@@ -1,0 +1,24 @@
+[
+    {
+        "question": "Where and when was Einstein born?",
+        "contexts": [
+            [
+                "Albert Einstein (born 14 March 1879) was a German-born theoretical physicist",
+                "widely held to be one of the greatest and most influential scientists of all time"
+            ]
+        ],
+        "answer": "Einstein was born in Germany on 14th March 1879.",
+        "ground_truth": "Einstein was born in Germany on 14th March 1879."
+    },
+    {
+        "question": "Where and when was Einstein born?",
+        "contexts": [
+            [
+                "Albert Einstein (born 14 March 1879) was a German-born theoretical physicist",
+                "widely held to be one of the greatest and most influential scientists of all time"
+            ]
+        ],
+        "answer": "Einstein was born in Germany on 20th March 1879.",
+        "ground_truth": "Einstein was born in Germany on 14th March 1879."
+    }
+]
