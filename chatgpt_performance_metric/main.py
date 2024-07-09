@@ -644,7 +644,64 @@ class Chatbot_MainWindow(QtWidgets.QMainWindow):
         if not file_path.endswith(".json"):
             file_path += ".json"
 
-        output_data = {}
+        # saved data를 dict format으로 저장
+        # output_data = {}
+        # num = 0
+        # for widget in self.store_inserted_widget:
+        #     num += 1
+        #
+        #     if self.progress is not None:
+        #         self.signal_send_save_status.emit(num % 99)
+        #
+        #     split_context = widget.contexts_plainTextEdit.toPlainText().split(g_context_split)
+        #
+        #     # # Initialize the global_context list
+        #     # global_context = []
+        #     #
+        #     # # Add each split string as a sublist to the global_context list
+        #     # for s in split_context:
+        #     #     global_context.append([s])
+        #
+        #     if view_only_ragas:
+        #         output_data[widget.scenario_checkBox.text()] = {
+        #             "question": widget.question_plainTextEdit.toPlainText(),
+        #             # "contexts": global_context,
+        #             "contexts": split_context,
+        #             "answer": widget.answer_plainTextEdit.toPlainText(),
+        #             "ground_truth": widget.truth_plainTextEdit.toPlainText(),
+        #
+        #             "Ragas": {
+        #                 "faithfulness": widget.score_lineEdit_7.text(),
+        #                 "answer_correctness": widget.score_lineEdit_13.text()
+        #             }
+        #         }
+        #     else:
+        #         output_data[widget.scenario_checkBox.text()] = {
+        #             "question": widget.question_plainTextEdit.toPlainText(),
+        #             # "contexts": global_context,
+        #             "contexts": split_context,
+        #             "answer": widget.answer_plainTextEdit.toPlainText(),
+        #             "ground_truth": widget.truth_plainTextEdit.toPlainText(),
+        #
+        #             "all-MiniLM-L6-v2": widget.score_lineEdit_1.text(),
+        #             "all-mpnet-base-v2": widget.score_lineEdit_2.text(),
+        #             "paraphrase-MiniLM-L6-v2": widget.score_lineEdit_3.text(),
+        #             "distiluse-base-multilingual-cased-v2": widget.score_lineEdit_4.text(),
+        #             "paraphrase-mpnet-base-v2": widget.score_lineEdit_5.text(),
+        #             "all-distilroberta-v1": widget.score_lineEdit_6.text(),
+        #             "Ragas": {
+        #                 "faithfulness": widget.score_lineEdit_7.text(),
+        #                 "answer_relevancy": widget.score_lineEdit_8.text(),
+        #                 "context_precision": widget.score_lineEdit_9.text(),
+        #                 "context_recall": widget.score_lineEdit_10.text(),
+        #                 "context_entity_recall": widget.score_lineEdit_11.text(),
+        #                 "answer_similarity": widget.score_lineEdit_12.text(),
+        #                 "answer_correctness": widget.score_lineEdit_13.text()
+        #             }
+        #         }
+
+        # saved data를 list format으로 저장 ==> input scenario와 동일한 format으로 만들기 위해서
+        output_data = []
         num = 0
         for widget in self.store_inserted_widget:
             num += 1
@@ -673,9 +730,9 @@ class Chatbot_MainWindow(QtWidgets.QMainWindow):
                         "faithfulness": widget.score_lineEdit_7.text(),
                         "answer_correctness": widget.score_lineEdit_13.text()
                     }
-                }
+                }            
             else:
-                output_data[widget.scenario_checkBox.text()] = {
+                temp = {
                     "question": widget.question_plainTextEdit.toPlainText(),
                     # "contexts": global_context,
                     "contexts": split_context,
@@ -698,6 +755,7 @@ class Chatbot_MainWindow(QtWidgets.QMainWindow):
                         "answer_correctness": widget.score_lineEdit_13.text()
                     }
                 }
+            output_data.append(temp)
 
         # JSON 데이터를 파일에 저장
         with open(file_path, 'w') as json_file:
