@@ -12,8 +12,9 @@ import json
 import easygui
 import pandas as pd
 
-from sentence_transformers import SentenceTransformer, util
 from datasets import Dataset
+from sentence_transformers import SentenceTransformer, util
+
 from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall, context_entity_recall, \
     answer_similarity, answer_correctness
 from ragas import evaluate
@@ -171,23 +172,28 @@ class Cal_Model_Score:
             metric = [faithfulness, answer_relevancy, context_precision, context_recall, context_entity_recall,
                       answer_similarity, answer_correctness]
 
-        score = evaluate(dataset, metrics=metric)
+        result = {}
+        for element in metric:
+            score = evaluate(dataset, metrics=[element])
+            result[str(element.name)] = str(round(score[str(element.name)], 5))
 
-        if view_only_ragas:
-            result = {
-                "faithfulness": str(round(score["faithfulness"], 5)),
-                "answer_correctness": str(round(score["answer_correctness"], 5))
-            }
-        else:
-            result = {
-                "faithfulness": str(round(score["faithfulness"], 5)),
-                "answer_relevancy": str(round(score["answer_relevancy"], 5)),
-                "context_precision": str(round(score["context_precision"], 5)),
-                "context_recall": str(round(score["context_recall"], 5)),
-                "context_entity_recall": str(round(score["context_entity_recall"], 5)),
-                "answer_similarity": str(round(score["answer_similarity"], 5)),
-                "answer_correctness": str(round(score["answer_correctness"], 5))
-            }
+        # score = evaluate(dataset, metrics=metric)
+        #
+        # if view_only_ragas:
+        #     result = {
+        #         "faithfulness": str(round(score["faithfulness"], 5)),
+        #         "answer_correctness": str(round(score["answer_correctness"], 5))
+        #     }
+        # else:
+        #     result = {
+        #         "faithfulness": str(round(score["faithfulness"], 5)),
+        #         "answer_relevancy": str(round(score["answer_relevancy"], 5)),
+        #         "context_precision": str(round(score["context_precision"], 5)),
+        #         "context_recall": str(round(score["context_recall"], 5)),
+        #         "context_entity_recall": str(round(score["context_entity_recall"], 5)),
+        #         "answer_similarity": str(round(score["answer_similarity"], 5)),
+        #         "answer_correctness": str(round(score["answer_correctness"], 5))
+        #     }
 
         return result
 
@@ -535,8 +541,6 @@ class Chatbot_MainWindow(QtWidgets.QMainWindow):
         for idx, thread_ in enumerate(self.widget_thread):
             thread_.start()
             thread_.join()
-
-        self.progress.setProgressBarMaximum(max_value=len(self.widget_thread))
 
     def check_scenario_to_test(self):
 
