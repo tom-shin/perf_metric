@@ -52,49 +52,44 @@ class EmittingStream(QtCore.QObject):
         pass
 
 
-class ProgressDialog(QDialog):
+class ProgressDialog(QtWidgets.QDialog):
+    close_analyze_Signal = QtCore.pyqtSignal()  # 닫기 시그널 정의
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, message='', parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(message)
+        self.setModal(True)
 
-        self.label = None
-        self.progressBar = None
-        self.setupUi()
+        # 창의 닫기 버튼(X)을 숨김
+        # self.setWindowFlags(QtCore.Qt.WindowTitleHint | QtCore.Qt.CustomizeWindowHint)
 
-    def setupUi(self):
-        self.label = QtWidgets.QLabel(self)
-        self.label.setGeometry(QtCore.QRect(40, 30, 251, 16))
-        self.label.setObjectName("label")
-        self.progressBar = QtWidgets.QProgressBar(self)
-        self.progressBar.setGeometry(QtCore.QRect(40, 60, 611, 23))
-        self.progressBar.setProperty("value", 0)
-        self.progressBar.setTextVisible(False)
-        self.progressBar.setObjectName("progressBar")
+        self.resize(400, 80)  # 원하는 크기로 조절
 
-        _translate = QtCore.QCoreApplication.translate
-        self.setWindowTitle(_translate("Dialog", "Loading Scenarios"))
-        self.label.setText(_translate("Dialog", "Loading Scenario ..."))
-
-        QtCore.QMetaObject.connectSlotsByName(self)
-
-        # """ Remove '?' 'X' marks in QDialog box """
-        # self.setWindowFlag(Qt.WindowCloseButtonHint, False)
-        # self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
+        self.progress_bar = QtWidgets.QProgressBar(self)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(self.progress_bar)
+        self.setLayout(layout)
 
     def setProgressBarMaximum(self, max_value):
-        self.progressBar.setMaximum(max_value)
-
-    def onProgressChanged(self, progress):
-        self.label.setText(progress)
+        self.progress_bar.setMaximum(max_value)
 
     def onCountChanged(self, value):
-        self.progressBar.setValue(value)
+        self.progress_bar.setValue(value)
+
+    def onProgressTextChanged(self, text):
+        self.label.setText(text)
 
     def showModal(self):
         super().exec_()
 
-    def showModaless(self):
+    def showModa_less(self):
         super().show()
+
+    # def closeEvent(self, event):
+    #     send = self.windowTitle()
+    #     print(send)
+    #     self.close_analyze_Signal.emit()  # 다이얼로그 제목을 포함하여 시그널 전송
+    #     super().closeEvent(event)  # 기본 닫기 이벤트 호출
 
 
 class load_scenario(QThread):
@@ -161,8 +156,8 @@ class Cal_Model_Score:
             'ground_truth': [self.ground_truth]
         }
 
-        print(data_samples)
-        print("\n")
+        # print(data_samples)
+        # print("\n")
 
         dataset = Dataset.from_dict(data_samples)
 
@@ -227,6 +222,8 @@ class Chatbot_MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
 
+        self.start_time = None
+        self.end_time = None
         """ for main frame & widget """
         self.mainFrame_ui = None
         self.widget_ui = None
@@ -307,41 +304,11 @@ class Chatbot_MainWindow(QtWidgets.QMainWindow):
     def normalOutputWritten(self, text):
         cursor = self.mainFrame_ui.logtextbrowser.textCursor()
         cursor.movePosition(QtGui.QTextCursor.End)
-
-        if " **" in text and "[" in text and "]" in text:
-            endposition = cursor.position()
-            startcursor = self.self.mainFrame_ui.logtextbrowser.textCursor()
-            startcursor.movePosition(QtGui.QTextCursor.End)
-            startcursor.movePosition(QtGui.QTextCursor.StartOfLine)
-            startcursor.movePosition(QtGui.QTextCursor.Left)
-            startposition = startcursor.position()
-
-            diff = endposition - startposition
-            for i in range(diff):
-                startcursor.deleteChar()
-        cursor.movePosition(QtGui.QTextCursor.End)
-
         color_format = cursor.charFormat()
-        if 'score' in text.lower() or 'not clicked' in text.lower() or 'Image Info' in text or 'Set Verification' in text or "Failed" in text:
-            color_format.setForeground(QtCore.Qt.red)
-        elif "Test Start" in text or "Simulation Start" in text:
-            color_format.setForeground(QtCore.Qt.blue)
-        elif "Iter." in text:
-            color_format.setForeground(QtCore.Qt.darkCyan)
-        else:
-            color_format.setForeground(QtCore.Qt.black)
-        cursor.setCharFormat(color_format)
 
-        if '*' in text:
-            for t in text:
-                if t == '*':
-                    color_format.setForeground(QtCore.Qt.blue)
-                else:
-                    color_format.setForeground(QtCore.Qt.darkCyan)
-                cursor.setCharFormat(color_format)
-                cursor.insertText(t)
-        else:
-            cursor.insertText(text)
+        color_format.setForeground(QtCore.Qt.black)
+        cursor.setCharFormat(color_format)
+        cursor.insertText(text)
 
         self.mainFrame_ui.logtextbrowser.setTextCursor(cursor)
         self.mainFrame_ui.logtextbrowser.ensureCursorVisible()
@@ -483,6 +450,17 @@ class Chatbot_MainWindow(QtWidgets.QMainWindow):
                 widget.score_lineEdit_13.setText(model_score["answer_correctness"])
 
         if self.received_sig_cnt == len(self.widget_thread):
+            self.end_time = time.time()
+            elapsed_time = self.end_time - self.start_time
+            days = elapsed_time // (24 * 3600)
+            remaining_secs = elapsed_time % (24 * 3600)
+            hours = remaining_secs // 3600
+            remaining_secs %= 3600
+            minutes = remaining_secs // 60
+            seconds = remaining_secs % 60
+
+            total_time = f"{int(days)}day {int(hours)}h {int(minutes)}m {int(seconds)}s"
+
             if self.progress is not None:
                 self.progress.close()
 
@@ -490,11 +468,11 @@ class Chatbot_MainWindow(QtWidgets.QMainWindow):
 
             answer = QtWidgets.QMessageBox.information(self,
                                                        "Verification",
-                                                       "All Test Done !       ",
+                                                       f"All Test Done !       \nElapsed time: {total_time}",
                                                        QtWidgets.QMessageBox.Ok)
         else:
             self.progress.onCountChanged(value=self.received_sig_cnt)
-            self.progress.label.setText("Analyzing...Wait until all test done")
+            # self.progress.label.setText("Analyzing...Wait until all test done")
 
     def model_for_score_cal(self, widget, test_model):
 
@@ -592,9 +570,11 @@ class Chatbot_MainWindow(QtWidgets.QMainWindow):
         if not self.check_scenario_to_test():
             return
 
+        self.start_time = time.time()
+
         self.progress = ProgressDialog()
-        self.progress.setWindowTitle("Analyze")
-        self.progress.label.setText("Initializing for analysis. Wait...")
+        self.progress.setWindowTitle("Analyzing.... Wait until all test done")
+        # self.progress.label.setText("Initializing for analysis. Wait...")
 
         self.cal_thread = threading.Thread(target=self.cal_score_thread, daemon=True)
 
@@ -723,7 +703,7 @@ class Chatbot_MainWindow(QtWidgets.QMainWindow):
             #     global_context.append([s])
 
             if view_only_ragas:
-                output_data[widget.scenario_checkBox.text()] = {
+                temp = {
                     "question": widget.question_plainTextEdit.toPlainText(),
                     # "contexts": global_context,
                     "contexts": split_context,
@@ -734,7 +714,7 @@ class Chatbot_MainWindow(QtWidgets.QMainWindow):
                         "faithfulness": widget.score_lineEdit_7.text(),
                         "answer_correctness": widget.score_lineEdit_13.text()
                     }
-                }            
+                }
             else:
                 temp = {
                     "question": widget.question_plainTextEdit.toPlainText(),
@@ -785,7 +765,7 @@ class Chatbot_MainWindow(QtWidgets.QMainWindow):
 
         self.progress = ProgressDialog()
         self.progress.setWindowTitle("Saving Scenario Output")
-        self.progress.label.setText("Saving Scenario Output ...")
+        # self.progress.label.setText("Saving Scenario Output ...")
 
         self.save_thread = threading.Thread(target=self.start_save_analyze_data, daemon=True)
         self.save_thread.start()
