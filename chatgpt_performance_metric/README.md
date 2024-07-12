@@ -4,9 +4,9 @@
 ```
 usage:
 
-1. module_install.bat 실행
+1. module_install.bat 실행(최초 1회)
 
-2. cli mode에서 local_models로 이동하여 model_download.py 실행
+2. cli mode에서 local_models로 이동하여 model_download.py 실행 (Ragas 기반의 open-ai 외 타 모델로 평가 시 최초 1회)
 
 3. [선택 사항]
    - configuration 아래 model_config.py를 열면 Models가 있는데 필요 없는 것은 # 처리 한다.
