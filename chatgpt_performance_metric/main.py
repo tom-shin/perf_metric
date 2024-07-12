@@ -1,32 +1,20 @@
+import time
 import warnings
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-import os
-
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-
-import time
-import threading
+import logging
 import json
 import easygui
-import pandas as pd
 
-from datasets import Dataset
-from sentence_transformers import SentenceTransformer, util
-
-from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall, context_entity_recall, \
-    answer_similarity, answer_correctness
-from ragas import evaluate
-
-from PyQt5.QtCore import QThread, pyqtSignal, Qt
+from PyQt5.QtCore import QThread, pyqtSignal, QObject
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtWidgets import QDialog
 
-pd.set_option('display.max_rows', None)  # 모든 행을 출력
-pd.set_option('display.max_columns', None)  # 모든 열을 출력
-pd.set_option('display.width', None)  # 출력 너비를 제한하지 않음
-pd.set_option('display.max_colwidth', None)  # 각 열의 최대 너비를 제한하지 않음
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QProgressBar, QPushButton, QHBoxLayout, QSpacerItem, \
+    QSizePolicy
+
+# user defined module
+from configuration.model_config import *
 
 os.environ["OPENAI_API_KEY"] = ""
 
@@ -36,14 +24,20 @@ file_path = os.path.join(BASE_DIR, "scenario", "version.txt")
 with open(file_path, "r") as file_:
     Version_ = file_.readline()
 
+logging.basicConfig(level=logging.INFO)
+
+
+def PRINT_(*args):
+    logging.info(args)
+
 
 def load_module_func(module_name):
     mod = __import__(f"{module_name}", fromlist=[module_name])
     return mod
 
 
-class EmittingStream(QtCore.QObject):
-    textWritten = QtCore.pyqtSignal(str)
+class EmittingStream(QObject):
+    textWritten = pyqtSignal(str)
 
     def write(self, text):
         self.textWritten.emit(str(text))
@@ -52,29 +46,46 @@ class EmittingStream(QtCore.QObject):
         pass
 
 
-class ProgressDialog(QtWidgets.QDialog):
-    close_analyze_Signal = QtCore.pyqtSignal()  # 닫기 시그널 정의
+class ProgressDialog(QDialog):
+    send_user_close_event = pyqtSignal(bool)
 
-    def __init__(self, message='', parent=None):
+    def __init__(self, message, show=False, parent=None):
         super().__init__(parent)
         self.setWindowTitle(message)
         self.setModal(True)
 
-        # 창의 닫기 버튼(X)을 숨김
-        # self.setWindowFlags(QtCore.Qt.WindowTitleHint | QtCore.Qt.CustomizeWindowHint)
+        self.resize(400, 100)  # 원하는 크기로 조절
 
-        self.resize(400, 80)  # 원하는 크기로 조절
+        self.progress_bar = QProgressBar(self)
+        self.label = QLabel("", self)
+        self.close_button = QPushButton("Close", self)
 
-        self.progress_bar = QtWidgets.QProgressBar(self)
-        layout = QtWidgets.QVBoxLayout(self)
+        # Create a horizontal layout for the close button and spacer
+        h_layout = QHBoxLayout()
+        spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        h_layout.addSpacerItem(spacer)
+        h_layout.addWidget(self.close_button)
+
+        # Create the main layout
+        layout = QVBoxLayout(self)
         layout.addWidget(self.progress_bar)
+        layout.addWidget(self.label)
+        layout.addLayout(h_layout)
         self.setLayout(layout)
 
+        # Close 버튼 클릭 시 다이얼로그를 닫음
+        self.close_button.clicked.connect(self.close)
+
+        if show:
+            self.close_button.show()
+        else:
+            self.close_button.hide()
+
     def setProgressBarMaximum(self, max_value):
-        self.progress_bar.setMaximum(max_value)
+        self.progress_bar.setMaximum(int(max_value))
 
     def onCountChanged(self, value):
-        self.progress_bar.setValue(value)
+        self.progress_bar.setValue(int(value))
 
     def onProgressTextChanged(self, text):
         self.label.setText(text)
@@ -85,161 +96,151 @@ class ProgressDialog(QtWidgets.QDialog):
     def showModa_less(self):
         super().show()
 
-    # def closeEvent(self, event):
-    #     send = self.windowTitle()
-    #     print(send)
-    #     self.close_analyze_Signal.emit()  # 다이얼로그 제목을 포함하여 시그널 전송
-    #     super().closeEvent(event)  # 기본 닫기 이벤트 호출
+    def closeEvent(self, event):
+        self.send_user_close_event.emit(True)
+        event.accept()
 
 
-class load_scenario(QThread):
-    send_scenario_data_sig = pyqtSignal(dict)
-    send_read_scenario_progress_sig = pyqtSignal(int)
-    send_max_scenario_count = pyqtSignal(int)
+class Load_test_scenario_thread(QtCore.QThread):
+    send_scenario_update_ui_sig = QtCore.pyqtSignal(int, dict)
+    send_max_scenario_cnt_sig = QtCore.pyqtSignal(int)
+    send_finish_scenario_update_ui_sig = QtCore.pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, base_dir, context_split):
         super().__init__()
+        self.base_dir = base_dir
+        self.context_split = context_split
 
     def run(self):
-        scenario_path = os.path.join(BASE_DIR, "scenario", "scenarios.json")
-        # Load the JSON data from the file
+        scenario_path = os.path.join(self.base_dir, "scenario", "scenarios.json")
         with open(scenario_path, 'r') as file:
             scenarios = json.load(file)
 
-        cell_data = {}
+        self.send_max_scenario_cnt_sig.emit(len(scenarios) + 1)
 
-        max_count = len(scenarios) + 1
-        self.send_max_scenario_count.emit(max_count)
-
-        for num_scenario, scenario in enumerate(scenarios):
+        for idx, scenario in enumerate(scenarios):
             question_data = scenario["question"]
-
-            contexts = g_context_split.join(scenario["contexts"][0])
-            # contexts = g_context_split.join(
-            #     [context for sublist in scenario["contexts"] for context in sublist])  # Flatten and join contexts
-
+            contexts = self.context_split.join(scenario["contexts"][0])
             answer = scenario["answer"]
             ground_truth = scenario["ground_truth"]
 
-            self.send_read_scenario_progress_sig.emit(num_scenario % 100)
-
-            # new /n, /r/n 와 같은 new line도 입력 그대로 넣음
-            cell_data[num_scenario] = {
+            scenario_data = {
                 "question": question_data,
                 "contexts": contexts,
+                "answer": answer,
                 "ground_truth": ground_truth,
-                "answer": answer
+                "idx": idx
             }
 
-        self.send_read_scenario_progress_sig.emit(max_count)
-        self.send_scenario_data_sig.emit(cell_data)
+            self.send_scenario_update_ui_sig.emit(idx, scenario_data)
+
+        self.send_finish_scenario_update_ui_sig.emit()
+
+
+#######################################################################################
+def call_metric_function(model, scenario_data):
+    score = 0
+
+    if "ragas" not in model.lower():
+        score = common_llm_model(model=model, scenario_data=scenario_data)
+
+    elif "ragas" in model.lower():
+        score = common_ragas_metric_model(model=model, scenario_data=scenario_data)
+
+    else:
+        print("Warning: No Supported Metric Model")
+    return model, score
+
+
+import threading
+
+
+def evaluate_model(args):
+    scenario_data, model, metrics, idx, cnt = args
+    model_name, score = call_metric_function(model=model, scenario_data=scenario_data)
+    result = {
+        "model": str(model_name),
+        "metric": None,
+        "score": str(score),
+        "idx": idx,
+        "cnt": cnt
+    }
+    return result
+
+
+class Metric_Evaluation_Thread(QThread):
+    send_progress_status = pyqtSignal(list)
+    send_network_error_sig = pyqtSignal(str)
+
+    def __init__(self, max_cnt, sub_widget, model, parent):
+        super().__init__()
+        self.working = True
+        self.max_cnt = max_cnt
+        self.sub_widget = sub_widget
+        self.model = model
+        self.parent = parent
+        self.progress = 0
+
+    def run(self):
+        self.progress = 0
+
+        for idx, (widget_ui, widget_ui_instance) in enumerate(self.sub_widget):
+            if not self.working:
+                break
+
+            if widget_ui.scenario_checkBox.isChecked():
+                scenario_data = {
+                    "question": widget_ui.question_plainTextEdit.toPlainText(),
+                    "contexts": widget_ui.contexts_plainTextEdit.toPlainText(),
+                    "answer": widget_ui.answer_plainTextEdit.toPlainText(),
+                    "ground_truth": widget_ui.truth_plainTextEdit.toPlainText()
+                }
+
+                for cnt, (model, metrics) in enumerate(self.model.items()):
+                    if not self.working:
+                        break
+
+                    checkbox = self.parent.findChild(QtWidgets.QCheckBox, f"metric_{model}_{cnt}")
+                    if checkbox.isChecked():
+                        try:
+                            result = evaluate_model((scenario_data, model, metrics, idx, cnt))
+
+                            result['widget_ui'] = widget_ui
+                            result['widget_ui_instance'] = widget_ui_instance
+                            self.progress += 1
+                            self.send_progress_status.emit([self.progress, self.max_cnt, result, model])
+
+                        except Exception as e:
+                            self.send_network_error_sig.emit(
+                                f"Error in common_ragas_metric_model for model {model}: {e}")
 
     def stop(self):
+        print("User canceled Evaluation forcefully")
+        self.working = False
         self.quit()
         self.wait(3000)
 
 
-class Cal_Model_Score:
-    def __init__(self, question, context, answer, ground_truth, model):
-        self.question = question
-        self.context = context.split(g_context_split)  # contexts는 <split>로 구분하도록 했음. 상황에 맞혀 변경이 필요할 수 도...
-        self.answer = answer
-        self.ground_truth = ground_truth
-        self.model = model
-
-    def Ragas_ALG(self):
-        # ragas에서 인식할 수 있는 format으로 변경 
-        data_samples = {
-            'question': [self.question],
-            'contexts': [self.context],
-            'answer': [self.answer],
-            'ground_truth': [self.ground_truth]
-        }
-
-        # print(data_samples)
-        # print("\n")
-
-        dataset = Dataset.from_dict(data_samples)
-
-        if view_only_ragas:
-            metric = [faithfulness, answer_correctness]
-        else:
-            metric = [faithfulness, answer_relevancy, context_precision, context_recall, context_entity_recall,
-                      answer_similarity, answer_correctness]
-
-        result = {}
-        for element in metric:
-            score = evaluate(dataset, metrics=[element])
-            result[str(element.name)] = str(round(score[str(element.name)], 5))
-
-        # score = evaluate(dataset, metrics=metric)
-        #
-        # if view_only_ragas:
-        #     result = {
-        #         "faithfulness": str(round(score["faithfulness"], 5)),
-        #         "answer_correctness": str(round(score["answer_correctness"], 5))
-        #     }
-        # else:
-        #     result = {
-        #         "faithfulness": str(round(score["faithfulness"], 5)),
-        #         "answer_relevancy": str(round(score["answer_relevancy"], 5)),
-        #         "context_precision": str(round(score["context_precision"], 5)),
-        #         "context_recall": str(round(score["context_recall"], 5)),
-        #         "context_entity_recall": str(round(score["context_entity_recall"], 5)),
-        #         "answer_similarity": str(round(score["answer_similarity"], 5)),
-        #         "answer_correctness": str(round(score["answer_correctness"], 5))
-        #     }
-
-        return result
-
-    def LLM_MODEL_ALG(self):
-        local_model_dir = os.path.join(BASE_DIR, "local_models", self.model)
-        model = SentenceTransformer(local_model_dir)
-
-        # 문장 임베딩 생성
-        embedding1 = model.encode(self.answer, convert_to_tensor=True)
-        embedding2 = model.encode(self.ground_truth, convert_to_tensor=True)
-
-        # 코사인 유사도 계산
-        cosine_score = util.pytorch_cos_sim(embedding1, embedding2)
-        # cosine_score = util.cos_sim(embedding1, embedding2)
-
-        result = {
-            "model": str(self.model),
-            "score": str(round(cosine_score.item(), 5))
-        }
-
-        return result
-
-
-class Chatbot_MainWindow(QtWidgets.QMainWindow):
-    signal_reset_score = pyqtSignal()
-    signal_send_score = pyqtSignal(object, dict, str)
-    signal_send_save_finished = pyqtSignal()
-
-    signal_send_save_status = pyqtSignal(int)
+class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
+    send_sig_delete_all_sub_widget = pyqtSignal()
+    send_save_finished_sig = pyqtSignal()
 
     def __init__(self):
         super().__init__()
 
-        self.start_time = None
-        self.end_time = None
+        self.start_evaluation_time = None
+        self.end_evaluation_time = None
+        self.added_scenario_widgets = None
+        self.update_thread = None
+        self.update_evaluation_progress = None
+        self.update_sub_widget_progress = None
+        self.eval_thread = None
+        self.save_thread = None
+        self.save_progress = None
+
         """ for main frame & widget """
         self.mainFrame_ui = None
         self.widget_ui = None
-
-        "main frame에 평가할 models의 갯수"
-        self.const_num_total_algo = 7
-
-        "기타 일반 변수"
-        self.scenario_data = None
-        self.store_inserted_widget = []
-        self.received_sig_cnt = 0
-        self.progress = None
-        self.save_thread = None
-        self.cal_thread = None
-        # widget별로 thread를 돌리려고함. 어떤 widget를 thread로 돌리는지 확인하고자 아래 변수 사용
-        self.widget_thread = []
 
         self.setupUi()
 
@@ -249,22 +250,20 @@ class Chatbot_MainWindow(QtWidgets.QMainWindow):
         self.mainFrame_ui = rt.Ui_MainWindow()
         self.mainFrame_ui.setupUi(self)
 
-        """ default golden data path """
-        local_path_ = os.path.join(BASE_DIR, "scenario", "scenarios.json")
-        self.mainFrame_ui.golden_lineEdit.setText(local_path_)
-        self.mainFrame_ui.golden_lineEdit.setReadOnly(True)
+        self.main_frame_init_ui()
 
         self.setWindowTitle(Version_)
 
-        if view_only_ragas:
-            for i in range(1, 7):  # 여러개 다른 llm 모델 hide
-                label_name = f"alg_checkBox_{i}"
-                label = getattr(self.mainFrame_ui, label_name, None)
-                if label is not None:
-                    label.hide()
-            self.mainFrame_ui.allcheck_pushButton.hide()  # all check 버턴 숨기기
-            self.mainFrame_ui.alluncheck_pushButton.hide()  # all uncheck 버턴 숨기기
-            self.mainFrame_ui.alg_checkBox_7.setChecked(True)  # ragas default로 check
+    def main_frame_init_ui(self):
+        for idx, (model, metric) in enumerate(Models.items()):
+            checkbox = QtWidgets.QCheckBox(self)
+            checkbox.setObjectName(f"metric_{model}_{idx}")
+            checkbox.setText(model)
+            self.mainFrame_ui.verticalLayout_5.addWidget(checkbox)
+
+        s_path = os.path.join(BASE_DIR, "scenario", "scenarios.json")
+        self.mainFrame_ui.scenario_path_lineedit.setText(s_path)
+        self.mainFrame_ui.scenario_path_lineedit.setReadOnly(True)
 
     def closeEvent(self, event):
         answer = QtWidgets.QMessageBox.question(self,
@@ -277,35 +276,11 @@ class Chatbot_MainWindow(QtWidgets.QMainWindow):
         else:
             event.ignore()
 
-    def connectSlotSignal(self):
-        """ sys.stdout redirection """
-        sys.stdout = EmittingStream(textWritten=self.normalOutputWritten)
-        self.mainFrame_ui.log_clear_pushButton.clicked.connect(self.cleanLogBrowser)
-
-        self.mainFrame_ui.allcheck_pushButton.clicked.connect(self.algorithm_select)
-        self.mainFrame_ui.alluncheck_pushButton.clicked.connect(self.algorithm_select)
-
-        "시나리오 기반으로 시나리오 갯수만큼 sub widget 삽입"
-        self.mainFrame_ui.refresh_pushButton.clicked.connect(self.update_all_sub_widget)
-        self.mainFrame_ui.analyze_pushButton.clicked.connect(self.perform_analyze)
-        self.mainFrame_ui.save_pushButton.clicked.connect(self.save_analyze_data)
-
-        self.mainFrame_ui.scenario_allcheck_pushButton.clicked.connect(self.select_scenario_to)
-        self.mainFrame_ui.scenario_alluncheck_pushButton.clicked.connect(self.select_scenario_to)
-
-        self.signal_reset_score.connect(self.calculate_score)
-        self.signal_send_score.connect(self.update_model_score)
-        self.signal_send_save_finished.connect(self.save_finished)
-        self.signal_send_save_status.connect(self.progress_save_status)
-
-    def cleanLogBrowser(self):
-        self.mainFrame_ui.logtextbrowser.clear()
-
     def normalOutputWritten(self, text):
         cursor = self.mainFrame_ui.logtextbrowser.textCursor()
         cursor.movePosition(QtGui.QTextCursor.End)
-        color_format = cursor.charFormat()
 
+        color_format = cursor.charFormat()
         color_format.setForeground(QtCore.Qt.black)
         cursor.setCharFormat(color_format)
         cursor.insertText(text)
@@ -313,308 +288,138 @@ class Chatbot_MainWindow(QtWidgets.QMainWindow):
         self.mainFrame_ui.logtextbrowser.setTextCursor(cursor)
         self.mainFrame_ui.logtextbrowser.ensureCursorVisible()
 
-    def main_frame_button_ctrl_disabled(self, flag=False):
-        if flag:
-            self.mainFrame_ui.analyze_pushButton.setEnabled(False)
-            self.mainFrame_ui.refresh_pushButton.setEnabled(False)
-        else:
-            self.mainFrame_ui.analyze_pushButton.setEnabled(True)
-            self.mainFrame_ui.refresh_pushButton.setEnabled(True)
+    def cleanLogBrowser(self):
+        self.mainFrame_ui.logtextbrowser.clear()
 
-    def select_scenario_to(self):
-        if len(self.store_inserted_widget) == 0:
+    def connectSlotSignal(self):
+        """ sys.stdout redirection """
+        sys.stdout = EmittingStream(textWritten=self.normalOutputWritten)
+        self.mainFrame_ui.log_clear_pushButton.clicked.connect(self.cleanLogBrowser)
+
+        self.mainFrame_ui.all_check_model.clicked.connect(self.model_check)
+        self.mainFrame_ui.all_uncheck_model.clicked.connect(self.model_check)
+
+        self.mainFrame_ui.refresh_pushButton.clicked.connect(self.remove_all_sub_widget)
+        self.send_sig_delete_all_sub_widget.connect(self.update_all_sub_widget)
+
+        self.mainFrame_ui.all_check_scenario.clicked.connect(self.select_all_scenario)
+        self.mainFrame_ui.all_uncheck_scenario.clicked.connect(self.select_all_scenario)
+
+        self.mainFrame_ui.analyze_pushButton.clicked.connect(self.t_start_evaluation)
+        self.mainFrame_ui.save_pushButton.clicked.connect(self.save_analyze_data)
+        self.mainFrame_ui.reset_score_pushButton.clicked.connect(self.reset_all_score)
+
+        self.send_save_finished_sig.connect(self.finished_all_test_result_save)
+
+    def select_all_scenario(self):
+        if self.added_scenario_widgets is None or len(self.added_scenario_widgets) == 0:
             return
 
         sender = self.sender()
         check = False
 
         if sender:
-            if sender.objectName() == "scenario_allcheck_pushButton":
+            if sender.objectName() == "all_check_scenario":
                 check = True
-            elif sender.objectName() == "scenario_alluncheck_pushButton":
+            elif sender.objectName() == "all_uncheck_scenario":
                 check = False
 
-        for widget in self.store_inserted_widget:
-            widget.scenario_checkBox.setChecked(check)
+        for scenario_widget, scenario_widget_instance in self.added_scenario_widgets:
+            scenario_widget.scenario_checkBox.setChecked(check)
 
-    def algorithm_select(self):
+    def model_check(self):
+        PRINT_("model check")
         sender = self.sender()
         check = False
 
         if sender:
-            if sender.objectName() == "allcheck_pushButton":
+            if sender.objectName() == "all_check_model":
                 check = True
-            elif sender.objectName() == "alluncheck_pushButton":
+            elif sender.objectName() == "all_uncheck_model":
                 check = False
 
-        for num in range(self.const_num_total_algo):
-            algo_checkbox = getattr(self.mainFrame_ui, f"alg_checkBox_{num + 1}")
-            algo_checkbox.setChecked(check)
+        for idx, (model, metric) in enumerate(Models.items()):
+            checkbox = self.findChild(QtWidgets.QCheckBox, f"metric_{model}_{idx}")
+            if checkbox:
+                checkbox.setChecked(check)
 
-    def remove_all_widget_in_mainFrame(self):
+    def remove_all_sub_widget(self):
         while self.mainFrame_ui.formLayout.count():
             item = self.mainFrame_ui.formLayout.takeAt(0)
             widget = item.widget()
             if widget:
                 widget.setParent(None)
 
-    def received_all_scenario(self, all_scenario_data):
-        self.remove_all_widget_in_mainFrame()
-        self.insert_all_sub_widget_to_main_frame(widget_contents=all_scenario_data)
+        self.send_sig_delete_all_sub_widget.emit()
 
-        # 모든 시나리오를 읽어와 widget 구성 완료
-        if self.progress is not None:
-            self.progress.close()
+    def add_scenario_widget(self, idx, scenario_data):
+        rt = load_module_func(module_name="ui_designer.main_widget")
+        widget_ui = rt.Ui_Form()
+        widget_instance = QtWidgets.QWidget()
+        widget_ui.setupUi(widget_instance)
 
-    def insert_all_sub_widget_to_main_frame(self, widget_contents):
-        # main frame에 시나리오 기반으로 sub widget을 insert
-        self.store_inserted_widget = []
+        widget_ui.scenario_checkBox.setText(f"scenario_{idx + 1}")
+        widget_ui.question_plainTextEdit.setPlainText(scenario_data["question"])
+        widget_ui.contexts_plainTextEdit.setPlainText(scenario_data["contexts"])
+        widget_ui.answer_plainTextEdit.setPlainText(scenario_data["answer"])
+        widget_ui.truth_plainTextEdit.setPlainText(scenario_data["ground_truth"])
 
-        # Load and insert widget
-        for idx in range(len(widget_contents.keys())):
-            rt = load_module_func(module_name="ui_designer.main_widget")
-            widget_ui = rt.Ui_Form()
-            widget_instance = QtWidgets.QWidget()
-            widget_ui.setupUi(widget_instance)
+        font = QtGui.QFont()
+        font.setBold(False)
+        font.setWeight(50)
 
-            widget_ui.scenario_checkBox.setText(rf"Test_Scenario_#{idx}")
+        cnt = 0
 
-            """ widget에 text 입력 하기 """
-            widget_ui.question_plainTextEdit.setPlainText(widget_contents[idx]["question"])
-            widget_ui.contexts_plainTextEdit.setPlainText(widget_contents[idx]["contexts"])
-            widget_ui.answer_plainTextEdit.setPlainText(widget_contents[idx]["answer"])
-            widget_ui.truth_plainTextEdit.setPlainText(widget_contents[idx]["ground_truth"])
+        def draw_sub_widget_model(widget_ui, idx, cnt, model, metrics, obj_name, is_sub=False):
+            label = QtWidgets.QLabel(widget_ui.groupBox_2)
+            label.setFont(font)
+            label.setObjectName(f"label_{idx}_{cnt}")
+            label.setText(obj_name)
+            widget_ui.formLayout.setWidget(cnt, QtWidgets.QFormLayout.LabelRole, label)
 
-            if view_only_ragas:
-                for i in range(1, 7):  # 여러개 다른 llm 모델 hide
-                    label_name = f"label_{i}"
-                    score_name = f"score_lineEdit_{i}"
-                    label = getattr(widget_ui, label_name, None)
-                    score = getattr(widget_ui, score_name, None)
+            if not is_sub:
+                score_line = QtWidgets.QLineEdit(widget_ui.groupBox_2)
+                sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+                sizePolicy.setHorizontalStretch(0)
+                sizePolicy.setVerticalStretch(0)
+                sizePolicy.setHeightForWidth(score_line.sizePolicy().hasHeightForWidth())
+                score_line.setSizePolicy(sizePolicy)
+                score_line.setMaximumSize(QtCore.QSize(75, 16777215))
+                score_line.setFont(font)
+                score_line.setObjectName(f"score_line_{idx}_{cnt}")
+                widget_ui.formLayout.setWidget(cnt, QtWidgets.QFormLayout.FieldRole, score_line)
 
-                    if label is not None:
-                        label.hide()
-                        score.hide()
-
-                for i in range(8, 13):  # 여러개 다른 llm 모델 hide
-                    label_name = f"label_{i + 1}"
-                    score_name = f"score_lineEdit_{i}"
-                    label = getattr(widget_ui, label_name, None)
-                    score = getattr(widget_ui, score_name, None)
-
-                    if label is not None:
-                        label.hide()
-                        score.hide()
-
-            self.store_inserted_widget.append(widget_ui)
-
-            # Add the widget to the main window's form layout
-            self.mainFrame_ui.formLayout.setWidget(idx, QtWidgets.QFormLayout.FieldRole, widget_instance)
-
-    def update_model_score(self, widget, model_score, model_name):
-        self.received_sig_cnt += 1
-
-        if model_name != "Ragas":
-            model_score = model_score["score"]
-
-        if model_name == "all-MiniLM-L6-v2":
-            widget.score_lineEdit_1.setText(model_score)
-
-        elif model_name == "all-mpnet-base-v2":
-            widget.score_lineEdit_2.setText(model_score)
-
-        elif model_name == "paraphrase-MiniLM-L6-v2":
-            widget.score_lineEdit_3.setText(model_score)
-
-        elif model_name == "distiluse-base-multilingual-cased-v2":
-            widget.score_lineEdit_4.setText(model_score)
-
-        elif model_name == "paraphrase-mpnet-base-v2":
-            widget.score_lineEdit_5.setText(model_score)
-
-        elif model_name == "all-distilroberta-v1":
-            widget.score_lineEdit_6.setText(model_score)
-
-        elif model_name == "Ragas":
-
-            if view_only_ragas:
-                widget.score_lineEdit_7.setText(model_score["faithfulness"])
-                widget.score_lineEdit_13.setText(model_score["answer_correctness"])
+        for model, metrics in Models.items():
+            if metrics is None:
+                draw_sub_widget_model(widget_ui, idx, cnt, model, metrics, obj_name=model)
+                cnt += 1
             else:
-                widget.score_lineEdit_7.setText(model_score["faithfulness"])
-                widget.score_lineEdit_8.setText(model_score["answer_relevancy"])
-                widget.score_lineEdit_9.setText(model_score["context_precision"])
-                widget.score_lineEdit_10.setText(model_score["context_recall"])
-                widget.score_lineEdit_11.setText(model_score["context_entity_recall"])
-                widget.score_lineEdit_12.setText(model_score["answer_similarity"])
-                widget.score_lineEdit_13.setText(model_score["answer_correctness"])
+                draw_sub_widget_model(widget_ui, idx, cnt, model, metrics, obj_name=model, is_sub=True)
+                cnt += 1
+                for sub_metric in metrics:
+                    draw_sub_widget_model(widget_ui, idx, cnt, model, metrics, obj_name=sub_metric)
+                    cnt += 1
 
-        if self.received_sig_cnt == len(self.widget_thread):
-            self.end_time = time.time()
-            elapsed_time = self.end_time - self.start_time
-            days = elapsed_time // (24 * 3600)
-            remaining_secs = elapsed_time % (24 * 3600)
-            hours = remaining_secs // 3600
-            remaining_secs %= 3600
-            minutes = remaining_secs // 60
-            seconds = remaining_secs % 60
+        self.added_scenario_widgets.append((widget_ui, widget_instance))
+        self.mainFrame_ui.formLayout.setWidget(idx, QtWidgets.QFormLayout.FieldRole, widget_instance)
 
-            total_time = f"{int(days)}day {int(hours)}h {int(minutes)}m {int(seconds)}s"
+        if self.update_sub_widget_progress is not None:
+            self.update_sub_widget_progress.onCountChanged(idx)
 
-            if self.progress is not None:
-                self.progress.close()
+    def set_max_progressbar_cnt(self, value):
+        if self.update_sub_widget_progress is not None:
+            # PRINT_("max value", value)
+            self.update_sub_widget_progress.setProgressBarMaximum(max_value=value)
 
-            self.main_frame_button_ctrl_disabled(flag=False)
-
-            answer = QtWidgets.QMessageBox.information(self,
-                                                       "Verification",
-                                                       f"All Test Done !       \nElapsed time: {total_time}",
-                                                       QtWidgets.QMessageBox.Ok)
-        else:
-            self.progress.onCountChanged(value=self.received_sig_cnt)
-            # self.progress.label.setText("Analyzing...Wait until all test done")
-
-    def model_for_score_cal(self, widget, test_model):
-
-        question = widget.question_plainTextEdit.toPlainText()
-        context = widget.contexts_plainTextEdit.toPlainText()
-        answer = widget.answer_plainTextEdit.toPlainText()
-        ground_truth = widget.truth_plainTextEdit.toPlainText()
-
-        # constructor
-        selected_model = Cal_Model_Score(question=question, context=context, answer=answer, ground_truth=ground_truth,
-                                         model=test_model)
-
-        score = None
-        if "Ragas" in test_model:
-            score = selected_model.Ragas_ALG()
-
-        else:
-            score = selected_model.LLM_MODEL_ALG()
-
-        self.signal_send_score.emit(widget, score, test_model)
-
-    def cal_score_thread(self):
-
-        print("[Start Cal Score]")
-        self.widget_thread = []
-
-        for widget in self.store_inserted_widget:
-            if not widget.scenario_checkBox.isChecked():
-                continue
-
-            for idx in range(self.const_num_total_algo):
-                checked_algo = getattr(self.mainFrame_ui, f"alg_checkBox_{idx + 1}")
-                if checked_algo.isChecked():
-                    _thread = threading.Thread(target=self.model_for_score_cal, args=(widget, checked_algo.text(),),
-                                               daemon=True)
-                    self.widget_thread.append(_thread)
-
-        if len(self.widget_thread) != 0:
-            self.main_frame_button_ctrl_disabled(flag=True)
-
-        self.received_sig_cnt = 0
-
-        self.progress.setProgressBarMaximum(max_value=len(self.widget_thread) + 1)
-        for idx, thread_ in enumerate(self.widget_thread):
-            thread_.start()
-            thread_.join()
-
-    def check_scenario_to_test(self):
-
-        if len(self.store_inserted_widget) == 0:
-            answer = QtWidgets.QMessageBox.warning(self,
-                                                   "Scenario Check",
-                                                   "No scenarios to analyze.",
-                                                   QtWidgets.QMessageBox.Ok)
-
-            if answer == QtWidgets.QMessageBox.Ok:
-                return False
-
-        else:
-            exist = False
-            for widget in self.store_inserted_widget:
-                if widget.scenario_checkBox.isChecked():
-                    exist = True
-                    break
-
-            if not exist:
-                answer = QtWidgets.QMessageBox.warning(self,
-                                                       "Scenario Check",
-                                                       "Select Test Scenario",
-                                                       QtWidgets.QMessageBox.Ok)
-
-                if answer == QtWidgets.QMessageBox.Ok:
-                    return False
-
-            exist = False
-            for idx in range(self.const_num_total_algo):
-                checked_algo = getattr(self.mainFrame_ui, f"alg_checkBox_{idx + 1}")
-                if checked_algo.isChecked():
-                    exist = True
-                    break
-
-            if not exist:
-                answer = QtWidgets.QMessageBox.warning(self,
-                                                       "Model Check",
-                                                       "Select Test Model",
-                                                       QtWidgets.QMessageBox.Ok)
-
-                if answer == QtWidgets.QMessageBox.Ok:
-                    return False
-
-        return True
-
-    def calculate_score(self):
-
-        if not self.check_scenario_to_test():
-            return
-
-        self.start_time = time.time()
-
-        self.progress = ProgressDialog()
-        self.progress.setWindowTitle("Analyzing.... Wait until all test done")
-        # self.progress.label.setText("Initializing for analysis. Wait...")
-
-        self.cal_thread = threading.Thread(target=self.cal_score_thread, daemon=True)
-
-        self.cal_thread.start()
-
-        self.progress.showModal()
-
-    def remove_previous_score(self):
-        if not self.check_scenario_to_test():
-            return
-
-        include_ragas = 6  # ragas는 7개 sub 항목이 있어 아래처럼 전체를 지우기 위해서는 total algo + 6개 추가 필요 (최적화 나중에..)
-        for widget in self.store_inserted_widget:
-            for idx in range(self.const_num_total_algo + include_ragas):
-                score = getattr(widget, f"score_lineEdit_{idx + 1}")
-                score.setText("")
-
-        self.signal_reset_score.emit()
-
-    def perform_analyze(self):
-        self.remove_previous_score()
-
-    def update_all_sub_widget(self):
-        # progress bar 시작
-        self.progress = ProgressDialog()
-
-        self.scenario_data = load_scenario()
-        self.scenario_data.send_scenario_data_sig.connect(self.received_all_scenario)
-        self.scenario_data.send_read_scenario_progress_sig.connect(self.progress.onCountChanged)
-        self.scenario_data.send_max_scenario_count.connect(self.progress.setProgressBarMaximum)
-
-        self.scenario_data.start()
-
-        self.progress.showModal()
+    def finished_add_scenario_widget(self):
+        if self.update_sub_widget_progress is not None:
+            # PRINT_("finished_add_scenario_widget")
+            self.update_sub_widget_progress.close()
 
     def start_save_analyze_data(self):
-        if len(self.store_inserted_widget) == 0:
+        if self.added_scenario_widgets is None or len(self.added_scenario_widgets) == 0:
             return
 
-        # 파일 저장 대화 상자를 열고 .json 파일만 선택할 수 있도록 합니다.
         file_path = easygui.filesavebox(
             msg="Want to Save File?",
             title="Saving File",
@@ -628,160 +433,223 @@ class Chatbot_MainWindow(QtWidgets.QMainWindow):
         if not file_path.endswith(".json"):
             file_path += ".json"
 
-        # saved data를 dict format으로 저장
-        # output_data = {}
-        # num = 0
-        # for widget in self.store_inserted_widget:
-        #     num += 1
-        #
-        #     if self.progress is not None:
-        #         self.signal_send_save_status.emit(num % 99)
-        #
-        #     split_context = widget.contexts_plainTextEdit.toPlainText().split(g_context_split)
-        #
-        #     # # Initialize the global_context list
-        #     # global_context = []
-        #     #
-        #     # # Add each split string as a sublist to the global_context list
-        #     # for s in split_context:
-        #     #     global_context.append([s])
-        #
-        #     if view_only_ragas:
-        #         output_data[widget.scenario_checkBox.text()] = {
-        #             "question": widget.question_plainTextEdit.toPlainText(),
-        #             # "contexts": global_context,
-        #             "contexts": split_context,
-        #             "answer": widget.answer_plainTextEdit.toPlainText(),
-        #             "ground_truth": widget.truth_plainTextEdit.toPlainText(),
-        #
-        #             "Ragas": {
-        #                 "faithfulness": widget.score_lineEdit_7.text(),
-        #                 "answer_correctness": widget.score_lineEdit_13.text()
-        #             }
-        #         }
-        #     else:
-        #         output_data[widget.scenario_checkBox.text()] = {
-        #             "question": widget.question_plainTextEdit.toPlainText(),
-        #             # "contexts": global_context,
-        #             "contexts": split_context,
-        #             "answer": widget.answer_plainTextEdit.toPlainText(),
-        #             "ground_truth": widget.truth_plainTextEdit.toPlainText(),
-        #
-        #             "all-MiniLM-L6-v2": widget.score_lineEdit_1.text(),
-        #             "all-mpnet-base-v2": widget.score_lineEdit_2.text(),
-        #             "paraphrase-MiniLM-L6-v2": widget.score_lineEdit_3.text(),
-        #             "distiluse-base-multilingual-cased-v2": widget.score_lineEdit_4.text(),
-        #             "paraphrase-mpnet-base-v2": widget.score_lineEdit_5.text(),
-        #             "all-distilroberta-v1": widget.score_lineEdit_6.text(),
-        #             "Ragas": {
-        #                 "faithfulness": widget.score_lineEdit_7.text(),
-        #                 "answer_relevancy": widget.score_lineEdit_8.text(),
-        #                 "context_precision": widget.score_lineEdit_9.text(),
-        #                 "context_recall": widget.score_lineEdit_10.text(),
-        #                 "context_entity_recall": widget.score_lineEdit_11.text(),
-        #                 "answer_similarity": widget.score_lineEdit_12.text(),
-        #                 "answer_correctness": widget.score_lineEdit_13.text()
-        #             }
-        #         }
-
-        # saved data를 list format으로 저장 ==> input scenario와 동일한 format으로 만들기 위해서
         output_data = []
-        num = 0
-        for widget in self.store_inserted_widget:
-            num += 1
+        progress = 0
 
-            if self.progress is not None:
-                self.signal_send_save_status.emit(num % 99)
+        for idx, (widget_ui, widget_ui_instance) in enumerate(self.added_scenario_widgets):
+            progress += 1
+            self.save_progress.onCountChanged(progress % 99)
 
-            split_context = widget.contexts_plainTextEdit.toPlainText().split(g_context_split)
+            result_out = {}
 
-            # # Initialize the global_context list
-            # global_context = []
-            #
-            # # Add each split string as a sublist to the global_context list
-            # for s in split_context:
-            #     global_context.append([s])
+            result_out = {"question": widget_ui.question_plainTextEdit.toPlainText(),
+                          "split_context": widget_ui.contexts_plainTextEdit.toPlainText().split(g_context_split),
+                          "answer": widget_ui.answer_plainTextEdit.toPlainText(),
+                          "ground_truth": widget_ui.truth_plainTextEdit.toPlainText()
+                          }
 
-            if view_only_ragas:
-                temp = {
-                    "question": widget.question_plainTextEdit.toPlainText(),
-                    # "contexts": global_context,
-                    "contexts": split_context,
-                    "answer": widget.answer_plainTextEdit.toPlainText(),
-                    "ground_truth": widget.truth_plainTextEdit.toPlainText(),
+            for cnt, (model, metric) in enumerate(Models.items()):
+                score_line = widget_ui_instance.findChild(QtWidgets.QLineEdit, f"score_line_{idx}_{cnt}")
+                if score_line:
+                    result_out[model] = score_line.text()
 
-                    "Ragas": {
-                        "faithfulness": widget.score_lineEdit_7.text(),
-                        "answer_correctness": widget.score_lineEdit_13.text()
-                    }
-                }
-            else:
-                temp = {
-                    "question": widget.question_plainTextEdit.toPlainText(),
-                    # "contexts": global_context,
-                    "contexts": split_context,
-                    "answer": widget.answer_plainTextEdit.toPlainText(),
-                    "ground_truth": widget.truth_plainTextEdit.toPlainText(),
+            output_data.append(result_out)
 
-                    "all-MiniLM-L6-v2": widget.score_lineEdit_1.text(),
-                    "all-mpnet-base-v2": widget.score_lineEdit_2.text(),
-                    "paraphrase-MiniLM-L6-v2": widget.score_lineEdit_3.text(),
-                    "distiluse-base-multilingual-cased-v2": widget.score_lineEdit_4.text(),
-                    "paraphrase-mpnet-base-v2": widget.score_lineEdit_5.text(),
-                    "all-distilroberta-v1": widget.score_lineEdit_6.text(),
-                    "Ragas": {
-                        "faithfulness": widget.score_lineEdit_7.text(),
-                        "answer_relevancy": widget.score_lineEdit_8.text(),
-                        "context_precision": widget.score_lineEdit_9.text(),
-                        "context_recall": widget.score_lineEdit_10.text(),
-                        "context_entity_recall": widget.score_lineEdit_11.text(),
-                        "answer_similarity": widget.score_lineEdit_12.text(),
-                        "answer_correctness": widget.score_lineEdit_13.text()
-                    }
-                }
-            output_data.append(temp)
+        self.save_progress.onCountChanged(100)
+        QThread.sleep(1)
 
-        # JSON 데이터를 파일에 저장
         with open(file_path, 'w') as json_file:
             json.dump(output_data, json_file, indent=4)
 
-        self.signal_send_save_finished.emit()
+        self.send_save_finished_sig.emit()
 
-    def progress_save_status(self, num):
-        if self.progress is not None:
-            self.progress.onCountChanged(num)
-
-    def save_finished(self):
-        if self.progress is not None:
-            self.progress.onCountChanged(value=100)
-            app.processEvents()
-            time.sleep(1)
-
-            self.progress.close()
+    def finished_all_test_result_save(self):
+        if self.save_progress is not None:
+            self.save_progress.close()
 
     def save_analyze_data(self):
-        if len(self.store_inserted_widget) == 0:
+        PRINT_("save_analyze_data")
+
+        if self.added_scenario_widgets is None or len(self.added_scenario_widgets) == 0:
             return
 
-        self.progress = ProgressDialog()
-        self.progress.setWindowTitle("Saving Scenario Output")
-        # self.progress.label.setText("Saving Scenario Output ...")
+        self.save_progress = ProgressDialog(message="Saving Result ...")
 
         self.save_thread = threading.Thread(target=self.start_save_analyze_data, daemon=True)
         self.save_thread.start()
 
-        self.progress.showModal()
+        self.save_progress.showModa_less()
+
+    def update_all_sub_widget(self):
+        # PRINT_("add_scenario_in_subwidget")
+
+        self.update_sub_widget_progress = ProgressDialog(message="Loading Scenario")
+
+        self.added_scenario_widgets = []
+        self.update_thread = Load_test_scenario_thread(BASE_DIR, g_context_split)
+        self.update_thread.send_scenario_update_ui_sig.connect(self.add_scenario_widget)
+        self.update_thread.send_max_scenario_cnt_sig.connect(self.set_max_progressbar_cnt)
+        self.update_thread.send_finish_scenario_update_ui_sig.connect(self.finished_add_scenario_widget)
+
+        self.update_thread.start()
+
+        self.update_sub_widget_progress.showModa_less()
+
+    def check_warning_message(self):
+        if self.added_scenario_widgets is None:
+            return
+
+        scenario_exist = False
+        for widget, widget_instance in self.added_scenario_widgets:
+            if widget.scenario_checkBox.isChecked():
+                scenario_exist = True
+                break
+
+        if not scenario_exist:
+            answer = QtWidgets.QMessageBox.warning(self,
+                                                   "Warning",
+                                                   "Select scenario",
+                                                   QtWidgets.QMessageBox.Ok)
+            return False
+
+        metric_exist = False
+        for idx, (model, metric) in enumerate(Models.items()):
+
+            checkbox = self.findChild(QtWidgets.QCheckBox, f"metric_{model}_{idx}")
+
+            if checkbox.isChecked():
+                metric_exist = True
+                break
+
+        if not metric_exist:
+            answer = QtWidgets.QMessageBox.warning(self,
+                                                   "Warning",
+                                                   "Select metric",
+                                                   QtWidgets.QMessageBox.Ok)
+            return False
+
+        return True
+
+    def reset_all_score(self):
+        if self.added_scenario_widgets is None or len(self.added_scenario_widgets) == 0:
+            return
+
+        for widget_ui, widget_ui_instance in self.added_scenario_widgets:
+            # Find all QLineEdit widgets within the current scenario widget
+            line_edits = widget_ui_instance.findChildren(QtWidgets.QLineEdit)
+            for line_edit in line_edits:
+                line_edit.setText("")
+
+    def total_test_cnt(self):
+        selected_scenario_cnt = 0
+        for scenario_widget, scenario_widget_instance in self.added_scenario_widgets:
+            if scenario_widget.scenario_checkBox.isChecked():
+                selected_scenario_cnt += 1
+
+        selected_metric_cnt = 0
+        for idx, (model, metric) in enumerate(Models.items()):
+            checkbox = self.findChild(QtWidgets.QCheckBox, f"metric_{model}_{idx}")
+            if checkbox.isChecked():
+                if metric is None:
+                    selected_metric_cnt += 1
+                else:
+                    selected_metric_cnt += len(metric)
+
+        # PRINT_(selected_scenario_cnt, selected_metric_cnt, selected_metric_cnt * selected_scenario_cnt)
+
+        return selected_metric_cnt * selected_scenario_cnt
+
+    def evaluation_error(self, event):
+        if self.eval_thread is not None:
+            self.eval_thread.stop()
+
+        if self.update_evaluation_progress is not None:
+            self.update_evaluation_progress.close()
+
+        answer = QtWidgets.QMessageBox.warning(self,
+                                               "Evaluation Error - Network Error",
+                                               f"{event}",
+                                               QtWidgets.QMessageBox.Ok)
+
+    def update_evaluation_progress_status(self, event):
+        if self.eval_thread is not None:
+            # print(event[0], event[1], event[2])
+
+            # 결과 업데이트
+            result = event[2]
+            widget_ui = result["widget_ui"]
+            widget_ui_instance = result["widget_ui_instance"]
+            score = result["score"]
+            idx = result["idx"]
+            cnt = result["cnt"]
+
+            score_line = widget_ui_instance.findChild(QtWidgets.QLineEdit, f"score_line_{idx}_{cnt}")
+
+            if score_line:
+                score_line.setText(score)
+
+            # 프로그래스 바 업데이트
+            if int(event[0]) != int(event[1]):
+                if self.update_evaluation_progress is not None:
+                    self.update_evaluation_progress.onCountChanged(value=str(event[0]))
+                    self.update_evaluation_progress.onProgressTextChanged(
+                        text=f"\nScenario: {widget_ui.scenario_checkBox.text()}\nModel: {event[3]}\nProgress: {event[0]}/{event[1]}")
+
+            else:
+                self.end_evaluation_time = time.time()
+                elapsed_time = self.end_evaluation_time - self.start_evaluation_time
+                days = elapsed_time // (24 * 3600)
+                remaining_secs = elapsed_time % (24 * 3600)
+                hours = remaining_secs // 3600
+                remaining_secs %= 3600
+                minutes = remaining_secs // 60
+                seconds = remaining_secs % 60
+
+                total_time = f"{int(days)}day {int(hours)}h {int(minutes)}m {int(seconds)}s"
+
+                self.eval_thread.stop()
+                self.update_evaluation_progress.close()
+
+                answer = QtWidgets.QMessageBox.information(self,
+                                                           "Metric Evaluation",
+                                                           f"All Test Done !       \nElapsed time: {total_time}",
+                                                           QtWidgets.QMessageBox.Ok)
+
+    def t_start_evaluation(self):
+        if not self.check_warning_message():
+            return
+
+        max_cnt = self.total_test_cnt()
+
+        self.reset_all_score()
+        self.update_evaluation_progress = ProgressDialog(message="Evaluation ...", show=True)
+        self.update_evaluation_progress.setProgressBarMaximum(max_value=max_cnt)
+
+        self.eval_thread = Metric_Evaluation_Thread(max_cnt=max_cnt, sub_widget=self.added_scenario_widgets,
+                                                    model=Models, parent=self)
+
+        self.eval_thread.send_progress_status.connect(self.update_evaluation_progress_status)
+        self.eval_thread.send_network_error_sig.connect(self.evaluation_error)
+
+        # eval 중 사용자가 취소하고 싶을 때
+        self.update_evaluation_progress.send_user_close_event.connect(self.eval_thread.stop)
+
+        self.eval_thread.start()
+
+        self.start_evaluation_time = time.time()
+
+        self.update_evaluation_progress.showModa_less()
 
 
 if __name__ == "__main__":
     import sys
 
     g_context_split = "<split>"
-    view_only_ragas = True
+    view_only_ragas = False
 
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle("Fusion")
-    ui = Chatbot_MainWindow()
+    ui = Performance_metrics_MainWindow()
     ui.showMaximized()
     ui.connectSlotSignal()
 

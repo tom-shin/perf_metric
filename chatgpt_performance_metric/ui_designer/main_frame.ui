@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>913</width>
-    <height>600</height>
+    <width>1087</width>
+    <height>750</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -37,12 +37,12 @@
            <item>
             <widget class="QLabel" name="label">
              <property name="text">
-              <string>Golden Path</string>
+              <string>Scenario Path</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QLineEdit" name="golden_lineEdit"/>
+            <widget class="QLineEdit" name="scenario_path_lineedit"/>
            </item>
            <item>
             <widget class="QPushButton" name="refresh_pushButton">
@@ -65,8 +65,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>591</width>
-            <height>455</height>
+            <width>752</width>
+            <height>575</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_11">
@@ -80,16 +80,16 @@
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_4">
          <item>
-          <widget class="QPushButton" name="scenario_allcheck_pushButton">
+          <widget class="QPushButton" name="all_check_scenario">
            <property name="text">
-            <string>Test Scenario All Check</string>
+            <string>Scenario All Check</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="scenario_alluncheck_pushButton">
+          <widget class="QPushButton" name="all_uncheck_scenario">
            <property name="text">
-            <string>Test Scenario All Uncheck</string>
+            <string>Scenario All Uncheck</string>
            </property>
           </widget>
          </item>
@@ -120,6 +120,13 @@
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="QPushButton" name="reset_score_pushButton">
+           <property name="text">
+            <string>Reset Score</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
       </layout>
@@ -128,74 +135,22 @@
     <item>
      <widget class="QGroupBox" name="groupBox">
       <property name="title">
-       <string>Framwork</string>
+       <string>Metric</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_4">
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_5">
          <item>
-          <widget class="QCheckBox" name="alg_checkBox_1">
-           <property name="text">
-            <string>all-MiniLM-L6-v2</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="alg_checkBox_2">
-           <property name="text">
-            <string>all-mpnet-base-v2</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="alg_checkBox_3">
-           <property name="text">
-            <string>paraphrase-MiniLM-L6-v2</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="alg_checkBox_4">
-           <property name="text">
-            <string>distiluse-base-multilingual-cased-v2</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="alg_checkBox_5">
-           <property name="text">
-            <string>paraphrase-mpnet-base-v2</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="alg_checkBox_6">
-           <property name="text">
-            <string>all-distilroberta-v1</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="alg_checkBox_7">
-           <property name="enabled">
-            <bool>true</bool>
-           </property>
-           <property name="text">
-            <string>Ragas</string>
-           </property>
-          </widget>
-         </item>
-         <item>
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
-            <widget class="QPushButton" name="allcheck_pushButton">
+            <widget class="QPushButton" name="all_check_model">
              <property name="text">
               <string>All Check</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="alluncheck_pushButton">
+            <widget class="QPushButton" name="all_uncheck_model">
              <property name="text">
               <string>All Uncheck</string>
              </property>
@@ -246,8 +201,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>913</width>
-     <height>21</height>
+     <width>1087</width>
+     <height>26</height>
     </rect>
    </property>
   </widget>
