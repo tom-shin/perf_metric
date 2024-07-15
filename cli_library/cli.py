@@ -7,7 +7,15 @@ from tqdm import tqdm
 from datasets import Dataset
 from sentence_transformers import SentenceTransformer, util
 
-from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall, context_entity_recall, answer_similarity, answer_correctness
+from ragas.metrics import {
+    faithfulness, 
+    answer_relevancy, 
+    context_precision, 
+    context_recall, 
+    context_entity_recall, 
+    answer_similarity, 
+    answer_correctness
+}
 from ragas import evaluate
 
 from langchain_community.chat_models import ChatOllama
@@ -42,11 +50,12 @@ class ChatbotEvaluator:
 
         return cosine_score
 
-    def run_ragas(self, record):
-        llm_llama3 = ChatOllama(model="llama3:latest", temperature=0)
-        ollama_emb = OllamaEmbeddings(model="llama3:latest")
+    def set_ragas(self):
+        self.ragas_llm = CharOllama(model="llama3:latest", temperature=0)
+        self.ragas_embedding = OllamaEmbeddings(model="llama3:latest")
 
-        #print(record.contexts)
+
+    def run_ragas(self, record):
         data = {
             'question': [record.question],
             'contexts': [record.contexts[0]],
@@ -59,13 +68,19 @@ class ChatbotEvaluator:
         #metric = [faithfulness, answer_correctness]
         metric = [answer_correctness]
 
-        return evaluate(dataset = dataset, llm = llm_llama3, embeddings=ollama_emb, metrics=metric)
+        return evaluate(
+            dataset = dataset, 
+            llm = self.ragas_llm, 
+            embeddings = self.ragas_embedding, 
+            metrics=metric
+        )
         
 
     def evaluate_all(self, model_dir, tests):
         for test in tests:
             if test == "Ragas":
                 print("Evaluation with Ragas")
+                self.set_ragas()
                 for record in tqdm(self.records):
                     record.score.update(self.run_ragas(record))
                 continue
