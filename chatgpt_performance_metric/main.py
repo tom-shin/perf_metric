@@ -6,12 +6,13 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 import logging
 import json
 import easygui
+import threading
 
-from PyQt5.QtCore import QThread, pyqtSignal, QObject
+from PyQt5.QtCore import QThread, pyqtSignal, QObject, QTimer
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QProgressBar, QPushButton, QHBoxLayout, QSpacerItem, \
-    QSizePolicy
+    QSizePolicy, QRadioButton, QWidget
 
 # user defined module
 from configuration.model_config import *
@@ -46,7 +47,91 @@ class EmittingStream(QObject):
         pass
 
 
-class ProgressDialog(QDialog):
+class ModalLess_ProgressDialog(QWidget):  # popup 메뉴가 있어도 뒤 main gui의 제어가 가능 함
+    send_user_close_event = pyqtSignal(bool)
+
+    def __init__(self, message, show=False, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(message)
+
+        self.resize(400, 100)  # 원하는 크기로 조절
+
+        self.progress_bar = QProgressBar(self)
+        self.label = QLabel("", self)
+        self.close_button = QPushButton("Close", self)
+        self.radio_button = QRadioButton("", self)
+
+        # Create a horizontal layout for the close button and spacer
+        h_layout = QHBoxLayout()
+        spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        h_layout.addSpacerItem(spacer)
+        h_layout.addWidget(self.close_button)
+
+        # Create the main layout
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.progress_bar)
+        layout.addWidget(self.label)
+        layout.addWidget(self.radio_button)
+        layout.addLayout(h_layout)
+        self.setLayout(layout)
+
+        # Close 버튼 클릭 시 다이얼로그를 닫음
+        self.close_button.clicked.connect(self.close)
+
+        if show:
+            self.close_button.show()
+        else:
+            self.close_button.hide()
+
+        # Timer 설정
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.toggle_radio_button)
+        self.timer.start(500)  # 500ms 간격으로 토글
+
+        self.radio_state = False  # 깜빡임 상태 초기화
+
+    def setProgressBarMaximum(self, max_value):
+        self.progress_bar.setMaximum(int(max_value))
+
+    def onCountChanged(self, value):
+        self.progress_bar.setValue(int(value))
+
+    def onProgressTextChanged(self, text):
+        self.label.setText(text)
+
+    def showModal_less(self):
+        self.showModal()
+
+    def showModal(self):
+        self.show()
+
+    def closeEvent(self, event):
+        self.send_user_close_event.emit(True)
+        event.accept()
+
+    def toggle_radio_button(self):
+        if self.radio_state:
+            self.radio_button.setStyleSheet("""
+                        QRadioButton::indicator {
+                            width: 12px;
+                            height: 12px;
+                            background-color: red;
+                            border-radius: 5px;
+                        }
+                    """)
+        else:
+            self.radio_button.setStyleSheet("""
+                        QRadioButton::indicator {
+                            width: 12px;
+                            height: 12px;
+                            background-color: blue;
+                            border-radius: 5px;
+                        }
+                    """)
+        self.radio_state = not self.radio_state
+
+
+class Modal_ProgressDialog(QDialog):  # popup 메뉴가 있으면 뒤 main gui의 제어 불 가능 -> modal
     send_user_close_event = pyqtSignal(bool)
 
     def __init__(self, message, show=False, parent=None):
@@ -59,6 +144,7 @@ class ProgressDialog(QDialog):
         self.progress_bar = QProgressBar(self)
         self.label = QLabel("", self)
         self.close_button = QPushButton("Close", self)
+        self.radio_button = QRadioButton("", self)
 
         # Create a horizontal layout for the close button and spacer
         h_layout = QHBoxLayout()
@@ -70,6 +156,7 @@ class ProgressDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.addWidget(self.progress_bar)
         layout.addWidget(self.label)
+        layout.addWidget(self.radio_button)
         layout.addLayout(h_layout)
         self.setLayout(layout)
 
@@ -80,6 +167,13 @@ class ProgressDialog(QDialog):
             self.close_button.show()
         else:
             self.close_button.hide()
+
+        # Timer 설정
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.toggle_radio_button)
+        self.timer.start(500)  # 500ms 간격으로 토글
+
+        self.radio_state = False  # 깜빡임 상태 초기화
 
     def setProgressBarMaximum(self, max_value):
         self.progress_bar.setMaximum(int(max_value))
@@ -93,12 +187,33 @@ class ProgressDialog(QDialog):
     def showModal(self):
         super().exec_()
 
-    def showModa_less(self):
+    def showModal_less(self):
         super().show()
 
     def closeEvent(self, event):
         self.send_user_close_event.emit(True)
         event.accept()
+
+    def toggle_radio_button(self):
+        if self.radio_state:
+            self.radio_button.setStyleSheet("""
+                        QRadioButton::indicator {
+                            width: 12px;
+                            height: 12px;
+                            background-color: red;
+                            border-radius: 5px;
+                        }
+                    """)
+        else:
+            self.radio_button.setStyleSheet("""
+                        QRadioButton::indicator {
+                            width: 12px;
+                            height: 12px;
+                            background-color: blue;
+                            border-radius: 5px;
+                        }
+                    """)
+        self.radio_state = not self.radio_state
 
 
 class Load_test_scenario_thread(QtCore.QThread):
@@ -138,26 +253,25 @@ class Load_test_scenario_thread(QtCore.QThread):
 
 
 #######################################################################################
-def call_metric_function(model, scenario_data):
+def call_metric_function(model, scenario_data, max_iter, measuring_method, thread):
     score = 0
 
     if "ragas" not in model.lower():
-        score = common_llm_model(model=model, scenario_data=scenario_data)
+        score = common_llm_model(model=model, scenario_data=scenario_data, max_iter=max_iter, method=measuring_method, thread=thread)
 
     elif "ragas" in model.lower():
-        score = common_ragas_metric_model(model=model, scenario_data=scenario_data)
+        score = common_ragas_metric_model(model=model, scenario_data=scenario_data, max_iter=max_iter,
+                                          method=measuring_method, thread=thread)
 
     else:
         print("Warning: No Supported Metric Model")
     return model, score
 
 
-import threading
-
-
 def evaluate_model(args):
-    scenario_data, model, metrics, idx, cnt = args
-    model_name, score = call_metric_function(model=model, scenario_data=scenario_data)
+    scenario_data, model, metrics, idx, cnt, max_iter, measuring_method, thread = args
+    model_name, score = call_metric_function(model=model, scenario_data=scenario_data, max_iter=max_iter,
+                                             measuring_method=measuring_method, thread=thread)
     result = {
         "model": str(model_name),
         "metric": None,
@@ -172,7 +286,7 @@ class Metric_Evaluation_Thread(QThread):
     send_progress_status = pyqtSignal(list)
     send_network_error_sig = pyqtSignal(str)
 
-    def __init__(self, max_cnt, sub_widget, model, parent):
+    def __init__(self, max_cnt, sub_widget, model, parent, main_frame):
         super().__init__()
         self.working = True
         self.max_cnt = max_cnt
@@ -180,6 +294,14 @@ class Metric_Evaluation_Thread(QThread):
         self.model = model
         self.parent = parent
         self.progress = 0
+        self.method = None
+
+        if main_frame.iqr_median_radioButton.isChecked():
+            self.method = "IQR-MEDIAN"
+        elif main_frame.iqr_mean_radioButton.isChecked():
+            self.method = "IQR-MEAN"
+        elif main_frame.mean_radioButton.isChecked():
+            self.method = "MEAN"
 
     def run(self):
         self.progress = 0
@@ -203,7 +325,8 @@ class Metric_Evaluation_Thread(QThread):
                     checkbox = self.parent.findChild(QtWidgets.QCheckBox, f"metric_{model}_{cnt}")
                     if checkbox.isChecked():
                         try:
-                            result = evaluate_model((scenario_data, model, metrics, idx, cnt))
+                            result = evaluate_model(
+                                (scenario_data, model, metrics, idx, cnt, self.parent.max_iter, self.method, self))
 
                             result['widget_ui'] = widget_ui
                             result['widget_ui_instance'] = widget_ui_instance
@@ -215,7 +338,7 @@ class Metric_Evaluation_Thread(QThread):
                                 f"Error in common_ragas_metric_model for model {model}: {e}")
 
     def stop(self):
-        print("User canceled Evaluation forcefully")
+        # print("Evaluation Stop")
         self.working = False
         self.quit()
         self.wait(3000)
@@ -237,6 +360,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.eval_thread = None
         self.save_thread = None
         self.save_progress = None
+        self.max_iter = None
 
         """ for main frame & widget """
         self.mainFrame_ui = None
@@ -281,7 +405,11 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         cursor.movePosition(QtGui.QTextCursor.End)
 
         color_format = cursor.charFormat()
-        color_format.setForeground(QtCore.Qt.black)
+        if "><" in text:
+            color_format.setForeground(QtCore.Qt.red)
+        else:
+            color_format.setForeground(QtCore.Qt.black)
+
         cursor.setCharFormat(color_format)
         cursor.insertText(text)
 
@@ -473,17 +601,23 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         if self.added_scenario_widgets is None or len(self.added_scenario_widgets) == 0:
             return
 
-        self.save_progress = ProgressDialog(message="Saving Result ...")
+        if self.mainFrame_ui.popctrl_radioButton.isChecked():
+            self.save_progress = ModalLess_ProgressDialog(message="Saving Result ...")
+        else:
+            self.save_progress = Modal_ProgressDialog(message="Saving Result ...")
 
         self.save_thread = threading.Thread(target=self.start_save_analyze_data, daemon=True)
         self.save_thread.start()
 
-        self.save_progress.showModa_less()
+        self.save_progress.showModal_less()
 
     def update_all_sub_widget(self):
         # PRINT_("add_scenario_in_subwidget")
 
-        self.update_sub_widget_progress = ProgressDialog(message="Loading Scenario")
+        if self.mainFrame_ui.popctrl_radioButton.isChecked():
+            self.update_sub_widget_progress = ModalLess_ProgressDialog(message="Loading Scenario")
+        else:
+            self.update_sub_widget_progress = Modal_ProgressDialog(message="Loading Scenario")
 
         self.added_scenario_widgets = []
         self.update_thread = Load_test_scenario_thread(BASE_DIR, g_context_split)
@@ -493,7 +627,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
         self.update_thread.start()
 
-        self.update_sub_widget_progress.showModa_less()
+        self.update_sub_widget_progress.showModal_less()
 
     def check_warning_message(self):
         if self.added_scenario_widgets is None:
@@ -619,14 +753,20 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         if not self.check_warning_message():
             return
 
+        self.max_iter = int(self.mainFrame_ui.max_iter_spinBox.text())
         max_cnt = self.total_test_cnt()
 
         self.reset_all_score()
-        self.update_evaluation_progress = ProgressDialog(message="Evaluation ...", show=True)
+
+        if self.mainFrame_ui.popctrl_radioButton.isChecked():
+            self.update_evaluation_progress = ModalLess_ProgressDialog(message="Evaluation ...", show=True)
+        else:
+            self.update_evaluation_progress = Modal_ProgressDialog(message="Evaluation ...", show=True)
+
         self.update_evaluation_progress.setProgressBarMaximum(max_value=max_cnt)
 
         self.eval_thread = Metric_Evaluation_Thread(max_cnt=max_cnt, sub_widget=self.added_scenario_widgets,
-                                                    model=Models, parent=self)
+                                                    model=Models, parent=self, main_frame=self.mainFrame_ui)
 
         self.eval_thread.send_progress_status.connect(self.update_evaluation_progress_status)
         self.eval_thread.send_network_error_sig.connect(self.evaluation_error)
@@ -638,7 +778,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
         self.start_evaluation_time = time.time()
 
-        self.update_evaluation_progress.showModa_less()
+        self.update_evaluation_progress.showModal_less()
 
 
 if __name__ == "__main__":

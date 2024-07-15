@@ -1,4 +1,6 @@
 import os
+import numpy as np
+
 from sentence_transformers import SentenceTransformer, util
 from ragas import evaluate
 
@@ -40,20 +42,71 @@ Rag_Models_Metric = {
 parent_directory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def common_llm_model(model, scenario_data):
+def cal_iqr_mean_score(cal_data):
+    # 평균 계산
+    mean_score = np.mean(cal_data)
+
+    data = np.array(cal_data)
+    Q1 = np.percentile(data, 25)
+    Q3 = np.percentile(data, 75)
+    IQR = Q3 - Q1
+
+    # boundary for remove-outlier
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+
+    filtered_data = data[(data >= lower_bound) & (data <= upper_bound)]
+
+    # 대표값 계산
+    mean_filtered = np.mean(filtered_data)
+    median_filtered = np.median(filtered_data)
+
+    return float(mean_score), float(median_filtered), float(mean_filtered)
+
+
+def common_llm_model(model, scenario_data, max_iter, thread, method="IQR-MEDIAN"):
     local_model_dir = os.path.join(parent_directory, "local_models", model)
     c_model = SentenceTransformer(local_model_dir)
     # 문장 임베딩 생성
     embedding1 = c_model.encode(scenario_data["answer"], convert_to_tensor=True)
     embedding2 = c_model.encode(scenario_data["ground_truth"], convert_to_tensor=True)
 
-    # 코사인 유사도 계산
-    cosine_score = util.pytorch_cos_sim(embedding1, embedding2)
+    cal_data = []
+    print(f"[{model}]")
+    for i in range(max_iter):
 
-    return str(round(cosine_score.item(), 5))
+        if not thread.working:
+            print("쓰레드 작업 중지됨")
+            break
+
+        cosine_score = util.pytorch_cos_sim(embedding1, embedding2)  # 코사인 유사도 계산
+        temp = float(cosine_score.item())
+        cal_data.append(temp)
+        print(i + 1, "th: ", temp)
+
+    if not thread.working:
+        return float(-999)
+
+    mean_score, iqr_median_score, iqr_mean_score = cal_iqr_mean_score(cal_data=cal_data)
+    print(f"IQR(Median): {round(iqr_median_score, 3)}\nIQR(Mean): {round(iqr_mean_score, 3)}\nMean: {round(mean_score, 3)}" )
+
+    if len(set(cal_data)) != 1:  # 측정된 값이 달라졌음.
+        print("><==========================")
+    else:
+        print("==========================")
+
+    if method == "IQR-MEDIAN":
+        # print(method)
+        return str(round(iqr_median_score, 5))
+    elif method == "IQR-MEAN":
+        # print(method)
+        return str(round(iqr_mean_score, 5))
+    else:
+        # print(method)
+        return str(round(mean_score, 5))
 
 
-def common_ragas_metric_model(model, scenario_data):
+def common_ragas_metric_model(model, scenario_data, max_iter, thread, method="IQR-MEDIAN"):
     data_samples = {
         'question': [scenario_data["question"]],
         'contexts': [[scenario_data["contexts"]]],
@@ -62,7 +115,39 @@ def common_ragas_metric_model(model, scenario_data):
     }
 
     dataset = Dataset.from_dict(data_samples)
-    score = evaluate(dataset, metrics=[Rag_Models_Metric[model]])
-    score = str(round(score[str(Rag_Models_Metric[model].name)], 5))
+
+    cal_data = []
+    print(f"[{model}]")
+    for i in range(max_iter):
+
+        if not thread.working:
+            print("쓰레드 작업 중지됨")
+            break
+
+        score = evaluate(dataset, metrics=[Rag_Models_Metric[model]])
+        temp = float(score[str(Rag_Models_Metric[model].name)])
+        cal_data.append(temp)
+        print(i + 1, "th: ", temp)
+
+    if not thread.working:
+        return float(-999)
+
+    mean_score, iqr_median_score, iqr_mean_score = cal_iqr_mean_score(cal_data=cal_data)
+    print(f"IQR(Median): {round(iqr_median_score, 3)}\nIQR(Mean): {round(iqr_mean_score, 3)}\nMean: {round(mean_score, 3)}" )
+
+    if len(set(cal_data)) != 1:  # 측정된 값이 달라졌음.
+        print("><==========================")
+    else:
+        print("==========================")
+
+    if method == "IQR-MEDIAN":
+        # print(method)
+        score = str(round(iqr_median_score, 5))
+    elif method == "IQR-MEAN":
+        # print(method)
+        return str(round(iqr_mean_score, 5))
+    else:
+        # print(method)
+        score = str(round(mean_score, 5))
 
     return score
