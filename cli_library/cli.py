@@ -1,16 +1,9 @@
-import json
 import os
 import argparse
 
 from lib.chatbot_eveluator import ChatbotEvaluator
 
-class Record:
-    def __init__(self, data):
-        self.question = data["question"]
-        self.contexts = data["contexts"]
-        self.control_answer = data["ground_truth"]
-        self.test_answer = data["answer"]
-        self.score = {}
+
 
 
 
@@ -29,5 +22,7 @@ if __name__ == "__main__":
 
     chatbot_eval.evaluate_all(args.model_dir, args.tests)
     
-    chatbot_eval.print_scores()
+    # chatbot_eval.print_scores()
+
+    chatbot_eval.export_data()
 

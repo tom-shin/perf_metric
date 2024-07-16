@@ -1,4 +1,5 @@
 import json
+import os   
 from tqdm import tqdm
 
 from datasets import Dataset
@@ -18,17 +19,31 @@ from ragas import evaluate
 from langchain_community.chat_models import ChatOllama
 from langchain_community.embeddings import OllamaEmbeddings
 
+class Record:
+    def __init__(self, data):
+        self.question = data["question"]
+        self.contexts = data["contexts"]
+        self.control_answer = data["ground_truth"]
+        self.test_answer = data["answer"]
+        self.score = {}
+
+    def to_dict(self):
+        return {
+            "question": self.question,
+            "contexts": self.contexts,
+            "ground_truth": self.control_answer,
+            "answer": self.test_answer,
+            "score": self.score
+        }
+
 class ChatbotEvaluator:
     def __init__(self):
         pass
 
-    def parse_data(self, data):
-        return Record(data)
-
     def load_data(self, data_path):
         with open(data_path, 'r') as file:
             data = json.load(file)
-        self.records = list(map(self.parse_data, data))
+        self.records = list(map(lambda x: Record(x), data))
     
     def cal_score(self, model, record):
         control_embedding = model.encode(record.control_answer, convert_to_tensor=True)
@@ -85,3 +100,9 @@ class ChatbotEvaluator:
     def print_scores(self):
         for record in self.records:
             print(record.score)
+
+
+    def export_data(self, export_path = "./test/result.json"):
+        export_data = list(map(lambda x: x.to_dict(), self.records))
+        with open(export_path, 'w+') as f:
+            json.dump(export_data, f, indent=4      )
