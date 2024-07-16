@@ -6,16 +6,16 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>913</width>
-    <height>600</height>
+    <width>1064</width>
+    <height>792</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout_2">
-    <item>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
      <widget class="QFrame" name="frame">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -29,22 +29,22 @@
       <property name="frameShadow">
        <enum>QFrame::Raised</enum>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout_10">
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout">
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout">
-           <item>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="0" column="0">
+        <layout class="QGridLayout" name="gridLayout_3">
+         <item row="0" column="0">
+          <layout class="QGridLayout" name="gridLayout_4">
+           <item row="0" column="0">
             <widget class="QLabel" name="label">
              <property name="text">
-              <string>Golden Path</string>
+              <string>Scenario Path</string>
              </property>
             </widget>
            </item>
-           <item>
-            <widget class="QLineEdit" name="golden_lineEdit"/>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="scenario_path_lineedit"/>
            </item>
-           <item>
+           <item row="0" column="2">
             <widget class="QPushButton" name="refresh_pushButton">
              <property name="text">
               <string>Refresh</string>
@@ -55,7 +55,7 @@
          </item>
         </layout>
        </item>
-       <item>
+       <item row="1" column="0">
         <widget class="QScrollArea" name="scrollArea">
          <property name="widgetResizable">
           <bool>true</bool>
@@ -65,8 +65,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>591</width>
-            <height>455</height>
+            <width>729</width>
+            <height>617</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_11">
@@ -77,19 +77,19 @@
          </widget>
         </widget>
        </item>
-       <item>
+       <item row="2" column="0">
         <layout class="QHBoxLayout" name="horizontalLayout_4">
          <item>
-          <widget class="QPushButton" name="scenario_allcheck_pushButton">
+          <widget class="QPushButton" name="all_check_scenario">
            <property name="text">
-            <string>Test Scenario All Check</string>
+            <string>Scenario All Check</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="scenario_alluncheck_pushButton">
+          <widget class="QPushButton" name="all_uncheck_scenario">
            <property name="text">
-            <string>Test Scenario All Uncheck</string>
+            <string>Scenario All Uncheck</string>
            </property>
           </widget>
          </item>
@@ -120,82 +120,37 @@
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="QPushButton" name="reset_score_pushButton">
+           <property name="text">
+            <string>Reset Score</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
       </layout>
      </widget>
     </item>
-    <item>
+    <item row="0" column="1">
      <widget class="QGroupBox" name="groupBox">
       <property name="title">
-       <string>Framwork</string>
+       <string>Metric</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_4">
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_5">
          <item>
-          <widget class="QCheckBox" name="alg_checkBox_1">
-           <property name="text">
-            <string>all-MiniLM-L6-v2</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="alg_checkBox_2">
-           <property name="text">
-            <string>all-mpnet-base-v2</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="alg_checkBox_3">
-           <property name="text">
-            <string>paraphrase-MiniLM-L6-v2</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="alg_checkBox_4">
-           <property name="text">
-            <string>distiluse-base-multilingual-cased-v2</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="alg_checkBox_5">
-           <property name="text">
-            <string>paraphrase-mpnet-base-v2</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="alg_checkBox_6">
-           <property name="text">
-            <string>all-distilroberta-v1</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="alg_checkBox_7">
-           <property name="enabled">
-            <bool>true</bool>
-           </property>
-           <property name="text">
-            <string>Ragas</string>
-           </property>
-          </widget>
-         </item>
-         <item>
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
-            <widget class="QPushButton" name="allcheck_pushButton">
+            <widget class="QPushButton" name="all_check_model">
              <property name="text">
               <string>All Check</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="alluncheck_pushButton">
+            <widget class="QPushButton" name="all_uncheck_model">
              <property name="text">
               <string>All Uncheck</string>
              </property>
@@ -230,10 +185,76 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="log_clear_pushButton">
-         <property name="text">
-          <string>Log Clear</string>
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <widget class="QPushButton" name="log_clear_pushButton">
+           <property name="text">
+            <string>Log Clear</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="popctrl_radioButton">
+           <property name="text">
+            <string>pop control</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_2">
+         <property name="title">
+          <string>Ctrl. params.</string>
          </property>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout">
+            <item>
+             <widget class="QRadioButton" name="iqr_median_radioButton">
+              <property name="text">
+               <string>IQR(median)</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="iqr_mean_radioButton">
+              <property name="text">
+               <string>IQR(mean)</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="mean_radioButton">
+              <property name="text">
+               <string>mean</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <item>
+             <widget class="QLabel" name="label_4">
+              <property name="text">
+               <string>max iter.</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="max_iter_spinBox">
+              <property name="minimum">
+               <number>1</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
         </widget>
        </item>
       </layout>
@@ -246,8 +267,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>913</width>
-     <height>21</height>
+     <width>1064</width>
+     <height>26</height>
     </rect>
    </property>
   </widget>

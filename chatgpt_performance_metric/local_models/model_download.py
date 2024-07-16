@@ -2,17 +2,16 @@ import shutil
 import os
 from sentence_transformers import SentenceTransformer
 
-# model_list = [
-#     'all-MiniLM-L6-v2',
-#     'all-mpnet-base-v2',
-#     'paraphrase-MiniLM-L6-v2',
-#     'distiluse-base-multilingual-cased-v2',
-#     'paraphrase-mpnet-base-v2',
-#     'all-distilroberta-v1'
-# ]
+# model_list = []
 
-model_list = []
-
+model_list = [
+    'all-MiniLM-L6-v2',
+    'all-mpnet-base-v2',
+    'paraphrase-MiniLM-L6-v2',
+    'distiluse-base-multilingual-cased-v2',
+    'paraphrase-mpnet-base-v2',
+    'all-distilroberta-v1'
+]
 
 base = os.getcwd()
 
@@ -29,3 +28,4 @@ for name in model_list:
     sentence = "This is a sample sentence."
     embedding = model.encode(sentence)
     print("Model loaded from local directory and used.")
+
