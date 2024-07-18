@@ -10,7 +10,8 @@ from ragas.metrics import (
     answer_relevancy, 
     context_precision, 
     context_recall, 
-    context_entity_recall, 
+    context_entity_recall,
+    context_relevancy, 
     answer_similarity, 
     answer_correctness
 )
@@ -53,9 +54,14 @@ class ChatbotEvaluator:
 
         return cosine_score
 
-    def set_ragas(self):
-        self.ragas_llm = ChatOllama(model="llama3:latest", temperature=0)
-        self.ragas_embedding = OllamaEmbeddings(model="llama3:latest")
+    def set_ragas(
+            self, 
+            llm_model = "llama2-uncensored:latest", 
+            embedding_model = "mxbai-embed-large:latest",
+            temperature = 0
+        ):
+        self.ragas_llm = ChatOllama(model = llm_model, temperature = temperature)
+        self.ragas_embedding = OllamaEmbeddings(model = embedding_model)
 
 
     def run_ragas(self, record):
@@ -68,14 +74,17 @@ class ChatbotEvaluator:
         dataset = Dataset.from_dict(data)
 
         #metric = [faithfulness, answer_relevancy, context_precision, context_recall, context_entity_recall, answer_similarity, answer_correctness]
-        #metric = [faithfulness, answer_correctness]
-        metric = [answer_correctness]
+        metric = [context_relevancy, answer_correctness]
+        #metric = [answer_correctness]
+        # metric = [faithfulness]
 
         return evaluate(
             dataset = dataset, 
             llm = self.ragas_llm, 
             embeddings = self.ragas_embedding, 
-            metrics=metric
+            metrics=metric,
+            # in_ci = True,
+            raise_exceptions=False
         )
         
 
@@ -83,8 +92,7 @@ class ChatbotEvaluator:
         for test in tests:
             if test == "Ragas":
                 print("Evaluation with Ragas")
-                self.set_ragas()
-                for record in tqdm(self.records):
+                for record in self.records:
                     record.score.update(self.run_ragas(record))
                 continue
 
@@ -105,4 +113,4 @@ class ChatbotEvaluator:
     def export_data(self, export_path = "./test/result.json"):
         export_data = list(map(lambda x: x.to_dict(), self.records))
         with open(export_path, 'w+') as f:
-            json.dump(export_data, f, indent=4      )
+            json.dump(export_data, f, indent=4)
