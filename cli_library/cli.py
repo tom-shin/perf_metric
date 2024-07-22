@@ -1,11 +1,6 @@
-import os
 import argparse
 
 from lib.chatbot_eveluator import ChatbotEvaluator
-
-
-
-
 
 def is_different(value1, value2):
     return abs(value1 - value2) > 0.0001
@@ -21,7 +16,7 @@ if __name__ == "__main__":
     chatbot_eval.load_data(args.data_dir)
 
     chatbot_eval.evaluate_all(args.model_dir, args.tests)
-    
+    chatbot_eval.set_ragas()
     # chatbot_eval.print_scores()
 
     chatbot_eval.export_data()
