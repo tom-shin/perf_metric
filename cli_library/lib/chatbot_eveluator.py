@@ -5,6 +5,7 @@ from tqdm import tqdm
 from datasets import Dataset
 from sentence_transformers import SentenceTransformer, util
 
+# Ragas
 from ragas.metrics import (
     faithfulness, 
     answer_relevancy, 
@@ -17,8 +18,12 @@ from ragas.metrics import (
 )
 from ragas import evaluate
 
+# Langchain Ollama
 from langchain_community.chat_models import ChatOllama
 from langchain_community.embeddings import OllamaEmbeddings
+# Langchain OpenAI
+from langchain_openai.chat_models import ChatOpenAI
+
 
 from lib.data_loader import DataLoader
 
@@ -62,7 +67,10 @@ class ChatbotEvaluator:
             embedding_model = None,
             temperature = 0
         ):
-        self.ragas_llm = ChatOllama(model=llm_model, temperature=temperature) if llm_model != None else None
+        if "OpenAI" in llm_model:
+            self.ragas_llm = ChatOpenAI(model=llm_model.split(":")[-1])
+        else:
+            self.ragas_llm = ChatOllama(model=llm_model, temperature=temperature)
         self.ragas_embedding = OllamaEmbeddings(model = embedding_model) if embedding_model != None else None
 
 
@@ -88,7 +96,8 @@ class ChatbotEvaluator:
     def evaluate_all(self, 
                      model_dir, 
                      tests,
-                     metric = [faithfulness, context_relevancy, answer_correctness],
+                    #  metric = [faithfulness, context_relevancy, answer_correctness],
+                     metric = [faithfulness, answer_relevancy, context_precision, context_recall, context_entity_recall, context_relevancy, answer_similarity, answer_correctness],
                      in_ci = False
                      ):
         for test in tests:

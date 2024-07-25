@@ -1,5 +1,7 @@
 import json
+import os
 from langchain_text_splitters import MarkdownHeaderTextSplitter
+from langchain_text_splitters import CharacterTextSplitter
 
 class DataLoader:
     def load_json(data_path):
@@ -19,11 +21,27 @@ class DataLoader:
             headers_to_split_on=headers_to_split_on
         )
 
-
         with open(data_path, 'r') as file:
             data_string = file.read()
             return markdown_splitter.split_text(data_string)
-            
+
+    def load_txt(data_path):
+        text_splitter = CharacterTextSplitter(
+            separator="\n",
+            length_function=len,
+            is_separator_regex=False,
+        )
+
+        with open(data_path, 'r') as file:
+            data_string = file.read().split("\n")
+            domain = os.path.splitext(os.path.basename(data_path))[0]
+            metadata = [{"domain":domain} for _ in data_string]
+            return text_splitter.create_documents(
+                data_string,
+                metadata
+            )
+
+
 
     def dump_json(dump_data, dump_path):
         with open(dump_path, 'w+') as file:
