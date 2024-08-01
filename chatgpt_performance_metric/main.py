@@ -286,12 +286,13 @@ class Metric_Evaluation_Thread(QThread):
     send_progress_status = pyqtSignal(list)
     send_network_error_sig = pyqtSignal(str)
 
-    def __init__(self, max_cnt, sub_widget, model, parent, main_frame):
+    def __init__(self, max_cnt, sub_widget, model, parent, main_frame, openai_model):
         super().__init__()
         self.working = True
         self.max_cnt = max_cnt
         self.sub_widget = sub_widget
         self.model = model
+        self.openai_model = openai_model
         self.parent = parent
         self.progress = 0
         self.method = None
@@ -361,6 +362,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.save_thread = None
         self.save_progress = None
         self.max_iter = None
+        self.openai_model = None
 
         """ for main frame & widget """
         self.mainFrame_ui = None
@@ -756,6 +758,11 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.max_iter = int(self.mainFrame_ui.max_iter_spinBox.text())
         max_cnt = self.total_test_cnt()
 
+        if self.mainFrame_ui.gpt4omini_radioButton.isChecked():
+            self.openai_model = "gpt-4o-mini"
+        else:
+            self.openai_model = "gpt-3.5-turbo-16k"
+
         self.reset_all_score()
 
         if self.mainFrame_ui.popctrl_radioButton.isChecked():
@@ -766,7 +773,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.update_evaluation_progress.setProgressBarMaximum(max_value=max_cnt)
 
         self.eval_thread = Metric_Evaluation_Thread(max_cnt=max_cnt, sub_widget=self.added_scenario_widgets,
-                                                    model=Models, parent=self, main_frame=self.mainFrame_ui)
+                                                    model=Models, parent=self, main_frame=self.mainFrame_ui, openai_model=self.openai_model)
 
         self.eval_thread.send_progress_status.connect(self.update_evaluation_progress_status)
         self.eval_thread.send_network_error_sig.connect(self.evaluation_error)

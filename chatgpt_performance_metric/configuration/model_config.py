@@ -3,6 +3,7 @@ import numpy as np
 
 from sentence_transformers import SentenceTransformer, util
 from ragas import evaluate
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 from datasets import Dataset
 from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall, context_entity_recall, \
@@ -88,7 +89,8 @@ def common_llm_model(model, scenario_data, max_iter, thread, method="IQR-MEDIAN"
         return float(-999)
 
     mean_score, iqr_median_score, iqr_mean_score = cal_iqr_mean_score(cal_data=cal_data)
-    print(f"IQR(Median): {round(iqr_median_score, 3)}\nIQR(Mean): {round(iqr_mean_score, 3)}\nMean: {round(mean_score, 3)}" )
+    print(
+        f"IQR(Median): {round(iqr_median_score, 3)}\nIQR(Mean): {round(iqr_mean_score, 3)}\nMean: {round(mean_score, 3)}")
 
     if len(set(cal_data)) != 1:  # 측정된 값이 달라졌음.
         print("><==========================")
@@ -124,7 +126,16 @@ def common_ragas_metric_model(model, scenario_data, max_iter, thread, method="IQ
             print("쓰레드 작업 중지됨")
             break
 
-        score = evaluate(dataset, metrics=[Rag_Models_Metric[model]])
+        # print(thread.openai_model)
+        if thread.openai_model is not None:
+            llm = ChatOpenAI(model="gpt-4o-mini")
+        else:
+            llm = ChatOpenAI(model="gpt-3.5-turbo-16k")
+
+        # embeddings = OpenAIEmbeddings()
+        # score = evaluate(dataset, llm=llm, embeddings=embeddings, metrics=[Rag_Models_Metric[model]])
+
+        score = evaluate(dataset, llm=llm, metrics=[Rag_Models_Metric[model]])
         temp = float(score[str(Rag_Models_Metric[model].name)])
         cal_data.append(temp)
         print(i + 1, "th: ", temp)
@@ -133,7 +144,8 @@ def common_ragas_metric_model(model, scenario_data, max_iter, thread, method="IQ
         return float(-999)
 
     mean_score, iqr_median_score, iqr_mean_score = cal_iqr_mean_score(cal_data=cal_data)
-    print(f"IQR(Median): {round(iqr_median_score, 3)}\nIQR(Mean): {round(iqr_mean_score, 3)}\nMean: {round(mean_score, 3)}" )
+    print(
+        f"IQR(Median): {round(iqr_median_score, 3)}\nIQR(Mean): {round(iqr_mean_score, 3)}\nMean: {round(mean_score, 3)}")
 
     if len(set(cal_data)) != 1:  # 측정된 값이 달라졌음.
         print("><==========================")
