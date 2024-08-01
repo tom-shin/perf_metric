@@ -125,11 +125,12 @@ def common_ragas_metric_model(model, scenario_data, max_iter, thread, method="IQ
         if not thread.working:
             print("쓰레드 작업 중지됨")
             break
-
-        # print(thread.openai_model)
-        if thread.openai_model is not None:
+        
+        if "gpt-4o-mini" == thread.openai_model:
+            # print(thread.openai_model)
             llm = ChatOpenAI(model="gpt-4o-mini")
         else:
+            # print(thread.openai_model)
             llm = ChatOpenAI(model="gpt-3.5-turbo-16k")
 
         # embeddings = OpenAIEmbeddings()
