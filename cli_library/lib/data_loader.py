@@ -41,8 +41,25 @@ class DataLoader:
                 metadata
             )
 
-
-
     def dump_json(dump_data, dump_path):
         with open(dump_path, 'w+') as file:
             json.dump(dump_data, file, indent=4)
+
+
+    def load_general(base_dir):
+        data = []
+        for root, dirs, files in os.walk(base_dir):
+            for file in files:
+                if ".txt" in file:
+                    data += DataLoader.load_txt(os.path.join(root,file))
+
+        return data
+    
+    def load_document(base_dir):
+        data = []
+        for root, dirs, files in os.walk(base_dir):
+            for file in files:
+                if ".md" in file:
+                    data += DataLoader.load_markdown(os.path.join(root,file))
+
+        return data

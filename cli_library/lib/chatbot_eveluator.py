@@ -1,4 +1,4 @@
-
+from datetime import datetime
 import os   
 from tqdm import tqdm
 
@@ -121,6 +121,6 @@ class ChatbotEvaluator:
             print(record.score)
 
 
-    def export_data(self, export_path = "./test/result.json"):
+    def export_data(self, export_path = f"./test/result-{datetime.today().strftime('%Y-%m-%d')}.json"):
         export_data = list(map(lambda x: x.to_dict(), self.records))
         DataLoader.dump_json(export_data, export_path)

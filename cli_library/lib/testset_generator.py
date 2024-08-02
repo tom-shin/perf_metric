@@ -24,8 +24,6 @@ class TestGenerator:
             self.critic_llm,
             self.embeddings
         )
-
-        
     
     def generate(
             self, 
