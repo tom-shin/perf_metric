@@ -7,8 +7,14 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 
 class TestGenerator:
+    default_distributions = {
+                simple: 0.5,
+                multi_context: 0.4,
+                reasoning: 0.1
+            }
+    
     def __init__(self):
-        self.generator_llm = ChatOpenAI(model="gpt-3.5-turbo-16k")
+        self.generator_llm = ChatOpenAI(model="gpt-4o-mini")
         self.critic_llm = ChatOpenAI(model="gpt-4")
         # self.critic_llm = ChatOpenAI(model="gpt-3.5-turbo-16k")
         self.embeddings = OpenAIEmbeddings()
@@ -19,17 +25,16 @@ class TestGenerator:
             self.embeddings
         )
     
-    def generate(self, documents):
-        distributions = {
-            simple: 0.5,
-            multi_context: 0.4,
-            reasoning: 0.1
-        }
-        # distributions = { simple: 1, }
+    def generate(
+            self, 
+            documents, 
+            distributions = default_distributions,
+            n = 10
+            ):
 
         testset = self.generator.generate_with_langchain_docs(
             documents,
-            10,
+            n,
             distributions
         )
 

@@ -1,10 +1,11 @@
-
+from datetime import datetime
 import os   
 from tqdm import tqdm
 
 from datasets import Dataset
 from sentence_transformers import SentenceTransformer, util
 
+# Ragas
 from ragas.metrics import (
     faithfulness, 
     answer_relevancy, 
@@ -17,8 +18,12 @@ from ragas.metrics import (
 )
 from ragas import evaluate
 
+# Langchain Ollama
 from langchain_community.chat_models import ChatOllama
 from langchain_community.embeddings import OllamaEmbeddings
+# Langchain OpenAI
+from langchain_openai.chat_models import ChatOpenAI
+
 
 from lib.data_loader import DataLoader
 
@@ -58,15 +63,18 @@ class ChatbotEvaluator:
 
     def set_ragas(
             self, 
-            llm_model = "llama2-uncensored:latest", 
-            embedding_model = "mxbai-embed-large:latest",
+            llm_model = None, 
+            embedding_model = None,
             temperature = 0
         ):
-        self.ragas_llm = ChatOllama(model = llm_model, temperature = temperature)
-        self.ragas_embedding = OllamaEmbeddings(model = embedding_model)
+        if "OpenAI" in llm_model:
+            self.ragas_llm = ChatOpenAI(model=llm_model.split(":")[-1])
+        else:
+            self.ragas_llm = ChatOllama(model=llm_model, temperature=temperature)
+        self.ragas_embedding = OllamaEmbeddings(model = embedding_model) if embedding_model != None else None
 
 
-    def run_ragas(self, record):
+    def run_ragas(self, record, metric, in_ci):
         data = {
             'question': [record.question],
             'contexts': [record.contexts[0]],
@@ -75,27 +83,28 @@ class ChatbotEvaluator:
         }
         dataset = Dataset.from_dict(data)
 
-        #metric = [faithfulness, answer_relevancy, context_precision, context_recall, context_entity_recall, answer_similarity, answer_correctness]
-        metric = [faithfulness, context_relevancy, answer_correctness]
-        #metric = [answer_correctness]
-        # metric = [faithfulness]
-
         return evaluate(
             dataset = dataset, 
-            # llm = self.ragas_llm, 
-            # embeddings = self.ragas_embedding, 
+            llm = self.ragas_llm, 
+            embeddings = self.ragas_embedding, 
             metrics=metric,
-            in_ci = True,
+            in_ci = in_ci,
             raise_exceptions=False
         )
         
 
-    def evaluate_all(self, model_dir, tests):
+    def evaluate_all(self, 
+                     model_dir, 
+                     tests,
+                    #  metric = [faithfulness, context_relevancy, answer_correctness],
+                     metric = [faithfulness, answer_relevancy, context_precision, context_recall, context_entity_recall, context_relevancy, answer_similarity, answer_correctness],
+                     in_ci = False
+                     ):
         for test in tests:
             if test == "Ragas":
                 print("Evaluation with Ragas")
                 for record in self.records:
-                    record.score.update(self.run_ragas(record))
+                    record.score.update(self.run_ragas(record, metric, in_ci))
                 continue
 
             print(f"Evaluating with model: {test}")
@@ -112,6 +121,6 @@ class ChatbotEvaluator:
             print(record.score)
 
 
-    def export_data(self, export_path = "./test/result.json"):
+    def export_data(self, export_path = f"./test/result-{datetime.today().strftime('%Y-%m-%d')}.json"):
         export_data = list(map(lambda x: x.to_dict(), self.records))
         DataLoader.dump_json(export_data, export_path)
