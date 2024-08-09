@@ -13,7 +13,7 @@ model_list = [
     'all-distilroberta-v1'
 ]
 
-base = os.getcwd()
+base = os.path.dirname(os.path.abspath(__file__))
 
 for name in model_list:
     model = SentenceTransformer(name)
