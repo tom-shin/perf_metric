@@ -5,6 +5,8 @@ from sentence_transformers import SentenceTransformer
 # model_list = []
 
 model_list = [
+    "all-roberta-large-v1"
+    "all-MiniLM-L12-v2"
     'all-MiniLM-L6-v2',
     'all-mpnet-base-v2',
     'paraphrase-MiniLM-L6-v2',

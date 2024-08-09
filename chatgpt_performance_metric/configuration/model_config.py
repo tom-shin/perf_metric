@@ -12,6 +12,8 @@ from ragas.metrics import faithfulness, answer_relevancy, context_precision, con
 """아래 Models에서 평가하고자 하는 모델만 enable 그리로 main.py 실행"""
 
 Models = {
+    "all-roberta-large-v1": None,
+    "all-MiniLM-L12-v2": None,
     "all-MiniLM-L6-v2": None,
     "all-mpnet-base-v2": None,
     "paraphrase-MiniLM-L6-v2": None,
