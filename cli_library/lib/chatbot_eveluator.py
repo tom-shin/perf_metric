@@ -47,6 +47,7 @@ class Record:
 
 class ChatbotEvaluator:
     def __init__(self):
+        self.set_ragas()
         pass
 
     def load_data(self, data_path):
@@ -63,7 +64,7 @@ class ChatbotEvaluator:
 
     def set_ragas(
             self, 
-            llm_model = None, 
+            llm_model = "gpt-4o-mini", 
             embedding_model = None,
             temperature = 0
         ):
@@ -96,7 +97,6 @@ class ChatbotEvaluator:
     def evaluate_all(self, 
                      model_dir, 
                      tests,
-                    #  metric = [faithfulness, context_relevancy, answer_correctness],
                      metric = [faithfulness, answer_relevancy, context_precision, context_recall, context_entity_recall, context_relevancy, answer_similarity, answer_correctness],
                      in_ci = False
                      ):
