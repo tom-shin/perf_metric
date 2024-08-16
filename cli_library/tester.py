@@ -66,5 +66,5 @@ def evaluate(data_dir):
         chatbot_eval.export_data(f"./test/result_{m}_{datetime.today().strftime('%Y%m%d')}.json")
 
 
-evalset_dir = generate_evalset("./test/testset_general.json")
+evalset_dir = generate_evalset("./test/testset_do_not_answer.json")
 evaluate(evalset_dir)

@@ -15,7 +15,7 @@ class LambdaGenerator:
         evalset = []
         for test in tqdm(testset, desc="Generating Evalset"):
             context, response = self.invoke_chat(test["question"])
-            test.update({"contexts":context[:100], "answer":response})
+            test.update({"contexts":context, "answer":response})
             # print(test)
             evalset.append(test)
             
@@ -26,7 +26,8 @@ class LambdaGenerator:
     def invoke_chat(self, query):
         event = {
             "Query": query,
-            "History": []
+            "History": [],
+            "debug": True
         }
         payload = json.dumps(event)
 
@@ -35,6 +36,6 @@ class LambdaGenerator:
             InvocationType='RequestResponse',
             Payload=payload
         )
-
+        
         body = json.loads(response['Payload'].read())
-        return body['context'], body['response']
+        return body.get('list', ['']), body.get('response', '')

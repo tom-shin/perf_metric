@@ -77,7 +77,7 @@ class ChatbotEvaluator:
     def run_ragas(self, record, metric, in_ci):
         data = {
             'question': [record.question],
-            'contexts': [record.contexts[0]],
+            'contexts': [record.contexts],
             'answer': [record.test_answer],
             'ground_truth': [record.control_answer]
         }
