@@ -1,9 +1,10 @@
 from datetime import datetime
+from tqdm import tqdm
 
 from lib.chatbot_eveluator import ChatbotEvaluator
 from lib.testset_generator import TestGenerator
 from lib.data_loader import DataLoader
-from lib.lambda_generator import LambdaGenerator
+from lib.lambda_invoke_manager import LambdaInvokeManager
 
 
 from ragas.metrics import (
@@ -35,36 +36,27 @@ def generate_testset(context, n = 20, testset_dir = f"./test/testset_{datetime.t
     DataLoader.dump_json(data, testset_dir)
     return testset_dir
 
+
 def generate_evalset(testset_dir, evalset_dir = f"./test/evalset_{datetime.today().strftime('%Y%m%d')}.json"):
-    generator = LambdaGenerator()
-    return generator.generate_evalset(testset_dir, evalset_dir)
-
-
+    lambda_manager = LambdaInvokeManager()
+    testset = DataLoader.load_json(testset_dir)
+    evalset = []
+    for test in tqdm(testset, desc="Generating Evalset"):
+        context, response = lambda_manager.invoke_chat(test["question"])
+        test.update({"contexts":context, "answer":response})
+        
+        evalset.append(test)
+        
+    DataLoader.dump_json(evalset, evalset_dir)
+    return evalset_dir
     
 
 def evaluate(data_dir):
-    models = [
-    # "tinyllama:latest",
-    # "phi3:3.8b",
-    # "llama2:latest",
-    # "llama3:latest",
-    # "gemma2:latest",
-    # "llama3.1:latest",
-    "OpenAI:gpt-4o-mini",
-    ]
-
-    for m in models:
-        chatbot_eval = ChatbotEvaluator()
-        chatbot_eval.load_data(data_dir)
-
-        chatbot_eval.set_ragas(
-            llm_model = m if m != "OpenAI" else None,
-            # embedding_model = "mxbai-embed-large:latest",
-            temperature = 0
-        )
-        chatbot_eval.evaluate_all(None, ["Ragas"], [faithfulness, context_relevancy, answer_correctness])
-        chatbot_eval.export_data(f"./test/result_{m}_{datetime.today().strftime('%Y%m%d')}.json")
+    chatbot_eval = ChatbotEvaluator()
+    chatbot_eval.load_data(data_dir)
+    chatbot_eval.evaluate_all(None, ["Ragas"], [faithfulness, context_relevancy, answer_correctness])
+    chatbot_eval.export_data(f"./test/result_{datetime.today().strftime('%Y%m%d')}.json")
 
 
-evalset_dir = generate_evalset("./test/testset_general.json")
-evaluate(evalset_dir)
+# evalset_dir = generate_evalset("./test/testset_do_not_answer.json")
+# evaluate(evalset_dir)
