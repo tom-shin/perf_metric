@@ -7,7 +7,7 @@ EMBED_FUNCTION_NAME = "dev-lambda-embed"
 DEL_FUNCTION_NAME = "dev-lambda-del"
 
 
-class LambdaInvokeManager:
+class LambdaManager:
     def __init__(self):
         self.client = boto3.client('lambda')
     
