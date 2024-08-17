@@ -26,7 +26,7 @@ class LambdaInvokeManager:
             Payload=payload
         )
         
-        body = json.loads(response['Payload'].read())
+        body = json.loads(response['Payload'].read())["body"]
         return body.get('list', ['']), body.get('response', '')
     
 
@@ -43,7 +43,7 @@ class LambdaInvokeManager:
             Payload=payload
         )
 
-        return json.loads(response['Payload'].read())
+        return json.loads(response['Payload'].read())["body"]
     
 
     def invoke_embed(self, chunk_list):
@@ -56,7 +56,7 @@ class LambdaInvokeManager:
             Payload=payload
         )
 
-        return json.loads(response['Payload'].read())["Status"]
+        return json.loads(response['Payload'].read())["statusCode"] == 200
     
 
     def invoke_del(self, filter):
@@ -72,4 +72,4 @@ class LambdaInvokeManager:
             Payload=payload
         )
 
-        return json.loads(response['Payload'].read())['statusCode']
+        return json.loads(response['Payload'].read())['statusCode'] == 200
