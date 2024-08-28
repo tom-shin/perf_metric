@@ -12,6 +12,7 @@ from ragas.metrics import (
     answer_correctness
 )
 from ragas import evaluate
+
 # Langchain OpenAI
 from langchain_openai.chat_models import ChatOpenAI
 
