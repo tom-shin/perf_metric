@@ -203,11 +203,14 @@
            <layout class="QVBoxLayout" name="verticalLayout">
             <item>
              <widget class="QRadioButton" name="iqr_mean_radioButton">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
               <property name="text">
                <string>IQR(mean)</string>
               </property>
               <property name="checked">
-               <bool>true</bool>
+               <bool>false</bool>
               </property>
              </widget>
             </item>
@@ -224,7 +227,10 @@
             <item>
              <widget class="QRadioButton" name="mean_radioButton">
               <property name="text">
-               <string>mean</string>
+               <string>Mean</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
               </property>
              </widget>
             </item>
@@ -243,6 +249,9 @@
              <widget class="QSpinBox" name="max_iter_spinBox">
               <property name="minimum">
                <number>1</number>
+              </property>
+              <property name="value">
+               <number>5</number>
               </property>
              </widget>
             </item>

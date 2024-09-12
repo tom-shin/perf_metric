@@ -580,7 +580,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
             for cnt, (model, metric) in enumerate(Models.items()):
                 score_line = widget_ui_instance.findChild(QtWidgets.QLineEdit, f"score_line_{idx}_{cnt}")
-                if score_line:
+                if score_line and score_line.text() != "":
                     result_out[model] = score_line.text()
 
             output_data.append(result_out)

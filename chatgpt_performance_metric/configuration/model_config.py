@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import math
 
 from sentence_transformers import SentenceTransformer, util
 from ragas import evaluate
@@ -12,19 +13,19 @@ from ragas.metrics import faithfulness, answer_relevancy, context_precision, con
 """아래 Models에서 평가하고자 하는 모델만 enable 그리로 main.py 실행"""
 
 Models = {
-    "all-roberta-large-v1": None,
-    "all-MiniLM-L12-v2": None,
-    "all-MiniLM-L6-v2": None,
-    "all-mpnet-base-v2": None,
-    "paraphrase-MiniLM-L6-v2": None,
-    "distiluse-base-multilingual-cased-v2": None,
-    "paraphrase-mpnet-base-v2": None,
-    "all-distilroberta-v1": None,
+    # "all-roberta-large-v1": None,
+    # "all-MiniLM-L12-v2": None,
+    # "all-MiniLM-L6-v2": None,
+    # "all-mpnet-base-v2": None,
+    # "paraphrase-MiniLM-L6-v2": None,
+    # "distiluse-base-multilingual-cased-v2": None,
+    # "paraphrase-mpnet-base-v2": None,
+    # "all-distilroberta-v1": None,
     "Ragas(open-ai): Faithfulness": None,
-    "Ragas(open-ai): Answer Relevancy": None,
-    "Ragas(open-ai): Context Precision": None,
-    "Ragas(open-ai): Context Recall": None,
-    "Ragas(open-ai): Context Entity Recall": None,
+    # "Ragas(open-ai): Answer Relevancy": None,
+    # "Ragas(open-ai): Context Precision": None,
+    # "Ragas(open-ai): Context Recall": None,
+    # "Ragas(open-ai): Context Entity Recall": None,
     "Ragas(open-ai): Answer Similarity": None,
     "Ragas(open-ai): Answer Correctness": None
 }
@@ -84,7 +85,8 @@ def common_llm_model(model, scenario_data, max_iter, thread, method="IQR-MEDIAN"
 
         cosine_score = util.pytorch_cos_sim(embedding1, embedding2)  # 코사인 유사도 계산
         temp = float(cosine_score.item())
-        cal_data.append(temp)
+        if isinstance(temp, (int, float)) and not math.isnan(temp):
+            cal_data.append(temp)
         print(i + 1, "th: ", temp)
 
     if not thread.working:
@@ -140,7 +142,9 @@ def common_ragas_metric_model(model, scenario_data, max_iter, thread, method="IQ
 
         score = evaluate(dataset, llm=llm, metrics=[Rag_Models_Metric[model]])
         temp = float(score[str(Rag_Models_Metric[model].name)])
-        cal_data.append(temp)
+
+        if isinstance(temp, (int, float)) and not math.isnan(temp):
+            cal_data.append(temp)
         print(i + 1, "th: ", temp)
 
     if not thread.working:
