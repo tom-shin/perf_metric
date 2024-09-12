@@ -7,6 +7,7 @@ import logging
 import json
 import easygui
 import threading
+import csv
 
 from PyQt5.QtCore import QThread, pyqtSignal, QObject, QTimer
 from PyQt5 import QtWidgets, QtCore, QtGui
@@ -257,7 +258,8 @@ def call_metric_function(model, scenario_data, max_iter, measuring_method, threa
     score = 0
 
     if "ragas" not in model.lower():
-        score = common_llm_model(model=model, scenario_data=scenario_data, max_iter=max_iter, method=measuring_method, thread=thread)
+        score = common_llm_model(model=model, scenario_data=scenario_data, max_iter=max_iter, method=measuring_method,
+                                 thread=thread)
 
     elif "ragas" in model.lower():
         score = common_ragas_metric_model(model=model, scenario_data=scenario_data, max_iter=max_iter,
@@ -591,7 +593,35 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         with open(file_path, 'w') as json_file:
             json.dump(output_data, json_file, indent=4)
 
+        self.converter_json2csv(file_path)
+
         self.send_save_finished_sig.emit()
+
+    @staticmethod
+    def converter_json2csv(file_path):
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        # CSV 파일 저장
+        # 첫 번째 항목에서 key들을 자동으로 가져옴
+        csv_columns = list(data[0].keys())
+
+        csv_file = file_path.replace("json", "csv")
+
+        try:
+            with open(csv_file, 'w', newline='', encoding='utf-8') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
+                writer.writeheader()
+
+                for entry in data:
+                    # split_context 리스트를 문자열로 변환
+                    entry["split_context"] = "\n".join(entry["split_context"])
+                    writer.writerow(entry)
+
+            print(f"CSV 파일이 성공적으로 저장되었습니다: {csv_file}")
+
+        except IOError:
+            print("CSV 파일 저장 중 오류가 발생했습니다.")
 
     def finished_all_test_result_save(self):
         if self.save_progress is not None:
@@ -773,7 +803,8 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.update_evaluation_progress.setProgressBarMaximum(max_value=max_cnt)
 
         self.eval_thread = Metric_Evaluation_Thread(max_cnt=max_cnt, sub_widget=self.added_scenario_widgets,
-                                                    model=Models, parent=self, main_frame=self.mainFrame_ui, openai_model=self.openai_model)
+                                                    model=Models, parent=self, main_frame=self.mainFrame_ui,
+                                                    openai_model=self.openai_model)
 
         self.eval_thread.send_progress_status.connect(self.update_evaluation_progress_status)
         self.eval_thread.send_network_error_sig.connect(self.evaluation_error)
