@@ -7,9 +7,20 @@ from ragas import evaluate
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 from datasets import Dataset
-from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall, context_entity_recall, \
-    answer_similarity, answer_correctness
+# from ragas.metrics import faithfulness, context_relevancy, answer_relevancy, context_precision, context_recall, \
+#     context_entity_recall, \
+#     answer_similarity, answer_correctness
 
+from ragas.metrics import (
+    faithfulness,
+    answer_relevancy,
+    context_precision,
+    context_recall,
+    context_entity_recall,
+    context_relevancy,
+    answer_similarity,
+    answer_correctness
+)
 """아래 Models에서 평가하고자 하는 모델만 enable 그리로 main.py 실행"""
 
 Models = {
@@ -21,12 +32,14 @@ Models = {
     # "distiluse-base-multilingual-cased-v2": None,
     # "paraphrase-mpnet-base-v2": None,
     # "all-distilroberta-v1": None,
+
     "Ragas(open-ai): Faithfulness": None,
     # "Ragas(open-ai): Answer Relevancy": None,
     # "Ragas(open-ai): Context Precision": None,
     # "Ragas(open-ai): Context Recall": None,
     # "Ragas(open-ai): Context Entity Recall": None,
-    "Ragas(open-ai): Answer Similarity": None,
+    "Ragas(open-ai): Context Relevancy": None,
+    # "Ragas(open-ai): Answer Similarity": None,
     "Ragas(open-ai): Answer Correctness": None
 }
 
@@ -38,6 +51,7 @@ Rag_Models_Metric = {
     "Ragas(open-ai): Context Precision": context_precision,
     "Ragas(open-ai): Context Recall": context_recall,
     "Ragas(open-ai): Context Entity Recall": context_entity_recall,
+    "Ragas(open-ai): Context Relevancy": context_relevancy,
     "Ragas(open-ai): Answer Similarity": answer_similarity,
     "Ragas(open-ai): Answer Correctness": answer_correctness
 }
@@ -47,6 +61,9 @@ parent_directory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def cal_iqr_mean_score(cal_data):
+    if len(cal_data) == 0:   # 모두 non이라는 것임.
+        return 0, 0, 0
+
     # 평균 계산
     mean_score = np.mean(cal_data)
 
@@ -129,7 +146,7 @@ def common_ragas_metric_model(model, scenario_data, max_iter, thread, method="IQ
         if not thread.working:
             print("쓰레드 작업 중지됨")
             break
-        
+
         if "gpt-4o-mini" == thread.openai_model:
             # print(thread.openai_model)
             llm = ChatOpenAI(model="gpt-4o-mini")
@@ -140,7 +157,7 @@ def common_ragas_metric_model(model, scenario_data, max_iter, thread, method="IQ
         # embeddings = OpenAIEmbeddings()
         # score = evaluate(dataset, llm=llm, embeddings=embeddings, metrics=[Rag_Models_Metric[model]])
 
-        score = evaluate(dataset, llm=llm, metrics=[Rag_Models_Metric[model]])
+        score = evaluate(dataset, llm=llm, metrics=[Rag_Models_Metric[model]], raise_exceptions=False)
         temp = float(score[str(Rag_Models_Metric[model].name)])
 
         if isinstance(temp, (int, float)) and not math.isnan(temp):

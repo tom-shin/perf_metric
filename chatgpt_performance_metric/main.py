@@ -15,6 +15,20 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QProgressBar, QPushButton, QHBoxLayout, QSpacerItem, \
     QSizePolicy, QRadioButton, QWidget
 
+from langchain_community.document_loaders import DirectoryLoader, UnstructuredMarkdownLoader
+from ragas.testset.generator import TestsetGenerator
+from ragas.testset.evolutions import simple, reasoning, multi_context
+
+# Convert to Pandas for easy viewing
+import pandas as pd
+from datetime import datetime
+
+# 모든 행과 열을 출력할 수 있도록 설정 변경
+pd.set_option('display.max_rows', None)  # 모든 행을 출력
+pd.set_option('display.max_columns', None)  # 모든 열을 출력
+pd.set_option('display.width', None)  # 출력 폭을 제한하지 않음
+pd.set_option('display.max_colwidth', None)  # 각 열의 최대 너비를 제한하지 않음
+
 # user defined module
 from configuration.model_config import *
 
@@ -354,6 +368,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
 
+        self.directory = None
         self.start_evaluation_time = None
         self.end_evaluation_time = None
         self.added_scenario_widgets = None
@@ -442,6 +457,109 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.mainFrame_ui.reset_score_pushButton.clicked.connect(self.reset_all_score)
 
         self.send_save_finished_sig.connect(self.finished_all_test_result_save)
+
+        self.mainFrame_ui.dirpushButton.clicked.connect(self.open_dir)
+        self.mainFrame_ui.gengenpushButton.clicked.connect(self.set_gen)
+        self.mainFrame_ui.gensavepushButton.clicked.connect(self.save_gen)
+
+    def open_dir(self):
+        self.directory = easygui.diropenbox()
+
+        # Print the selected directory
+        if not self.directory:
+            return
+
+        self.mainFrame_ui.dirlineEdit.setText(self.directory)
+
+    def set_gen(self):
+        import nltk
+        nltk.download('punkt_tab')
+        # 종료 시간 기록
+        start_time = datetime.now()
+
+        def load_markdown_files(directory_path):
+            if os.path.isfile(directory_path):
+                # 파일인 경우 UnstructuredMarkdownLoader로 파일 로드
+                loader = UnstructuredMarkdownLoader(directory_path)
+                documents = loader.load()
+            elif os.path.isdir(directory_path):
+                # 디렉토리인 경우 DirectoryLoader로 하위 디렉토리 포함 모든 .md 파일 로드
+                loader = DirectoryLoader(directory_path, glob="*.md", loader_cls=UnstructuredMarkdownLoader)
+                documents = loader.load()
+            else:
+                raise ValueError(f"{directory_path} is neither a valid file nor a directory.")
+            return documents
+
+        # 디렉토리 경로 설정
+        directory_path = self.directory
+
+        # 디렉토리에서 .md 파일들 로드
+        documents = load_markdown_files(directory_path)
+
+        # Setup LLMs
+        model = self.mainFrame_ui.gptlineEdit.text()
+        generator_llm = ChatOpenAI(model=model)
+        critic_llm = ChatOpenAI(model="gpt-4o")
+        embeddings = OpenAIEmbeddings()
+
+        # Initialize generator
+        generator = TestsetGenerator.from_langchain(
+            generator_llm, critic_llm, embeddings
+        )
+
+        # Generate test set (questions)
+        test_size_ = int(self.mainFrame_ui.n_lineEdit.text())
+        simple_ = float(self.mainFrame_ui.simplelineEdit.text())
+        reasoning_ = float(self.mainFrame_ui.reasonlineEdit.text())
+        multi_context_ = float(self.mainFrame_ui.multilineEdit.text())
+
+        testset = generator.generate_with_langchain_docs(documents, test_size=test_size_,
+                                                         distributions={simple: simple_, reasoning: reasoning_,
+                                                                        multi_context: multi_context_})
+
+        df = testset.to_pandas()
+
+        # 종료 시간 기록
+        end_time = datetime.now()
+
+        # 수행된 시간 계산
+        execution_time = end_time - start_time
+
+        # 시간을 시, 분, 초 단위로 변환하여 출력
+        hours, remainder = divmod(execution_time.total_seconds(), 3600)
+        minutes, seconds = divmod(remainder, 60)
+
+        print(f"Execution time: {int(hours)} hours, {int(minutes)} minutes, {seconds:.2f} seconds")
+
+        # print(df)
+
+        # 'question', 'contexts', 'ground_truth' 컬럼만 추출하여 리스트로 변환
+        if not df.empty:
+            # json_data = df[['question', 'contexts', 'ground_truth']].to_dict(orient='records')
+            json_data = df[['question', 'ground_truth']].to_dict(orient='records')
+
+            # 전체 데이터를 JSON 파일로 저장
+            with open('generate_scenarios.json', 'w', encoding='utf-8') as f:
+                json.dump(json_data, f, ensure_ascii=False, indent=4)
+
+            print("All rows saved as JSON")
+        else:
+            print("DataFrame is empty.")
+
+    def save_gen(self):
+        pass
+        # # 'question', 'contexts', 'ground_truth' 컬럼만 추출하여 리스트로 변환
+        # if not df.empty:
+        #     # json_data = df[['question', 'contexts', 'ground_truth']].to_dict(orient='records')
+        #     json_data = df[['question', 'ground_truth']].to_dict(orient='records')
+        #
+        #     # 전체 데이터를 JSON 파일로 저장
+        #     with open('generate_scenarios.json', 'w', encoding='utf-8') as f:
+        #         json.dump(json_data, f, ensure_ascii=False, indent=4)
+        #
+        #     print("All rows saved as JSON")
+        # else:
+        #     print("DataFrame is empty.")
 
     def select_all_scenario(self):
         if self.added_scenario_widgets is None or len(self.added_scenario_widgets) == 0:
@@ -560,6 +678,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         )
 
         if not file_path:
+            self.send_save_finished_sig.emit()
             return
 
         if not file_path.endswith(".json"):
@@ -575,16 +694,20 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             result_out = {}
 
             result_out = {"question": widget_ui.question_plainTextEdit.toPlainText(),
-                          "split_context": widget_ui.contexts_plainTextEdit.toPlainText().split(g_context_split),
+                          "contexts": widget_ui.contexts_plainTextEdit.toPlainText().split(g_context_split),
+                          "ground_truth": widget_ui.truth_plainTextEdit.toPlainText(),
                           "answer": widget_ui.answer_plainTextEdit.toPlainText(),
-                          "ground_truth": widget_ui.truth_plainTextEdit.toPlainText()
+                          "score": ""
                           }
 
+            score_dict = {}
             for cnt, (model, metric) in enumerate(Models.items()):
                 score_line = widget_ui_instance.findChild(QtWidgets.QLineEdit, f"score_line_{idx}_{cnt}")
                 if score_line and score_line.text() != "":
-                    result_out[model] = score_line.text()
+                    score_dict[Rag_Models_Metric[model].name] = float(score_line.text())
+                    # result_out[model] = score_line.text()
 
+            result_out["score"] = score_dict
             output_data.append(result_out)
 
         self.save_progress.onCountChanged(100)
@@ -593,7 +716,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         with open(file_path, 'w') as json_file:
             json.dump(output_data, json_file, indent=4)
 
-        self.converter_json2csv(file_path)
+        # self.converter_json2csv(file_path)
 
         self.send_save_finished_sig.emit()
 
@@ -604,7 +727,16 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
         # CSV 파일 저장
         # 첫 번째 항목에서 key들을 자동으로 가져옴
-        csv_columns = list(data[0].keys())
+        for cnt in range(0, len(data)):
+            if len(list(data[cnt].keys())) == 0:
+                continue
+            csv_columns = list(data[cnt].keys())
+            break
+
+        csv_columns.remove("score")  # score는 제거
+        # score에 있는 key를 가져와 추가
+        score_keys = list(data[0]["score"].keys())
+        csv_columns.extend(score_keys)
 
         csv_file = file_path.replace("json", "csv")
 
@@ -614,8 +746,16 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
                 writer.writeheader()
 
                 for entry in data:
-                    # split_context 리스트를 문자열로 변환
-                    entry["split_context"] = "\n".join(entry["split_context"])
+                    # contexts 리스트를 문자열로 변환
+                    entry["contexts"] = "\n".join(entry["contexts"])
+
+                    # score를 개별 필드로 분리
+                    for key in score_keys:
+                        entry[key] = entry["score"].get(key)
+
+                    # score 필드 자체는 제거
+                    del entry["score"]
+
                     writer.writerow(entry)
 
             print(f"CSV 파일이 성공적으로 저장되었습니다: {csv_file}")
