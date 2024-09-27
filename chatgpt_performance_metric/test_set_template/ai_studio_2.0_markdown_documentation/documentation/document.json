@@ -1,0 +1,233 @@
+[
+    {
+        "name": "Documentation Home", 
+        "fileName": "README.md",
+        "slug": "documentation-home",
+        "next": null,
+        "childs": null
+    },
+    { 
+        "name": "ENN SDK Developer Guide", 
+        "fileName": "developer-guide/README.md",
+        "slug": "developer-guide",
+        "next": null,
+        "childs": null
+    },
+    { 
+        "name": "API References", 
+        "fileName": "api-reference/README.md",
+        "slug": "api-reference",
+        "next": "api-reference/enn-framework-data-type-references",
+        "childs": [
+            {
+                "name": "ENN Framework Data Type References",
+                "fileName": "api-reference/enn-framework-data-type-references.md",
+                "next": "api-reference/enn-framework-api-functions",
+                "slug": "api-reference/enn-framework-data-type-references"
+            },
+            {
+                "name": "ENN Framwork API Functions",
+                "fileName": "api-reference/enn-framework-api-functions.md",
+                "next": null,
+                "slug": "api-reference/enn-framework-api-functions"
+            }
+        ]
+    },
+    { 
+        "name": "Support Matrix", 
+        "fileName": "support-matrix/README.md",
+        "slug": "support-matrix",
+        "next": null,
+        "childs": null
+    },
+    { 
+        "name": "Quick Start Guide", 
+        "fileName": "quick-start-guide/README.md",
+        "slug": "quick-start-guide",
+        "next": null,
+        "childs": null
+    },
+    { 
+        "name": "ENN SDK Samples", 
+        "fileName": "sample-support-guide/README.md",
+        "slug": "enn-sdk-samples",
+        "next": null,
+        "childs": null
+    },
+    { 
+        "name": "Getting Started with Android Samples", 
+        "fileName": "getting-started-with-android-samples/README.md",
+        "slug": "getting-started-with-android-samples",
+        "next": "getting-started-with-android-samples/starting-android-project",
+        "childs": [
+            {
+                "name": "Starting Android Project",
+                "fileName": "getting-started-with-android-samples/guide/starting-android-project.md",
+                "next": "getting-started-with-android-samples/setting-necessary-ui",
+                "slug": "getting-started-with-android-samples/starting-android-project"
+            },
+            {
+                "name": "Setting Necessary UI",
+                "fileName": "getting-started-with-android-samples/guide/setting-necessary-ui.md",
+                "next": "getting-started-with-android-samples/function-implementation",
+                "slug": "getting-started-with-android-samples/setting-necessary-ui"
+            },
+            {
+                "name": "Function Implementation",
+                "fileName": "getting-started-with-android-samples/guide/function-implementation.md",
+                "next": "getting-started-with-android-samples/enn-sdk-service",
+                "slug": "getting-started-with-android-samples/function-implementation"
+            },
+            {
+                "name": "ENN SDK Service",
+                "fileName": "getting-started-with-android-samples/guide/enn-sdk-service.md",
+                "next": "getting-started-with-android-samples/enn-framework",
+                "slug": "getting-started-with-android-samples/enn-sdk-service"
+            },
+            {
+                "name": "ENN Framework",
+                "fileName": "getting-started-with-android-samples/guide/enn-framework.md",
+                "next": "getting-started-with-android-samples/changing-model",
+                "slug": "getting-started-with-android-samples/enn-framework"
+            },
+            {
+                "name": "Changing the Model",
+                "fileName": "getting-started-with-android-samples/guide/changing-model.md",
+                "next": null,
+                "slug": "getting-started-with-android-samples/changing-model"
+            }
+        ]
+    },
+    { 
+        "name": "Getting Started with Native Samples", 
+        "fileName": "getting-started-with-native-samples/README.md",
+        "slug": "getting-started-with-native-samples",
+        "next": "getting-started-with-native-samples/writing-native-program",
+        "childs": [
+            {
+                "name": "Writing Native Program",
+                "fileName": "getting-started-with-native-samples/guide/writing-native-program.md",
+                "next": "getting-started-with-native-samples/compiling-using-ndk",
+                "slug": "getting-started-with-native-samples/writing-native-program"
+            },
+            {
+                "name": "Compiling Using NDK",
+                "fileName": "getting-started-with-native-samples/guide/compiling-using-ndk.md",
+                "next": "getting-started-with-native-samples/using-adb",
+                "slug": "getting-started-with-native-samples/compiling-using-ndk"
+            },
+            {
+                "name": "Using Adb to Execute",
+                "fileName": "getting-started-with-native-samples/guide/using-adb.md",
+                "next": null,
+                "slug": "getting-started-with-native-samples/using-adb"
+            }
+        ]
+    },
+    { 
+        "name": "Exynos AI Studio User Guide (TBD)", 
+        "fileName": "exynos-ai-studio-user-guide/introduction/introduction.md",
+        "slug": "exynos-ai-studio-user-guide",
+        "next": null,
+        "childs": [
+            {
+                "name": "Converter", 
+                "fileName": "exynos-ai-studio-user-guide/converter/converter.md",
+                "slug": "exynos-ai-studio-user-guide/converter",
+                "next": null,
+                "childs": null
+            },
+            {
+                "name": "Optimizer", 
+                "fileName": "exynos-ai-studio-user-guide/optimizer/optimizer.md",
+                "slug": "exynos-ai-studio-user-guide/optimizer",
+                "next": null,
+                "childs": null
+            },
+            {
+                "name": "Quantizer", 
+                "fileName": "exynos-ai-studio-user-guide/quantizer/quantizer.md",
+                "slug": "exynos-ai-studio-user-guide/quantizer",
+                "next": null,
+                "childs": null
+            },    
+            {
+                "name": "Simulator", 
+                "fileName": "exynos-ai-studio-user-guide/simulator/simulator.md",
+                "slug": "exynos-ai-studio-user-guide/simulator",
+                "next": null,
+                "childs": null
+            },
+            {
+                "name": "Model Editor", 
+                "fileName": "exynos-ai-studio-user-guide/model_editor/model_editor.md",
+                "slug": "exynos-ai-studio-user-guide/model_editor",
+                "next": null,
+                "childs": null
+            },
+            {
+                "name": "System Requirements", 
+                "fileName": "exynos-ai-studio-user-guide/system_requirements/system_requirements.md",
+                "slug": "exynos-ai-studio-user-guide/system_requirements",
+                "next": null,
+                "childs": null
+            },
+            {
+                "name": "Quick Start", 
+                "fileName": "exynos-ai-studio-user-guide/quick_start/quick_start.md",
+                "slug": "exynos-ai-studio-user-guide/quick_start",
+                "next": null,
+                "childs": null
+            },
+            {
+                "name": "Explanation of model optimization flow", 
+                "fileName": "exynos-ai-studio-user-guide/model_optimization_flow/model_optimization_flow.md",
+                "slug": "exynos-ai-studio-user-guide/model_optimization_flow",
+                "next": null,
+                "childs": null
+            },
+            {
+                "name": "Dataset preparation", 
+                "fileName": "exynos-ai-studio-user-guide/dataset_preparation/dataset_preparation.md",
+                "slug": "exynos-ai-studio-user-guide/dataset_preparation",
+                "next": null,
+                "childs": null
+            },
+            {
+                "name": "Model Requirements and Constraints", 
+                "fileName": "exynos-ai-studio-user-guide/model_requirements/model_requirements.md",
+                "slug": "exynos-ai-studio-user-guide/model_requirements",
+                "next": null,
+                "childs": null
+            },
+            {
+                "name": "Frontend API", 
+                "fileName": "exynos-ai-studio-user-guide/frontend_api/fe_api.md",
+                "slug": "exynos-ai-studio-user-guide/frontend_api",
+                "next": null,
+                "childs": null
+            },
+            {
+                "name": "Backend API", 
+                "fileName": "exynos-ai-studio-user-guide/backend_api/be_api.md",
+                "slug": "exynos-ai-studio-user-guide/backend_api",
+                "next": null,
+                "childs": null
+            },
+            {
+                "name": "LVM CNNX Image Generation Pipeline Example", 
+                "fileName": "exynos-ai-studio-user-guide/usage_example/lvm/README.md",
+                "slug": "exynos-ai-studio-user-guide/usage_example/lvm",
+                "next": null,
+                "childs": null
+            },  
+            {
+                "name": "LLM CNNX Word Generation Example", 
+                "fileName": "exynos-ai-studio-user-guide/usage_example/llm_ip_stg/README.md",
+                "slug": "exynos-ai-studio-user-guide/usage_example/llm_ip_stg",
+                "next": null,
+                "childs": null
+            }
+        ]
+    }
+]

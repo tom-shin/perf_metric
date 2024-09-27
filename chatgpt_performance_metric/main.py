@@ -241,16 +241,53 @@ class Load_test_scenario_thread(QtCore.QThread):
         self.base_dir = base_dir
         self.context_split = context_split
 
+
     def run(self):
         scenario_path = os.path.join(self.base_dir, "scenario", "scenarios.json")
         with open(scenario_path, 'r') as file:
             scenarios = json.load(file)
+        
+        #############################################
+        """
+        comment: 초기 평가 툴 구현 할 때 contexts 구조는 아래처럼 2차원 리스트 타입으로 가정하고 설계를 했음.
+                 그런데 ts_rag_tool에서 data set을 만들 때 1차원 리스트로 만들어 주고 있음.
+                 그래서 아래처럼 1차원 리스트 구조를 2차원 리스트를 갖는 구조로 임시 파일을 만들어 해당 파일
+                 기준으로 data 추출하고 이렇게 임시로 만들어 놓은 파일은 곧바로 삭제함으로써 기존 구조를 변경하지
+                 않고 ts-rag-tool에서 만든 구조를 그대로 사용할 수 있음: 20240927 수정  
+        {
+        "question": "",
+        "contexts": [[]],
+        "ground_truth": "",   
+        "answer": ""
+        }
+        """
+
+
+        # 각 데이터의 "contexts"를 [[]] 타입으로 변경
+        for item in scenarios:
+            if isinstance(item.get("contexts"), list):
+                # 기존 contexts가 리스트일 경우, 그 내부를 [[]] 형식으로 감싸기
+                item["contexts"] = [item["contexts"]]
+        
+        # 변경된 데이터를 새로운 파일로 저장
+        scenario_path = os.path.join(self.base_dir, "scenario", "temp_scenarios.json")
+        with open(scenario_path, 'w', encoding='utf-8') as file:
+            json.dump(scenarios, file, indent=4)
+        
+        with open(scenario_path, 'r') as file:
+            scenarios = json.load(file)
+
+        os.remove(scenario_path)
+        #############################################
+        
+
 
         self.send_max_scenario_cnt_sig.emit(len(scenarios) + 1)
 
         for idx, scenario in enumerate(scenarios):
             question_data = scenario["question"]
             contexts = self.context_split.join(scenario["contexts"][0])
+            # contexts = self.context_split.join(scenario["contexts"])
             answer = scenario["answer"]
             ground_truth = scenario["ground_truth"]
 
@@ -334,6 +371,9 @@ class Metric_Evaluation_Thread(QThread):
                     "answer": widget_ui.answer_plainTextEdit.toPlainText(),
                     "ground_truth": widget_ui.truth_plainTextEdit.toPlainText()
                 }
+                # print("===============================================")
+                # print(scenario_data)
+                # print("===============================================")
 
                 for cnt, (model, metrics) in enumerate(self.model.items()):
                     if not self.working:
@@ -459,7 +499,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.send_save_finished_sig.connect(self.finished_all_test_result_save)
 
         self.mainFrame_ui.dirpushButton.clicked.connect(self.open_dir)
-        self.mainFrame_ui.gengenpushButton.clicked.connect(self.set_gen)
+        self.mainFrame_ui.gengenpushButton.clicked.connect(self.test_set_creation)
         self.mainFrame_ui.gensavepushButton.clicked.connect(self.save_gen)
 
     def open_dir(self):
@@ -471,7 +511,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
         self.mainFrame_ui.dirlineEdit.setText(self.directory)
 
-    def set_gen(self):
+    def test_set_creation(self):
         import nltk
         nltk.download('punkt_tab')
         # 종료 시간 기록
@@ -539,8 +579,26 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             json_data = df[['question', 'ground_truth']].to_dict(orient='records')
 
             # 전체 데이터를 JSON 파일로 저장
-            with open('generate_scenarios.json', 'w', encoding='utf-8') as f:
-                json.dump(json_data, f, ensure_ascii=False, indent=4)
+            file_path = 'created_test_set.json'
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(json_data, f, indent=4)
+            
+
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+
+            result = []
+            for i, j in enumerate(data):
+                temp = {
+                    "question": j["question"],
+                    "contexts": [],
+                    "ground_truth": j["ground_truth"],
+                    "answer": ""
+                }
+                result.append(temp)
+
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(result, f, indent=4)
 
             print("All rows saved as JSON")
         else:
@@ -554,8 +612,8 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         #     json_data = df[['question', 'ground_truth']].to_dict(orient='records')
         #
         #     # 전체 데이터를 JSON 파일로 저장
-        #     with open('generate_scenarios.json', 'w', encoding='utf-8') as f:
-        #         json.dump(json_data, f, ensure_ascii=False, indent=4)
+        #     with open('created_test_set.json', 'w', encoding='utf-8') as f:
+        #         json.dump(json_data, f, indent=4)
         #
         #     print("All rows saved as JSON")
         # else:
@@ -962,8 +1020,9 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 if __name__ == "__main__":
     import sys
 
+    g_context_split = ""
     g_context_split = "<split>"
-    view_only_ragas = False
+    # view_only_ragas = False
 
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle("Fusion")

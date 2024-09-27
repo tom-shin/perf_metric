@@ -1,0 +1,350 @@
+[
+    {
+        "question": "Please tell me about EDS mean?",
+        "contexts": [],
+        "ground_truth": "EDS stands for Exynos Developer Society, an operating system created for enriching the developer ecosystem in Samsung S.LSI.",
+        "answer": ""
+    },
+    {
+        "question": "Please tell me who operates EDS Assistant?",
+        "contexts": [],
+        "ground_truth": "EDS Assistant is designed, developed, and operated by the Samsung S.LSI development team.",
+        "answer": ""
+    },
+    {
+        "question": "Please tell us about the purpose of EDS Assistant.",
+        "contexts": [],
+        "ground_truth": "The current version of EDS Assistant targets support for users using the Samsung S.LSI ENN SDK.",
+        "answer": ""
+    },
+    {
+        "question": "Please tell us about your future goals for EDS Assistant?",
+        "contexts": [],
+        "ground_truth": "EDS Assistant will evolve to provide information on technical issues, product information, events and announcements related to Samsug S.LSI Exynos products in addition to AI including Samsung S.LSI ENN SDK.",
+        "answer": ""
+    },
+    {
+        "question": "Please tell us about the company that actually developed EDS Assistant.",
+        "contexts": [],
+        "ground_truth": "Samsung S.LSI plans and supervises EDS Assistant and ThunderSoft Korea supervises the actual development.",
+        "answer": ""
+    },
+    {
+        "question": "Please tell us about the ENN SDK.",
+        "contexts": [],
+        "ground_truth": "ENN SDK is a software development kit for the Exynos chipset developed by Samsung S.LSI. It is designed to optimize and implement AI and machine learning models on Exynos-based device. Key features include model optimization for Exynos chipsets, support for various AI algorithms, and user-friendly interface improvement. It is primarily aimed at use on mobile devices and aims to provide developers with efficient tools through continuous updates and improvement.",
+        "answer": ""
+    },
+    {
+        "question": "I want to know about ENN SDK.",
+        "contexts": [],
+        "ground_truth": "The ENN SDK (Exynos Neural Network Software Development Kit) is a software development kit developed by Samsung S.LSI for its Exynos chipset. It is specifically designed to optimize and implement AI and machine learning models on Exynos-based device. The SDK facilitates the conversion and optimization of AI models to be compatible and efficient on devices powered by Exynos processor.",
+        "answer": ""
+    },
+    {
+        "question": "I want to download the ENN SDK and install it on a local PC or server to use it.",
+        "contexts": [],
+        "ground_truth": "Currently, the ENN SDK is not disclosed external. In the future, we plan to prepare an external distribution version along with GUI improvements, and if so, we will distribute it first to those who participated in the AI Challenger.",
+        "answer": ""
+    },
+    {
+        "question": "Please provide operating system information to use the ENN SDK.",
+        "contexts": [],
+        "ground_truth": "ENN SDK was developed based on Linux Server and can be used on various operating systems through Docker-based distribution. However, this is an internally developed version, and the externally distributed version will be distributed in the future as a separate GUI version with enhanced usability.",
+        "answer": ""
+    },
+    {
+        "question": "Please tell us the minimum specifications required to compile via ENN SDK?",
+        "contexts": [],
+        "ground_truth": "For general use, use a recently widely used general-purpose PC or laptop (Intel Available for Core i5 or AMD Ryzen 5 serie. However, for algorithms with high complexity, server-level use is required depending on the model.",
+        "answer": ""
+    },
+    {
+        "question": "Please tell us about the advantages of ENN SDK compared to other SDKs?",
+        "contexts": [],
+        "ground_truth": "The AI Toolset provided by each chipset is optimized for each chipset. ENN SDK is also optimized for Exynos chipset. Additionally, it is also used as an optimization tool for Samsung mobile device. Additionally, I think it will be a great advantage for developers to be able to reflect the voices of domestic developers and have the opportunity to participate in development like this program.",
+        "answer": ""
+    },
+    {
+        "question": "Please let us know the weaknesses of ENN SDK compared to similar SDKs or tools from other companies.",
+        "contexts": [],
+        "ground_truth": "Since it is mainly used in mobile terminals, there are some shortcomings in various expansion strategies for the IOT sector. However, like this program, we plan to quickly expand into various areas by reflecting the needs and voices of various developers.",
+        "answer": ""
+    },
+    {
+        "question": "Please let us know the schedule and details for updates or patches to the ENN SDK or other tools.",
+        "contexts": [],
+        "ground_truth": "Updates to the ENN SDK serviced through the portal are planned once a month. We plan to respond to requests arising from this program and provide internally developed and updated content. In addition, as previously explained, we are planning to distribute ENN Studio in the second half of next year, which has significantly improved the UI and strengthened developer usability.",
+        "answer": ""
+    },
+    {
+        "question": "I don't have enough knowledge about Edge AI, but I want to do a project using the ENN SDK.",
+        "contexts": [],
+        "ground_truth": "To understand Edge Device, you only need to understand the usage examples of IOT devices that are generally understood. However, it is necessary to have development capabilities and experience with the AI model and algorithm itself. We will help you create a sample application that can be run on a reference device through an AI model.",
+        "answer": ""
+    },
+    {
+        "question": "I want to know about the AI Challenger.",
+        "contexts": [],
+        "ground_truth": "The AI Challenger is an open innovation type of developer program that uses and develops AI SDK using Samsung S.LSI Exynos ENN SDK.",
+        "answer": ""
+    },
+    {
+        "question": "I want to develop a model using an algorithm other than the sample algorithm provided by the AI Challenger.",
+        "contexts": [],
+        "ground_truth": "In addition to the sample algorithm, other algorithms can be used to develop model. However, there may be restrictions on the areas supported, so we will inform you about the scope of support available on the portal bulletin board.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to see the source code related to the ENN SDK or portal in person.",
+        "contexts": [],
+        "ground_truth": "We do not provide separate source code for the ENN SDK or the portal itself. However, samples, guide materials, and source code necessary for this program will be provided as much as possible. For technical support or source code inquiries required during the program, please contact us through the portal forum and we will check and provide support on a case-by-case basis.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know the AI model categories supported by ENN SDK.",
+        "contexts": [],
+        "ground_truth": "The ENN SDK accommodates a diverse range of AI model categories, including Image Classification, Object Detection, Segmentation, Pose Estimation, Image Enhancement, Depth Estimation, Recommendation Systems, Anomaly Detection, Computer Vision for Healthcare, and Augmented and Virtual Reality.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know which operators are supported by the ENN SDK when developing Image Classification.",
+        "contexts": [],
+        "ground_truth": "For the Image Classification category, the supported operators include CONVOLUTION, DEPTHWISE_CONVOLUTION, FULLY_CONNECTED, SOFTMAX, RELU, AVGPOOL, and BATCH_NORMALIZATION.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know which operators are supported by the ENN SDK when developing Object Detection.",
+        "contexts": [],
+        "ground_truth": "The Object Detection category supports operators such as CONVOLUTION, RESHAPE, CONCATENATION, MAXPOOL, and DEPTHWISE_CONVOLUTION.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know which operators are supported by the ENN SDK when developing segmentation",
+        "contexts": [],
+        "ground_truth": "In the Segmentation category, the supported operators are CONVOLUTION and CONCATENATION.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know which operators are supported by the ENN SDK when developing Pose Estimation.",
+        "contexts": [],
+        "ground_truth": "For the Pose Estimation category, the supported operators include CONVOLUTION, RELU, and CONCATENATION.",
+        "answer": ""
+    },
+    {
+        "question": "Please tell us which operators are supported by ENN SDK when developing Image Enhancement.",
+        "contexts": [],
+        "ground_truth": "The Image Enhancement category supports the operators CONVOLUTION, DEPTHWISE_CONVOLUTION, and RELU.\n",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know which operators are supported by the ENN SDK when developing Depth Estimation.",
+        "contexts": [],
+        "ground_truth": "In the Depth Estimation category, the supported operators are CONVOLUTION, CONCATENATION, and RELU.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know which operators are supported by the ENN SDK when developing Recommendation System.",
+        "contexts": [],
+        "ground_truth": "For the Recommendation Systems category, the supported operators include FULLY_CONNECTED, ADD, CONCATENATION, and RELU.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know which operators are supported by the ENN SDK when developing Anomaly Detection",
+        "contexts": [],
+        "ground_truth": "In the Anomaly Detection category, the supported operators are DENSE, RELU, SOFTMAX, SUB, and MUL.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know which operators are supported by the ENN SDK when developing Computer Vision for Healthcare.",
+        "contexts": [],
+        "ground_truth": "For the Computer Vision for Healthcare category, the supported operators include CONVOLUTION, MAXPOOL, AVGPOOL, RESHAPE, and CONCATENATION.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know which operators are supported by the ENN SDK when developing Augmented and Virtual Reality.",
+        "contexts": [],
+        "ground_truth": "In the Augmented and Virtual Reality category, the supported operators are CONVOLUTION, DEPTHWISE_CONVOLUTION, and RESHAPE.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know examples of applications that can be created using Image Classification.",
+        "contexts": [],
+        "ground_truth": "AI Applications that can be created using Image Classification include Face recognition, Plant disease diagnosis, Product identification.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know examples of applications that can be created using Object Detection.",
+        "contexts": [],
+        "ground_truth": "AI Applications that can be created using Object Detection include Traffic monitoring, Security surveillance, Wildlife tracking.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know examples of applications that can be created using Segmentation.",
+        "contexts": [],
+        "ground_truth": "AI Applications that can be created using Segmentation include Medical image analysis, Autonomous vehicle navigation, Agricultural crop monitoring.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know examples of applications that can be created using Pose Estimation.",
+        "contexts": [],
+        "ground_truth": "AI Applications that can be created using Pose Estimation include Sports performance analysis, Physical therapy, Animation and Gaming.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know examples of applications that can be created using Image Enhancement.",
+        "contexts": [],
+        "ground_truth": "AI Applications that can be created using Image Enhancement include Restoration of old photos, Clarity improvement in medical imaging, Enhancement of security camera image.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know examples of applications that can be created using Depth Estimation.",
+        "contexts": [],
+        "ground_truth": "AI Applications that can be created using Depth Estimation include 3D modeling, Augmented reality AI Applications, Robot navigation.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know examples of applications that can be created using Recommendation System.",
+        "contexts": [],
+        "ground_truth": "AI Applications that can be created using Recommendation System include Personalized online shopping, Content recommendation in streaming services, Customized news feed.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know examples of applications that can be created using Anomaly Detection",
+        "contexts": [],
+        "ground_truth": "AI Applications that can be created using Anomaly Detection include Credit card fraud detection, Network security, Predictive maintenance in manufacturing.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know examples of applications that can be created using Computer Vision for Healthcare.",
+        "contexts": [],
+        "ground_truth": "AI Applications that can be created using Computer Vision for Healthcare include Tumor detection in radiology images, Patient monitoring systems, Surgical assistance.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know examples of applications that can be created using Augmented and Virtual Reality.",
+        "contexts": [],
+        "ground_truth": "AI Applications that can be created using augmented reality and virtual reality include Virtual training environments, Immersive gaming, Interactive educational contents.",
+        "answer": ""
+    },
+    {
+        "question": "Please tell us about the AI Challenger.",
+        "contexts": [],
+        "ground_truth": "Samsung S.LSI's AI Challenger, a key part of the SEED AI initiative, is dedicated to driving technological innovation through artificial intelligence. Central to the program is the Exynos ENN SDK, an advanced toolkit by Samsung S.LSI designed to facilitate AI model creation and optimization. This versatile SDK is instrumental for developing a wide range of AI applications, from image recognition to complex predictive analytics, and is a vital resource for developers seeking to craft impactful AI solutions in various sectors. Continually refined and supported by Samsung's dedicated ML team, the Exynos ENN SDK remains at the forefront of the ever-evolving digital landscape, meeting the dynamic needs of the AI industry. Through the AI Challenger, Samsung S.LSI showcases its commitment to leading AI advancements and nurturing a vibrant community of AI developers, propelling the industry towards a future where AI is integral to technological innovation and progress.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know the AI Challenger schedule.",
+        "contexts": [],
+        "ground_truth": "The AI Challenger unfolds through three primary stages, beginning with Stage I, where participants are familiarized with the program's structure, resources, and tools such as the ENN SDK. Stage II focuses on the active phase of research and development, providing participants with comprehensive technical support and coaching as they progress through their projects. The program culminates in Stage III, dedicated to finalizing projects, conducting thorough testing, and presenting outcomes, potentially concluding with a showcase event or demo day.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know the ENN SDK support models and environments.",
+        "contexts": [],
+        "ground_truth": "The ENN SDK facilitates AI model development by supporting various models, primarily focusing on TensorFlow Lite compatibility. It advises the conversion of TensorFlow Lite models through MLIR (Multi-Level Intermediate Representation) version 1.14 or higher, accommodating models with up to four dimensions and a maximum size of 1 GB. For models targeted for the Neural Processing Unit (NPU), quantization is mandatory, and model distillation is advised for optimization. This SDK is crafted to provide flexibility and comprehensive support, ensuring wide compatibility and adaptability across diverse AI applications and usage scenarios.",
+        "answer": ""
+    },
+    {
+        "question": "I want to know the planning intention of AI Challenger.",
+        "contexts": [],
+        "ground_truth": "Samsung System LSI's AI Challenger aims to cultivate AI expertise among Korean students and postgraduates through practical engagement and innovation. The program\u2019s objectives include advancing Edge AI technology by equipping participants with essential skills, fostering industry-academia collaboration through networking and mentorship, and transforming innovative ideas into tangible prototypes or solutions. Additionally, it offers practical exposure to real-world tech challenges. Ultimately, the AI Challenger seeks to enhance participants' competitiveness in the AI field and fuel the growth of AI technology and industry by serving as a breeding ground for applicable tech solutions.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know the device specifications provided by 1st AI Challenger.",
+        "contexts": [],
+        "ground_truth": "The device features the Exynos 2200 chipset, with a CPU configuration of Cortex\u00ae-X2, Cortex\u00ae-A710, and Cortex\u00ae-A510, alongside the Samsung Xclipse 920 GPU. It's equipped with an AI Engine incorporating a Dual-core NPU and DSP. The camera capabilities include support for up to 200MP in single camera mode, 108MP at 30fps for a single camera, and a dual-camera setup of 64MP + 32MP at 30fps. Video performance allows up to 8K decoding at 60fps for 10-bit HEVC(H.265) and 30fps for 10-bit VP9, AV1, along with 8K encoding at 30fps for 10-bit HEVC(H.265) and VP9. The display supports 4K/WQUXGA at 120Hz and QHD+ at 144Hz.",
+        "answer": ""
+    },
+    {
+        "question": "I would like to know the advantages of Exynos 2200, the base chipset of the reference device provided by First AI Challenger managers.",
+        "contexts": [],
+        "ground_truth": "Console quality graphics now on mobile with the Exynos 2200 mobile processor. The Samsung Xclipse GPU sets to usher in a new era and completely change the way we experience mobile gaming. Playtime is well and truly over.",
+        "answer": ""
+    },
+    {
+        "question": "I want to know what types of smartphones were mass-produced based on the Exynos 2200.",
+        "contexts": [],
+        "ground_truth": "Smartphones mass-produced based on the Exynos 2200 chipset include Samsung Galaxy S22 Ultra, Samsung Galaxy S22+, and Samsung Galaxy S22.",
+        "answer": ""
+    },
+    {
+        "question": "I want to know the main summary of Samsung Exynos 2200.",
+        "contexts": [],
+        "ground_truth": "Samsung Electronics introduces the Exynos 2200, a premium mobile processor featuring the Samsung Xclipse GPU based on AMD RDNA 2 architecture, crafted using a 4-nanometer EUV process. This processor enhances mobile gaming, social media, and photography, offering the first mobile hardware-accelerated ray tracing for realistic lighting and variable rate shading for smoother gameplay. It boasts an upgraded neural processing unit (NPU), Arm's latest Armv9 CPU cores for superior performance and security, and a fast 5G modem compliant with 3GPP Release 16. With integrated Secure Element (iSE) and robust encryption, it ensures data security. The processor's ISP supports up to 200MP resolution, AI-integrated camera functionalities for professional-quality images, an advanced codec for up to 8K video, and a display solution with HDR10+ and up to 144Hz refresh rates, ensuring a comprehensive and immersive visual experience.",
+        "answer": ""
+    },
+    {
+        "question": "NPU, particularly the hardware accelerators related to neural networks, are commonly structured as Systolic arrays. I'm not sure if this is possible, but is there a way to control the NPU resources we use through programming before compiling in 1st AI Challenger?",
+        "contexts": [],
+        "ground_truth": "Unfortunately, controlling NPU resources directly through pre-compilation programming is not supported in the current framework. This limitation is primarily due to the intricate nature of NPU architectures and the complexity of directly managing hardware-level functions. NPUs are designed to operate with a high level of efficiency for specific neural network tasks, and allowing direct control over their resources could potentially compromise their performance and the overall system stability. We understand that this might be an area of interest for in-depth exploration and appreciate your understanding of the constraints within the current technological setup.",
+        "answer": ""
+    },
+    {
+        "question": "I need to perform a Fourier Transform. Can you tell me if this is supported as an IP (Intellectual Property) function in the SoC (System on Chip) in 1st AI Challenger, and if so, which function should I call? If it's not supported, would we need to manually implement it ourselves?",
+        "contexts": [],
+        "ground_truth": "Unfortunately, there is no native library support for the Fourier Transform within our System on Chip (SoC). You would need to either use a 3rd party library or manually implement the Fourier Transform functionality. Additionally, please note that the Exynos Reference Design (ERD) provided for this iteration does not support the Transformer architecture. We recommend exploring external libraries or considering a custom implementation to meet your project's specific needs.",
+        "answer": ""
+    },
+    {
+        "question": "We are participating in the 1st AI Challenger. I would like to create an AI model by referring to OpenPOSE and KoBERT. Is this supported by the ENN SDK in the 1st AI Challenger?",
+        "contexts": [],
+        "ground_truth": "The OpenPOSE you want to use is a supported model. However, there are so many versions and types. If you have any problems during actual application, please contact us at any time. Unfortunately, KoBERT is not supported.",
+        "answer": ""
+    },
+    {
+        "question": "I am currently researching EO/IR Fusion Object Detection and using YOLO-based models (yolov5, yolov8). I am also conducting research using the MMdetection open-source library for object detection. I intend to undertake an OCR (Optical Character Recognition) project as part of the Exynos AI Challenger. Is support available for this kind of project in the 1st AI Challenger?",
+        "contexts": [],
+        "ground_truth": "In response to your inquiry, I regret to inform you that the YOLO-based models you intend to use (yolov5, yolov8), known to be 5-dimensional, are not supported. Please refer to the list of supported Operators list on our website for details about these limitations. Additionally, the MMdetection library you mentioned is not supported, and a manual implementation would be required. We understand this might not be the answer you were hoping for and appreciate your understanding of the constraints within our current system's capabilities.",
+        "answer": ""
+    },
+    {
+        "question": "I am interested in developing an AI model using the NeRF (Neural Radiance Fields) for image-based rendering in the 1st AI Challenger. Do you support it in the 1st AI Challenger?",
+        "contexts": [],
+        "ground_truth": "Regarding your interest in using the NeRF (Neural Radiance Fields) model, it's understood that NeRF requires real-time learning based on input imagery. Unfortunately, our current setup does not support on-device training, making it challenging to support NeRF for your project within the 1st AI Challenger. For further guidance and to understand the constraints better, you may refer to the list of supported operators available on our website. We appreciate your understanding of these limitations and are here to assist with any further queries you might have.",
+        "answer": ""
+    },
+    {
+        "question": "How do I post an article in the Best Lab?",
+        "contexts": [],
+        "ground_truth": "Best Lab is a dedicated platform where administrators meticulously select and upload projects that demonstrate excellence and have high potential for development. Currently, up to six projects are featured, receiving special attention. There is no separate process for individuals to submit their projects directly to Best Lab. Instead, administrators personally curate and showcase projects on the platform.",
+        "answer": ""
+    },
+    {
+        "question": "How many projects can I create maximum in the SDK Service?",
+        "contexts": [],
+        "ground_truth": "In the SDK Service, you are allowed to create a maximum of 5 tabs. If you attempt to create more than 5 tabs, a warning popup will appear to notify you of the limit. Please adjust your projects accordingly within this constraint.",
+        "answer": ""
+    },
+    {
+        "question": "In the SDK Service, I'm unable to download the converted log and NNC file.",
+        "contexts": [],
+        "ground_truth": "You can download the converted log and NNC file for up to 7 days after their creation. After this period, they are deleted, and the download button is disabled. If you need to download them again, you'll have to re-upload the same model file and repeat the conversion under the same conditions.",
+        "answer": ""
+    },
+    {
+        "question": "I entered the wrong password multiple times, and now my account is locked. What should I do?",
+        "contexts": [],
+        "ground_truth": "In the Eco System, an account gets locked after 5 consecutive incorrect password attempts. If your account is locked, you can unlock it by going through the verification process sent to your linked email address. Please check your email for the necessary steps to regain access to your account.",
+        "answer": ""
+    },
+    {
+        "question": "Could you please inform me about the models supported by the ENN SDK in the 1st AI Challenger?",
+        "contexts": [],
+        "ground_truth": "In the 1st AI Challenger, the ENN SDK supports TensorFlow Lite models, requiring conversion with Multi-Level Intermediate Representation (MLIR) version 1.14 or higher. Models must be up to four dimensions and not exceed 1GB in size. For Neural Processing Unit (NPU) utilization, quantization of models is mandatory. Additionally, model distillation is highly recommended for optimal performance. Ensure your models meet these criteria for compatibility with the ENN SDK.",
+        "answer": ""
+    },
+    {
+        "question": "Could you inform me about any models that have technical support limitations when executing the 1st AI Challenger?",
+        "contexts": [],
+        "ground_truth": "In the 1st AI Challenger, please note that certain models encounter technical support constraints. These limitations include models needing device code alterations, voice models, Generative AI models demanding real-time training, and those requiring operational analysis tool support on the device. Consider these restrictions when designing your projects for the program. For any inquiries or additional details regarding these limitations, don't hesitate to contact us for assistance.",
+        "answer": ""
+    },
+    {
+        "question": "Could you inform me about any models that have technical support possibilities when executing the 2nd AI Challenger?",
+        "contexts": [],
+        "ground_truth": "The 2nd AI Challenger introduces enhancements to the SDK, featuring customizable model optimization algorithms allowing personal code integration and conversion, along with voice model support for speech and voice recognition projects. It also includes Generative AI model support for cutting-edge AI developments. Future updates will introduce SDK retraining for improved model adaptability and accuracy, and device-specific operational analysis tools for optimal model performance tuning. These ongoing improvements aim to refine the SDK's functionalities to align with evolving development requirements. Further updates and features are on the horizon.",
+        "answer": ""
+    }
+]

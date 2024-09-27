@@ -22,9 +22,33 @@
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
-        <string>Test-Set Generation</string>
+        <string>Test-Set Creation</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_9">
+          <item>
+           <spacer name="horizontalSpacer_3">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_12">
+            <property name="text">
+             <string>support *.md file</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_7">
           <item>
@@ -60,6 +84,9 @@
             <property name="text">
              <string>gpt-4o-mini</string>
             </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
          </layout>
@@ -77,7 +104,7 @@
                <item row="0" column="1">
                 <widget class="QLineEdit" name="n_lineEdit">
                  <property name="text">
-                  <string>100</string>
+                  <string>10</string>
                  </property>
                 </widget>
                </item>
@@ -162,7 +189,7 @@
           <item>
            <widget class="QPushButton" name="gengenpushButton">
             <property name="text">
-             <string>Generate</string>
+             <string>Create</string>
             </property>
            </widget>
           </item>
@@ -250,8 +277,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>868</width>
-                <height>665</height>
+                <width>834</width>
+                <height>642</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_11">
@@ -495,7 +522,7 @@
      <x>0</x>
      <y>0</y>
      <width>1231</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>
