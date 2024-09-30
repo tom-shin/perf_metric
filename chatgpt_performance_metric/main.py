@@ -537,7 +537,17 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         documents = load_markdown_files(directory_path)
 
         # Setup LLMs
-        model = self.mainFrame_ui.gptlineEdit.text()
+        # model = self.mainFrame_ui.gptlineEdit.text()
+        if self.mainFrame_ui.creation_gpt4o_radioButton.isChecked():
+            model = "gpt-4o"
+            print("creation model", model)
+        elif self.mainFrame_ui.creation_gpt4omini_radioButton.isChecked():
+            model = "gpt-4o-mini"
+            print("creation model", model)
+        else:
+            model = "gpt-3.5-turbo-16k"
+            print("creation model", model)
+
         generator_llm = ChatOpenAI(model=model)
         critic_llm = ChatOpenAI(model="gpt-4o")
         embeddings = OpenAIEmbeddings()
@@ -986,7 +996,9 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.max_iter = int(self.mainFrame_ui.max_iter_spinBox.text())
         max_cnt = self.total_test_cnt()
 
-        if self.mainFrame_ui.gpt4omini_radioButton.isChecked():
+        if self.mainFrame_ui.gpt4o_radioButton.isChecked():
+            self.openai_model = "gpt-4o"
+        elif self.mainFrame_ui.gpt4omini_radioButton.isChecked():
             self.openai_model = "gpt-4o-mini"
         else:
             self.openai_model = "gpt-3.5-turbo-16k"
