@@ -241,12 +241,11 @@ class Load_test_scenario_thread(QtCore.QThread):
         self.base_dir = base_dir
         self.context_split = context_split
 
-
     def run(self):
         scenario_path = os.path.join(self.base_dir, "scenario", "scenarios.json")
         with open(scenario_path, 'r') as file:
             scenarios = json.load(file)
-        
+
         #############################################
         """
         comment: 초기 평가 툴 구현 할 때 contexts 구조는 아래처럼 2차원 리스트 타입으로 가정하고 설계를 했음.
@@ -262,25 +261,22 @@ class Load_test_scenario_thread(QtCore.QThread):
         }
         """
 
-
         # 각 데이터의 "contexts"를 [[]] 타입으로 변경
         for item in scenarios:
             if isinstance(item.get("contexts"), list):
                 # 기존 contexts가 리스트일 경우, 그 내부를 [[]] 형식으로 감싸기
                 item["contexts"] = [item["contexts"]]
-        
+
         # 변경된 데이터를 새로운 파일로 저장
         scenario_path = os.path.join(self.base_dir, "scenario", "temp_scenarios.json")
         with open(scenario_path, 'w', encoding='utf-8') as file:
             json.dump(scenarios, file, indent=4)
-        
+
         with open(scenario_path, 'r') as file:
             scenarios = json.load(file)
 
         os.remove(scenario_path)
         #############################################
-        
-
 
         self.send_max_scenario_cnt_sig.emit(len(scenarios) + 1)
 
@@ -420,6 +416,8 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.save_progress = None
         self.max_iter = None
         self.openai_model = None
+        self.create_testset_thread = None
+        self.create_testset_progress = None
 
         """ for main frame & widget """
         self.mainFrame_ui = None
@@ -512,6 +510,25 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.mainFrame_ui.dirlineEdit.setText(self.directory)
 
     def test_set_creation(self):
+        # if self.create_testset_progress is not None:
+        #     self.create_testset_progress.close()
+        #
+        # self.create_testset_progress = None
+        #
+        # if self.mainFrame_ui.popctrl_radioButton.isChecked():
+        #     self.create_testset_progress = ModalLess_ProgressDialog(message="Creating Test Set ...")
+        # else:
+        #     self.create_testset_progress = Modal_ProgressDialog(message="Creating Test Set ...")
+        #
+        # self.create_testset_thread = threading.Thread(target=self.start_test_set_creation, daemon=True)
+        # self.create_testset_thread.start()
+        #
+        # self.create_testset_progress.showModal_less()
+
+        self.start_test_set_creation()
+
+    def start_test_set_creation(self):
+
         import nltk
         nltk.download('punkt_tab')
         # 종료 시간 기록
@@ -524,8 +541,9 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
                 documents = loader.load()
             elif os.path.isdir(directory_path):
                 # 디렉토리인 경우 DirectoryLoader로 하위 디렉토리 포함 모든 .md 파일 로드
-                loader = DirectoryLoader(directory_path, glob="*.md", loader_cls=UnstructuredMarkdownLoader)
+                loader = DirectoryLoader(directory_path, glob="**/*.md", loader_cls=UnstructuredMarkdownLoader)
                 documents = loader.load()
+                print("number of doc: ", len(documents))
             else:
                 raise ValueError(f"{directory_path} is neither a valid file nor a directory.")
             return documents
@@ -581,38 +599,52 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
         print(f"Execution time: {int(hours)} hours, {int(minutes)} minutes, {seconds:.2f} seconds")
 
-        # print(df)
-
         # 'question', 'contexts', 'ground_truth' 컬럼만 추출하여 리스트로 변환
         if not df.empty:
-            # json_data = df[['question', 'contexts', 'ground_truth']].to_dict(orient='records')
-            json_data = df[['question', 'ground_truth']].to_dict(orient='records')
+            json_data = df[['question', 'contexts', 'ground_truth', 'evolution_type', 'metadata']].to_dict(orient='records')
+
+            # json_data가 주어진 데이터라고 가정
+            for data_ in json_data:
+                for key, val in data_.items():
+                    if key == "contexts":
+                        data_["contexts"] = []  # contexts만 빈 리스트로 초기화
+                data_["answer"] = ""
 
             # 전체 데이터를 JSON 파일로 저장
             file_path = 'created_test_set.json'
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(json_data, f, indent=4)
-            
 
-            with open(file_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-
-            result = []
-            for i, j in enumerate(data):
-                temp = {
-                    "question": j["question"],
-                    "contexts": [],
-                    "ground_truth": j["ground_truth"],
-                    "answer": ""
-                }
-                result.append(temp)
-
-            with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(result, f, indent=4)
+            # with open(file_path, 'r', encoding='utf-8') as f:
+            #     data = json.load(f)
+            #
+            # result = []
+            # for i, j in enumerate(data):
+            #     temp = {
+            #         "question": j["question"],
+            #         "contexts": [],
+            #         "ground_truth": j["ground_truth"],
+            #         "answer": "",
+            #         "evolution_type": j["evolution_type"],
+            #         "metadata": j["metadata"]
+            #     }
+            #     result.append(temp)
+            #
+            # with open(file_path, 'w', encoding='utf-8') as f:
+            #     json.dump(result, f, indent=4)
 
             print("All rows saved as JSON")
         else:
             print("DataFrame is empty.")
+
+        # if self.create_testset_progress is not None:
+        #     self.create_testset_progress.close()
+
+        # answer = QtWidgets.QMessageBox.information(self,
+        #                                            "Test Set Creation",
+        #                                            f"Completed !       \nElapsed time: {int(hours)} hours, {int(minutes)} minutes, {seconds:.2f} seconds",
+        #                                            QtWidgets.QMessageBox.Ok)
+
 
     def save_gen(self):
         pass
