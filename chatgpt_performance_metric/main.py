@@ -510,6 +510,14 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.mainFrame_ui.dirlineEdit.setText(self.directory)
 
     def test_set_creation(self):
+        if self.directory is None:
+
+            answer = QtWidgets.QMessageBox.warning(self,
+                                                   "Directory Check...",
+                                                   "Choose a directory for test-set",
+                                                   QtWidgets.QMessageBox.Yes)
+            print("Empty Directory")
+            return
         # if self.create_testset_progress is not None:
         #     self.create_testset_progress.close()
         #
