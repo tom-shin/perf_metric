@@ -523,6 +523,9 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
 
     def start_test_set_creation(self):
+        self.mainFrame_ui.tabWidget.setCurrentIndex(2)
+        QtWidgets.QApplication.processEvents()  # 이벤트 루프를 잠시 처리하여 GUI 업데이트
+        time.sleep(1)  # 작업 중에 딜레이 발생
 
         import nltk
         nltk.download('punkt_tab')
@@ -579,6 +582,10 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             simple_ = float(self.mainFrame_ui.simplelineEdit.text())
             reasoning_ = float(self.mainFrame_ui.reasonlineEdit.text())
             multi_context_ = float(self.mainFrame_ui.multilineEdit.text())
+
+            print("TestSet Creating ..... Wait until Completed")
+            QtWidgets.QApplication.processEvents()  # 이벤트 루프를 잠시 처리하여 GUI 업데이트
+            time.sleep(1)  # 작업 중에 딜레이 발생
 
             testset = generator.generate_with_langchain_docs(documents, test_size=test_size_,
                                                             distributions={simple: simple_, reasoning: reasoning_,
