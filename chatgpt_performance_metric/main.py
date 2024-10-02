@@ -517,23 +517,10 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
                                                    "Choose a directory for test-set",
                                                    QtWidgets.QMessageBox.Yes)
             print("Empty Directory")
-            return
-        # if self.create_testset_progress is not None:
-        #     self.create_testset_progress.close()
-        #
-        # self.create_testset_progress = None
-        #
-        # if self.mainFrame_ui.popctrl_radioButton.isChecked():
-        #     self.create_testset_progress = ModalLess_ProgressDialog(message="Creating Test Set ...")
-        # else:
-        #     self.create_testset_progress = Modal_ProgressDialog(message="Creating Test Set ...")
-        #
-        # self.create_testset_thread = threading.Thread(target=self.start_test_set_creation, daemon=True)
-        # self.create_testset_thread.start()
-        #
-        # self.create_testset_progress.showModal_less()
+            return       
 
         self.start_test_set_creation()
+
 
     def start_test_set_creation(self):
 
@@ -554,96 +541,104 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
                 print("number of doc: ", len(documents))
             else:
                 raise ValueError(f"{directory_path} is neither a valid file nor a directory.")
+
+            print(type(documents))
             return documents
 
-        # 디렉토리 경로 설정
-        directory_path = self.directory
 
-        # 디렉토리에서 .md 파일들 로드
-        documents = load_markdown_files(directory_path)
+        try:
+            # 디렉토리 경로 설정
+            directory_path = self.directory
 
-        # Setup LLMs
-        # model = self.mainFrame_ui.gptlineEdit.text()
-        if self.mainFrame_ui.creation_gpt4o_radioButton.isChecked():
-            model = "gpt-4o"
-            print("creation model", model)
-        elif self.mainFrame_ui.creation_gpt4omini_radioButton.isChecked():
-            model = "gpt-4o-mini"
-            print("creation model", model)
-        else:
-            model = "gpt-3.5-turbo-16k"
-            print("creation model", model)
+            # 디렉토리에서 .md 파일들 로드
+            documents = load_markdown_files(directory_path)
 
-        generator_llm = ChatOpenAI(model=model)
-        critic_llm = ChatOpenAI(model="gpt-4o")
-        embeddings = OpenAIEmbeddings()
+            # Setup LLMs
+            # model = self.mainFrame_ui.gptlineEdit.text()
+            if self.mainFrame_ui.creation_gpt4o_radioButton.isChecked():
+                model = "gpt-4o"
+                print("creation model", model)
+            elif self.mainFrame_ui.creation_gpt4omini_radioButton.isChecked():
+                model = "gpt-4o-mini"
+                print("creation model", model)
+            else:
+                model = "gpt-3.5-turbo-16k"
+                print("creation model", model)
 
-        # Initialize generator
-        generator = TestsetGenerator.from_langchain(
-            generator_llm, critic_llm, embeddings
-        )
+            generator_llm = ChatOpenAI(model=model)
+            critic_llm = ChatOpenAI(model="gpt-4o")
+            embeddings = OpenAIEmbeddings()
 
-        # Generate test set (questions)
-        test_size_ = int(self.mainFrame_ui.n_lineEdit.text())
-        simple_ = float(self.mainFrame_ui.simplelineEdit.text())
-        reasoning_ = float(self.mainFrame_ui.reasonlineEdit.text())
-        multi_context_ = float(self.mainFrame_ui.multilineEdit.text())
+            # Initialize generator
+            generator = TestsetGenerator.from_langchain(
+                generator_llm, critic_llm, embeddings
+            )
 
-        testset = generator.generate_with_langchain_docs(documents, test_size=test_size_,
-                                                         distributions={simple: simple_, reasoning: reasoning_,
-                                                                        multi_context: multi_context_})
+            # Generate test set (questions)
+            test_size_ = int(self.mainFrame_ui.n_lineEdit.text())
+            simple_ = float(self.mainFrame_ui.simplelineEdit.text())
+            reasoning_ = float(self.mainFrame_ui.reasonlineEdit.text())
+            multi_context_ = float(self.mainFrame_ui.multilineEdit.text())
 
-        df = testset.to_pandas()
+            testset = generator.generate_with_langchain_docs(documents, test_size=test_size_,
+                                                            distributions={simple: simple_, reasoning: reasoning_,
+                                                                            multi_context: multi_context_})
 
-        # 종료 시간 기록
-        end_time = datetime.now()
+            df = testset.to_pandas()
 
-        # 수행된 시간 계산
-        execution_time = end_time - start_time
+            # 종료 시간 기록
+            end_time = datetime.now()
 
-        # 시간을 시, 분, 초 단위로 변환하여 출력
-        hours, remainder = divmod(execution_time.total_seconds(), 3600)
-        minutes, seconds = divmod(remainder, 60)
+            # 수행된 시간 계산
+            execution_time = end_time - start_time
 
-        print(f"Execution time: {int(hours)} hours, {int(minutes)} minutes, {seconds:.2f} seconds")
+            # 시간을 시, 분, 초 단위로 변환하여 출력
+            hours, remainder = divmod(execution_time.total_seconds(), 3600)
+            minutes, seconds = divmod(remainder, 60)
 
-        # 'question', 'contexts', 'ground_truth' 컬럼만 추출하여 리스트로 변환
-        if not df.empty:
-            json_data = df[['question', 'contexts', 'ground_truth', 'evolution_type', 'metadata']].to_dict(orient='records')
+            print(f"Execution time: {int(hours)} hours, {int(minutes)} minutes, {seconds:.2f} seconds")
 
-            # json_data가 주어진 데이터라고 가정
-            for data_ in json_data:
-                for key, val in data_.items():
-                    if key == "contexts":
-                        data_["contexts"] = []  # contexts만 빈 리스트로 초기화
-                data_["answer"] = ""
+            # 'question', 'contexts', 'ground_truth' 컬럼만 추출하여 리스트로 변환
+            if not df.empty:
+                json_data = df[['question', 'contexts', 'ground_truth', 'evolution_type', 'metadata']].to_dict(orient='records')
 
-            # 전체 데이터를 JSON 파일로 저장
-            file_path = 'created_test_set.json'
-            with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(json_data, f, indent=4)
+                # json_data가 주어진 데이터라고 가정
+                for data_ in json_data:
+                    for key, val in data_.items():
+                        if key == "contexts":
+                            data_["contexts"] = []  # contexts만 빈 리스트로 초기화
+                    data_["answer"] = ""
 
-            # with open(file_path, 'r', encoding='utf-8') as f:
-            #     data = json.load(f)
-            #
-            # result = []
-            # for i, j in enumerate(data):
-            #     temp = {
-            #         "question": j["question"],
-            #         "contexts": [],
-            #         "ground_truth": j["ground_truth"],
-            #         "answer": "",
-            #         "evolution_type": j["evolution_type"],
-            #         "metadata": j["metadata"]
-            #     }
-            #     result.append(temp)
-            #
-            # with open(file_path, 'w', encoding='utf-8') as f:
-            #     json.dump(result, f, indent=4)
+                # 전체 데이터를 JSON 파일로 저장
+                file_path = 'created_test_set.json'
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    json.dump(json_data, f, indent=4)
 
-            print("All rows saved as JSON")
-        else:
-            print("DataFrame is empty.")
+                # with open(file_path, 'r', encoding='utf-8') as f:
+                #     data = json.load(f)
+                #
+                # result = []
+                # for i, j in enumerate(data):
+                #     temp = {
+                #         "question": j["question"],
+                #         "contexts": [],
+                #         "ground_truth": j["ground_truth"],
+                #         "answer": "",
+                #         "evolution_type": j["evolution_type"],
+                #         "metadata": j["metadata"]
+                #     }
+                #     result.append(temp)
+                #
+                # with open(file_path, 'w', encoding='utf-8') as f:
+                #     json.dump(result, f, indent=4)
+
+                print("All rows saved as JSON")
+            else:
+                print("DataFrame is empty.")
+
+        except Exception as e:
+            print(f"Error: {str(e)}")
+
 
         # if self.create_testset_progress is not None:
         #     self.create_testset_progress.close()
