@@ -9,7 +9,7 @@ import easygui
 import threading
 import csv
 
-from PyQt5.QtCore import QThread, pyqtSignal, QObject, QTimer
+from PyQt5.QtCore import QThread, pyqtSignal, QObject, QTimer, QProcess
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QProgressBar, QPushButton, QHBoxLayout, QSpacerItem, \
@@ -31,8 +31,6 @@ pd.set_option('display.max_colwidth', None)  # 각 열의 최대 너비를 제�
 
 # user defined module
 from configuration.model_config import *
-
-os.environ["OPENAI_API_KEY"] = ""
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -397,6 +395,13 @@ class Metric_Evaluation_Thread(QThread):
         self.wait(3000)
 
 
+def get_markdown_files(directory_):
+    loader = DirectoryLoader(directory_, glob="**/*.md", loader_cls=UnstructuredMarkdownLoader)
+    documents = loader.load()
+    print("number of doc: ", len(documents))
+    return documents
+
+
 class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
     send_sig_delete_all_sub_widget = pyqtSignal()
     send_save_finished_sig = pyqtSignal()
@@ -424,6 +429,20 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.widget_ui = None
 
         self.setupUi()
+
+        # QProcess 객체 생성
+        self.process = QProcess(self)
+        self.process.readyReadStandardOutput.connect(self.handle_stdout)
+        self.process.readyReadStandardError.connect(self.handle_stderr)
+
+    def handle_stdout(self):
+        output = self.process.readAllStandardOutput().data().decode()
+        print(output)
+
+    def handle_stderr(self):
+        error = self.process.readAllStandardError().data().decode()
+        if len(error) != 0:
+            print(f"Error: {error}")
 
     def setupUi(self):
         # Load the main window's UI module
@@ -498,7 +517,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
         self.mainFrame_ui.dirpushButton.clicked.connect(self.open_dir)
         self.mainFrame_ui.gengenpushButton.clicked.connect(self.test_set_creation)
-        self.mainFrame_ui.gensavepushButton.clicked.connect(self.save_gen)
+        self.mainFrame_ui.gensavepushButton.hide()  # clicked.connect(self.save_gen)
 
     def open_dir(self):
         self.directory = easygui.diropenbox()
@@ -511,18 +530,51 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
     def test_set_creation(self):
         if self.directory is None:
-
             answer = QtWidgets.QMessageBox.warning(self,
                                                    "Directory Check...",
                                                    "Choose a directory for test-set",
                                                    QtWidgets.QMessageBox.Yes)
             print("Empty Directory")
-            return       
+            return
 
         self.start_test_set_creation()
 
-
     def start_test_set_creation(self):
+        # Fetch all .md files from the current directory and subdirectories
+        documents = get_markdown_files(directory_=self.directory)
+        test_size_ = int(self.mainFrame_ui.n_lineEdit.text())
+        simple_ = float(self.mainFrame_ui.simplelineEdit.text())
+        reasoning_ = float(self.mainFrame_ui.reasonlineEdit.text())
+        multi_context_ = float(self.mainFrame_ui.multilineEdit.text())
+
+        if self.mainFrame_ui.creation_gpt4o_radioButton.isChecked():
+            model = "gpt-4o"
+            print("creation model", model)
+        elif self.mainFrame_ui.creation_gpt4omini_radioButton.isChecked():
+            model = "gpt-4o-mini"
+            print("creation model", model)
+        else:
+            model = "gpt-3.5-turbo-16k"
+            print("creation model", model)
+
+        # 실행할 파이썬 파일 경로와 전달할 인자들
+        script_path = 'cli_test_set_creator.py'  # test_set_Creator.py 경로
+
+        # 다른 변수들도 문자열로 변환
+        source_dir = str(self.directory)
+        test_size_str = str(test_size_)
+        simple_str = str(simple_)
+        reasoning_str = str(reasoning_)
+        multi_context_str = str(multi_context_)
+        model_str = str(model)
+
+        # 인자로 넘길 리스트 (모두 문자열이어야 함)
+        arguments = [script_path, source_dir, test_size_str, simple_str, reasoning_str, multi_context_str, model_str]
+
+        # QProcess로 파이썬 스크립트를 인자와 함께 실행
+        self.process.start(sys.executable, arguments)
+
+    def XX_start_test_set_creation(self):
         self.mainFrame_ui.tabWidget.setCurrentIndex(2)
         QtWidgets.QApplication.processEvents()  # 이벤트 루프를 잠시 처리하여 GUI 업데이트
         time.sleep(1)  # 작업 중에 딜레이 발생
@@ -547,7 +599,6 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
             print(type(documents))
             return documents
-
 
         try:
             # 디렉토리 경로 설정
@@ -588,7 +639,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             time.sleep(1)  # 작업 중에 딜레이 발생
 
             testset = generator.generate_with_langchain_docs(documents, test_size=test_size_,
-                                                            distributions={simple: simple_, reasoning: reasoning_,
+                                                             distributions={simple: simple_, reasoning: reasoning_,
                                                                             multi_context: multi_context_})
 
             df = testset.to_pandas()
@@ -607,7 +658,8 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
             # 'question', 'contexts', 'ground_truth' 컬럼만 추출하여 리스트로 변환
             if not df.empty:
-                json_data = df[['question', 'contexts', 'ground_truth', 'evolution_type', 'metadata']].to_dict(orient='records')
+                json_data = df[['question', 'contexts', 'ground_truth', 'evolution_type', 'metadata']].to_dict(
+                    orient='records')
 
                 # json_data가 주어진 데이터라고 가정
                 for data_ in json_data:
@@ -620,56 +672,12 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
                 file_path = 'created_test_set.json'
                 with open(file_path, 'w', encoding='utf-8') as f:
                     json.dump(json_data, f, indent=4)
-
-                # with open(file_path, 'r', encoding='utf-8') as f:
-                #     data = json.load(f)
-                #
-                # result = []
-                # for i, j in enumerate(data):
-                #     temp = {
-                #         "question": j["question"],
-                #         "contexts": [],
-                #         "ground_truth": j["ground_truth"],
-                #         "answer": "",
-                #         "evolution_type": j["evolution_type"],
-                #         "metadata": j["metadata"]
-                #     }
-                #     result.append(temp)
-                #
-                # with open(file_path, 'w', encoding='utf-8') as f:
-                #     json.dump(result, f, indent=4)
-
                 print("All rows saved as JSON")
             else:
                 print("DataFrame is empty.")
 
         except Exception as e:
             print(f"Error: {str(e)}")
-
-
-        # if self.create_testset_progress is not None:
-        #     self.create_testset_progress.close()
-
-        # answer = QtWidgets.QMessageBox.information(self,
-        #                                            "Test Set Creation",
-        #                                            f"Completed !       \nElapsed time: {int(hours)} hours, {int(minutes)} minutes, {seconds:.2f} seconds",
-        #                                            QtWidgets.QMessageBox.Ok)
-
-
-    def save_gen(self):
-        pass
-        # # 'question', 'contexts', 'ground_truth' 컬럼만 추출하여 리스트로 변환
-        # if not df.empty:
-        #     # json_data = df[['question', 'contexts', 'ground_truth']].to_dict(orient='records')
-        #     json_data = df[['question', 'ground_truth']].to_dict(orient='records')
-        #
-        #     # 전체 데이터를 JSON 파일로 저장
-        #     with open('created_test_set.json', 'w', encoding='utf-8') as f:
-        #         json.dump(json_data, f, indent=4)
-        #
-        #     print("All rows saved as JSON")
-        # else:
-        #     print("DataFrame is empty.")
 
     def select_all_scenario(self):
         if self.added_scenario_widgets is None or len(self.added_scenario_widgets) == 0:
@@ -1073,6 +1081,8 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
 if __name__ == "__main__":
     import sys
+
+    os.environ["OPENAI_API_KEY"] = ""
 
     g_context_split = ""
     g_context_split = "<split>"
