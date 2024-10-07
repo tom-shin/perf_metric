@@ -30,7 +30,20 @@ def load_markdown(data_path):
 
     with open(data_path, 'r') as file:
         data_string = file.read()
-        return markdown_splitter.split_text(data_string)
+        documents = markdown_splitter.split_text(data_string)
+
+        # 파일명을 metadata에 추가
+        domain = data_path  # os.path.basename(data_path)
+        for doc in documents:
+            if not doc.metadata:
+                doc.metadata = {}
+            doc.metadata["domain"] = domain  # Document 객체의 metadata 속성에 파일명 추가
+
+        return documents
+
+    # with open(data_path, 'r') as file:
+    #     data_string = file.read()
+    #     return markdown_splitter.split_text(data_string)
 
 
 def load_txt(data_path):
@@ -42,12 +55,23 @@ def load_txt(data_path):
 
     with open(data_path, 'r') as file:
         data_string = file.read().split("\n")
-        domain = os.path.splitext(os.path.basename(data_path))[0]
-        metadata = [{"domain": domain} for _ in data_string]
-        return text_splitter.create_documents(
-            data_string,
-            metadata
-        )
+        domain = data_path  # os.path.basename(data_path)
+        documents = text_splitter.create_documents(data_string)
+
+        for doc in documents:
+            if not doc.metadata:
+                doc.metadata = {}
+            doc.metadata["domain"] = domain  # Document 객체의 metadata 속성에 파일명 추가
+
+        return documents
+    # with open(data_path, 'r') as file:
+    #     data_string = file.read().split("\n")
+    #     domain = os.path.splitext(os.path.basename(data_path))[0]
+    #     metadata = [{"domain": domain} for _ in data_string]
+    #     return text_splitter.create_documents(
+    #         data_string,
+    #         metadata
+    #     )
 
 
 def load_general(base_dir):
@@ -180,17 +204,20 @@ def main(source_dir, test_size, simple_ratio, reasoning_ratio, multi_complex_rat
 
 if __name__ == "__main__":
     # OpenAI API 키 설정
-    os.environ["OPENAI_API_KEY"] = ""
 
-    if len(sys.argv) == 7:  # main.py gui parameter 전달 받음
+    if len(sys.argv) == 8:  # main.py gui parameter 전달 받음
         source_dir = sys.argv[1]
         test_size = int(sys.argv[2])
         simple_ratio = float(sys.argv[3])
         reasoning_ratio = float(sys.argv[4])
         multi_complex_ratio = float(sys.argv[5])
         model = sys.argv[6]
+        openaikey = sys.argv[7]
+        os.environ["OPENAI_API_KEY"] = openaikey
         print("given from main.py")
     else:
+        os.environ["OPENAI_API_KEY"] = ""
+
         # main.py의 gui 에서 실행한 경우가 아니고 단독으로 test_set_Creator.py를 실행한 경우
         source_dir = rf"C:\exynos-ai-studio-docs-main_240924"
         test_size = 10

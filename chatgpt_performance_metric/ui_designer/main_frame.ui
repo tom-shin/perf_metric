@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1061</width>
-    <height>813</height>
+    <width>1210</width>
+    <height>843</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -581,8 +581,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>651</width>
-                   <height>376</height>
+                   <width>716</width>
+                   <height>325</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_11">
@@ -696,6 +696,37 @@
       </item>
      </layout>
     </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>OpenAI Key</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="opeanaikey1">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>sk-</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="opeanaikey2">
+        <property name="text">
+         <string>BucaNVm1ibsxPUnxvWq8T3BlbkFJRGWPgBcKMtn1aorR2eYX</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -703,8 +734,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1061</width>
-     <height>21</height>
+     <width>1210</width>
+     <height>26</height>
     </rect>
    </property>
   </widget>

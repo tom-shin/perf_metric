@@ -148,13 +148,13 @@ def common_ragas_metric_model(model, scenario_data, max_iter, thread, method="IQ
             break
 
         if "gpt-4o" == thread.openai_model:
-            print("evaluation model", thread.openai_model)
+            # print("evaluation model", thread.openai_model)
             llm = ChatOpenAI(model="gpt-4o")
         elif "gpt-4o-mini" == thread.openai_model:
-            print("evaluation model", thread.openai_model)
+            # print("evaluation model", thread.openai_model)
             llm = ChatOpenAI(model="gpt-4o-mini")
         else:
-            print("evaluation model", thread.openai_model)
+            # print("evaluation model", thread.openai_model)
             llm = ChatOpenAI(model="gpt-3.5-turbo-16k")
 
         # embeddings = OpenAIEmbeddings()

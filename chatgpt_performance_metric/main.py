@@ -15,15 +15,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QProgressBar, QPushButton, QHBoxLayout, QSpacerItem, \
     QSizePolicy, QRadioButton, QWidget
 
-from langchain_community.document_loaders import DirectoryLoader, UnstructuredMarkdownLoader
-from ragas.testset.generator import TestsetGenerator
-from ragas.testset.evolutions import simple, reasoning, multi_context
-from langchain_text_splitters import MarkdownHeaderTextSplitter
-from langchain_text_splitters import CharacterTextSplitter
-
-# Convert to Pandas for easy viewing
 import pandas as pd
-from datetime import datetime
 
 # 모든 행과 열을 출력할 수 있도록 설정 변경
 pd.set_option('display.max_rows', None)  # 모든 행을 출력
@@ -397,72 +389,6 @@ class Metric_Evaluation_Thread(QThread):
         self.wait(3000)
 
 
-
-
-def load_markdown(data_path):
-    headers_to_split_on = [
-        ("#", "Header 1"),
-        ("##", "Header 2"),
-        ("###", "Header 3"),
-        ("####", "Header 4"),
-    ]
-    markdown_splitter = MarkdownHeaderTextSplitter(
-        headers_to_split_on=headers_to_split_on
-    )
-
-    with open(data_path, 'r') as file:
-        data_string = file.read()
-        return markdown_splitter.split_text(data_string)
-
-
-def load_txt(data_path):
-    text_splitter = CharacterTextSplitter(
-        separator="\n",
-        length_function=len,
-        is_separator_regex=False,
-    )
-
-    with open(data_path, 'r') as file:
-        data_string = file.read().split("\n")
-        domain = os.path.splitext(os.path.basename(data_path))[0]
-        metadata = [{"domain": domain} for _ in data_string]
-        return text_splitter.create_documents(
-            data_string,
-            metadata
-        )
-
-
-def load_general(base_dir):
-    data = []
-    for root, dirs, files in os.walk(base_dir):
-        for file in files:
-            if ".txt" in file:
-                data += load_txt(os.path.join(root, file))
-
-    return data
-
-
-def load_document(base_dir):
-    data = []
-    cnt = 0
-    for root, dirs, files in os.walk(base_dir):
-        for file in files:
-            if ".md" in file:
-                cnt += 1
-                data += load_markdown(os.path.join(root, file))
-
-    print(f"the number of md files is : {cnt}")
-    return data
-
-def get_markdown_files(directory_):
-    # loader = DirectoryLoader(directory_, glob="**/*.md", loader_cls=UnstructuredMarkdownLoader)
-    # documents = loader.load()
-    #
-    documents = load_document(base_dir=directory_)
-
-    print("number of doc: ", len(documents))
-    return documents
-
 class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
     send_sig_delete_all_sub_widget = pyqtSignal()
     send_save_finished_sig = pyqtSignal()
@@ -484,6 +410,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.openai_model = None
         self.create_testset_thread = None
         self.create_testset_progress = None
+        self.openaikey = None
 
         """ for main frame & widget """
         self.mainFrame_ui = None
@@ -514,6 +441,10 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.main_frame_init_ui()
 
         self.setWindowTitle(Version_)
+
+    def get_OpenAIKey(self):
+        self.openaikey = self.mainFrame_ui.opeanaikey1.text() + self.mainFrame_ui.opeanaikey2.text()
+        return self.openaikey
 
     def main_frame_init_ui(self):
         for idx, (model, metric) in enumerate(Models.items()):
@@ -629,117 +560,10 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         model_str = str(model)
 
         # 인자로 넘길 리스트 (모두 문자열이어야 함)
-        arguments = [script_path, source_dir, test_size_str, simple_str, reasoning_str, multi_context_str, model_str]
+        arguments = [script_path, source_dir, test_size_str, simple_str, reasoning_str, multi_context_str, model_str, self.get_OpenAIKey()]
 
         # QProcess로 파이썬 스크립트를 인자와 함께 실행
         self.process.start(sys.executable, arguments)
-
-    def XX_start_test_set_creation(self):
-        self.mainFrame_ui.tabWidget.setCurrentIndex(2)
-        QtWidgets.QApplication.processEvents()  # 이벤트 루프를 잠시 처리하여 GUI 업데이트
-        time.sleep(1)  # 작업 중에 딜레이 발생
-
-        import nltk
-        nltk.download('punkt_tab')
-        # 종료 시간 기록
-        start_time = datetime.now()
-
-        def load_markdown_files(directory_path):
-            if os.path.isfile(directory_path):
-                # 파일인 경우 UnstructuredMarkdownLoader로 파일 로드
-                loader = UnstructuredMarkdownLoader(directory_path)
-                documents = loader.load()
-            elif os.path.isdir(directory_path):
-                # 디렉토리인 경우 DirectoryLoader로 하위 디렉토리 포함 모든 .md 파일 로드
-                # loader = DirectoryLoader(directory_path, glob="**/*.md", loader_cls=UnstructuredMarkdownLoader)
-                # documents = loader.load()
-
-                documents = load_document(base_dir=directory_path)
-                print("number of doc: ", len(documents))
-            else:
-                raise ValueError(f"{directory_path} is neither a valid file nor a directory.")
-
-            print(type(documents))
-            return documents
-
-        try:
-            # 디렉토리 경로 설정
-            directory_path = self.directory
-
-            # 디렉토리에서 .md 파일들 로드
-            documents = load_markdown_files(directory_path)
-
-            # Setup LLMs
-            # model = self.mainFrame_ui.gptlineEdit.text()
-            if self.mainFrame_ui.creation_gpt4o_radioButton.isChecked():
-                model = "gpt-4o"
-                print("creation model", model)
-            elif self.mainFrame_ui.creation_gpt4omini_radioButton.isChecked():
-                model = "gpt-4o-mini"
-                print("creation model", model)
-            else:
-                model = "gpt-3.5-turbo-16k"
-                print("creation model", model)
-
-            generator_llm = ChatOpenAI(model=model)
-            critic_llm = ChatOpenAI(model="gpt-4o")
-            embeddings = OpenAIEmbeddings()
-
-            # Initialize generator
-            generator = TestsetGenerator.from_langchain(
-                generator_llm, critic_llm, embeddings
-            )
-
-            # Generate test set (questions)
-            test_size_ = int(self.mainFrame_ui.n_lineEdit.text())
-            simple_ = float(self.mainFrame_ui.simplelineEdit.text())
-            reasoning_ = float(self.mainFrame_ui.reasonlineEdit.text())
-            multi_context_ = float(self.mainFrame_ui.multilineEdit.text())
-
-            print("TestSet Creating ..... Wait until Completed")
-            QtWidgets.QApplication.processEvents()  # 이벤트 루프를 잠시 처리하여 GUI 업데이트
-            time.sleep(1)  # 작업 중에 딜레이 발생
-
-            testset = generator.generate_with_langchain_docs(documents, test_size=test_size_,
-                                                             distributions={simple: simple_, reasoning: reasoning_,
-                                                                            multi_context: multi_context_})
-
-            df = testset.to_pandas()
-
-            # 종료 시간 기록
-            end_time = datetime.now()
-
-            # 수행된 시간 계산
-            execution_time = end_time - start_time
-
-            # 시간을 시, 분, 초 단위로 변환하여 출력
-            hours, remainder = divmod(execution_time.total_seconds(), 3600)
-            minutes, seconds = divmod(remainder, 60)
-
-            print(f"Execution time: {int(hours)} hours, {int(minutes)} minutes, {seconds:.2f} seconds")
-
-            # 'question', 'contexts', 'ground_truth' 컬럼만 추출하여 리스트로 변환
-            if not df.empty:
-                json_data = df[['question', 'contexts', 'ground_truth', 'evolution_type', 'metadata']].to_dict(
-                    orient='records')
-
-                # json_data가 주어진 데이터라고 가정
-                for data_ in json_data:
-                    for key, val in data_.items():
-                        if key == "contexts":
-                            data_["contexts"] = []  # contexts만 빈 리스트로 초기화
-                    data_["answer"] = ""
-
-                # 전체 데이터를 JSON 파일로 저장
-                file_path = 'created_test_set.json'
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    json.dump(json_data, f, indent=4)
-                print("All rows saved as JSON")
-            else:
-                print("DataFrame is empty.")
-
-        except Exception as e:
-            print(f"Error: {str(e)}")
 
     def select_all_scenario(self):
         if self.added_scenario_widgets is None or len(self.added_scenario_widgets) == 0:
@@ -1142,9 +966,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
 
 if __name__ == "__main__":
-    import sys
-
-    os.environ["OPENAI_API_KEY"] = ""
+    import sys 
 
     g_context_split = ""
     g_context_split = "<split>"
@@ -1155,5 +977,7 @@ if __name__ == "__main__":
     ui = Performance_metrics_MainWindow()
     ui.showMaximized()
     ui.connectSlotSignal()
+
+    os.environ["OPENAI_API_KEY"] = ui.get_OpenAIKey()
 
     sys.exit(app.exec_())
