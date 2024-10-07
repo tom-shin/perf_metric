@@ -550,6 +550,9 @@
                <layout class="QGridLayout" name="gridLayout_3">
                 <item row="0" column="0">
                  <layout class="QGridLayout" name="gridLayout_4">
+                  <item row="0" column="1">
+                   <widget class="QLineEdit" name="scenario_path_lineedit"/>
+                  </item>
                   <item row="0" column="0">
                    <widget class="QLabel" name="label">
                     <property name="text">
@@ -557,13 +560,17 @@
                     </property>
                    </widget>
                   </item>
-                  <item row="0" column="1">
-                   <widget class="QLineEdit" name="scenario_path_lineedit"/>
-                  </item>
-                  <item row="0" column="2">
+                  <item row="0" column="3">
                    <widget class="QPushButton" name="refresh_pushButton">
                     <property name="text">
                      <string>Refresh</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="2">
+                   <widget class="QPushButton" name="open_pushButton">
+                    <property name="text">
+                     <string>Open</string>
                     </property>
                    </widget>
                   </item>
@@ -581,8 +588,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>716</width>
-                   <height>325</height>
+                   <width>800</width>
+                   <height>378</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_11">
@@ -735,7 +742,7 @@
      <x>0</x>
      <y>0</y>
      <width>1210</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

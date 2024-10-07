@@ -118,7 +118,7 @@ def save_test_set(test_set):
         filetypes=["*.json"]
     )
 
-    if not file_path:
+    if file_path is None:
         return False
 
     if not file_path.endswith(".json"):

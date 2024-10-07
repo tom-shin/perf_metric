@@ -234,7 +234,8 @@ class Load_test_scenario_thread(QtCore.QThread):
         self.context_split = context_split
 
     def run(self):
-        scenario_path = os.path.join(self.base_dir, "scenario", "scenarios.json")
+        # scenario_path = os.path.join(self.base_dir, "scenario", "scenarios.json")
+        scenario_path = self.base_dir
         with open(scenario_path, 'r') as file:
             scenarios = json.load(file)
 
@@ -260,7 +261,11 @@ class Load_test_scenario_thread(QtCore.QThread):
                 item["contexts"] = [item["contexts"]]
 
         # 변경된 데이터를 새로운 파일로 저장
-        scenario_path = os.path.join(self.base_dir, "scenario", "temp_scenarios.json")
+        # scenario_path = os.path.join(self.base_dir, "scenario", "temp_scenarios.json")
+
+        folder_path, file_name = os.path.split(self.base_dir)
+        scenario_path = os.path.join(folder_path, "temp_scenarios.json")
+
         with open(scenario_path, 'w', encoding='utf-8') as file:
             json.dump(scenarios, file, indent=4)
 
@@ -411,6 +416,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.create_testset_thread = None
         self.create_testset_progress = None
         self.openaikey = None
+        self.open_scenario_file = None
 
         """ for main frame & widget """
         self.mainFrame_ui = None
@@ -453,9 +459,9 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             checkbox.setText(model)
             self.mainFrame_ui.verticalLayout_5.addWidget(checkbox)
 
-        s_path = os.path.join(BASE_DIR, "scenario", "scenarios.json")
-        self.mainFrame_ui.scenario_path_lineedit.setText(s_path)
-        self.mainFrame_ui.scenario_path_lineedit.setReadOnly(True)
+        # s_path = os.path.join(BASE_DIR, "scenario", "scenarios.json")
+        # self.mainFrame_ui.scenario_path_lineedit.setText(s_path)
+        # self.mainFrame_ui.scenario_path_lineedit.setReadOnly(True)
 
     def closeEvent(self, event):
         answer = QtWidgets.QMessageBox.question(self,
@@ -495,6 +501,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.mainFrame_ui.all_check_model.clicked.connect(self.model_check)
         self.mainFrame_ui.all_uncheck_model.clicked.connect(self.model_check)
 
+        self.mainFrame_ui.open_pushButton.clicked.connect(self.open_test_set)
         self.mainFrame_ui.refresh_pushButton.clicked.connect(self.remove_all_sub_widget)
         self.send_sig_delete_all_sub_widget.connect(self.update_all_sub_widget)
 
@@ -515,7 +522,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.directory = easygui.diropenbox()
 
         # Print the selected directory
-        if not self.directory:
+        if self.directory is None:
             return
 
         self.mainFrame_ui.dirlineEdit.setText(self.directory)
@@ -560,7 +567,8 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         model_str = str(model)
 
         # 인자로 넘길 리스트 (모두 문자열이어야 함)
-        arguments = [script_path, source_dir, test_size_str, simple_str, reasoning_str, multi_context_str, model_str, self.get_OpenAIKey()]
+        arguments = [script_path, source_dir, test_size_str, simple_str, reasoning_str, multi_context_str, model_str,
+                     self.get_OpenAIKey()]
 
         # QProcess로 파이썬 스크립트를 인자와 함께 실행
         self.process.start(sys.executable, arguments)
@@ -597,7 +605,27 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             if checkbox:
                 checkbox.setChecked(check)
 
+    def open_test_set(self):
+        file_path = easygui.fileopenbox(
+            msg="Select Test Set Scenario",
+            title="Test Set Selection",
+            default="*.json",
+            filetypes=["*.json"]
+        )
+
+        if file_path is None:
+            return
+
+        self.open_scenario_file = file_path
+        self.mainFrame_ui.scenario_path_lineedit.setText(self.open_scenario_file)
+        # self.mainFrame_ui.scenario_path_lineedit.setReadOnly(True)
+        # print(self.open_scenario_file)
+        self.remove_all_sub_widget()  # remove all widget and update with new imported scenario
+
     def remove_all_sub_widget(self):
+        if self.open_scenario_file is None or len(self.mainFrame_ui.scenario_path_lineedit.text()) == 0:
+            return
+
         while self.mainFrame_ui.formLayout.count():
             item = self.mainFrame_ui.formLayout.takeAt(0)
             widget = item.widget()
@@ -681,7 +709,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             filetypes=["*.json"]
         )
 
-        if not file_path:
+        if file_path is None:
             self.send_save_finished_sig.emit()
             return
 
@@ -796,7 +824,8 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             self.update_sub_widget_progress = Modal_ProgressDialog(message="Loading Scenario")
 
         self.added_scenario_widgets = []
-        self.update_thread = Load_test_scenario_thread(BASE_DIR, g_context_split)
+        # self.update_thread = Load_test_scenario_thread(BASE_DIR, g_context_split)
+        self.update_thread = Load_test_scenario_thread(self.open_scenario_file, g_context_split)
         self.update_thread.send_scenario_update_ui_sig.connect(self.add_scenario_widget)
         self.update_thread.send_max_scenario_cnt_sig.connect(self.set_max_progressbar_cnt)
         self.update_thread.send_finish_scenario_update_ui_sig.connect(self.finished_add_scenario_widget)
@@ -966,7 +995,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
 
 if __name__ == "__main__":
-    import sys 
+    import sys
 
     g_context_split = ""
     g_context_split = "<split>"
