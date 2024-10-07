@@ -18,6 +18,8 @@ from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QProgressBar, QPushBut
 from langchain_community.document_loaders import DirectoryLoader, UnstructuredMarkdownLoader
 from ragas.testset.generator import TestsetGenerator
 from ragas.testset.evolutions import simple, reasoning, multi_context
+from langchain_text_splitters import MarkdownHeaderTextSplitter
+from langchain_text_splitters import CharacterTextSplitter
 
 # Convert to Pandas for easy viewing
 import pandas as pd
@@ -395,12 +397,71 @@ class Metric_Evaluation_Thread(QThread):
         self.wait(3000)
 
 
+
+
+def load_markdown(data_path):
+    headers_to_split_on = [
+        ("#", "Header 1"),
+        ("##", "Header 2"),
+        ("###", "Header 3"),
+        ("####", "Header 4"),
+    ]
+    markdown_splitter = MarkdownHeaderTextSplitter(
+        headers_to_split_on=headers_to_split_on
+    )
+
+    with open(data_path, 'r') as file:
+        data_string = file.read()
+        return markdown_splitter.split_text(data_string)
+
+
+def load_txt(data_path):
+    text_splitter = CharacterTextSplitter(
+        separator="\n",
+        length_function=len,
+        is_separator_regex=False,
+    )
+
+    with open(data_path, 'r') as file:
+        data_string = file.read().split("\n")
+        domain = os.path.splitext(os.path.basename(data_path))[0]
+        metadata = [{"domain": domain} for _ in data_string]
+        return text_splitter.create_documents(
+            data_string,
+            metadata
+        )
+
+
+def load_general(base_dir):
+    data = []
+    for root, dirs, files in os.walk(base_dir):
+        for file in files:
+            if ".txt" in file:
+                data += load_txt(os.path.join(root, file))
+
+    return data
+
+
+def load_document(base_dir):
+    data = []
+    cnt = 0
+    for root, dirs, files in os.walk(base_dir):
+        for file in files:
+            if ".md" in file:
+                cnt += 1
+                data += load_markdown(os.path.join(root, file))
+
+    print(f"the number of md files is : {cnt}")
+    return data
+
 def get_markdown_files(directory_):
-    loader = DirectoryLoader(directory_, glob="**/*.md", loader_cls=UnstructuredMarkdownLoader)
-    documents = loader.load()
+    # loader = DirectoryLoader(directory_, glob="**/*.md", loader_cls=UnstructuredMarkdownLoader)
+    # documents = loader.load()
+    #
+    documents = load_document(base_dir=directory_)
+
     print("number of doc: ", len(documents))
     return documents
-
 
 class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
     send_sig_delete_all_sub_widget = pyqtSignal()
@@ -541,7 +602,6 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
     def start_test_set_creation(self):
         # Fetch all .md files from the current directory and subdirectories
-        documents = get_markdown_files(directory_=self.directory)
         test_size_ = int(self.mainFrame_ui.n_lineEdit.text())
         simple_ = float(self.mainFrame_ui.simplelineEdit.text())
         reasoning_ = float(self.mainFrame_ui.reasonlineEdit.text())
@@ -591,8 +651,10 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
                 documents = loader.load()
             elif os.path.isdir(directory_path):
                 # 디렉토리인 경우 DirectoryLoader로 하위 디렉토리 포함 모든 .md 파일 로드
-                loader = DirectoryLoader(directory_path, glob="**/*.md", loader_cls=UnstructuredMarkdownLoader)
-                documents = loader.load()
+                # loader = DirectoryLoader(directory_path, glob="**/*.md", loader_cls=UnstructuredMarkdownLoader)
+                # documents = loader.load()
+
+                documents = load_document(base_dir=directory_path)
                 print("number of doc: ", len(documents))
             else:
                 raise ValueError(f"{directory_path} is neither a valid file nor a directory.")
