@@ -28,7 +28,7 @@ from configuration.model_config import *
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-file_path = os.path.join(BASE_DIR, "scenario", "version.txt")
+file_path = os.path.join(BASE_DIR, "version.txt")
 with open(file_path, "r") as file_:
     Version_ = file_.readline()
 
