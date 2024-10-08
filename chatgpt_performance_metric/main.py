@@ -556,7 +556,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             print("creation model", model)
 
         # 실행할 파이썬 파일 경로와 전달할 인자들
-        script_path = 'cli_test_set_creator.py'  # test_set_Creator.py 경로
+        script_path = os.path.join(BASE_DIR, 'cli_test_set_creator.py')  # test_set_Creator.py 경로
 
         # 다른 변수들도 문자열로 변환
         source_dir = str(self.directory)

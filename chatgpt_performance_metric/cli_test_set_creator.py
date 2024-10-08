@@ -2,6 +2,7 @@ import sys
 import os
 import json
 import easygui
+import chardet
 from PyQt5 import QtWidgets, QtCore
 
 from ragas.testset.generator import TestsetGenerator
@@ -18,6 +19,10 @@ nltk.download('punkt')
 
 
 def load_markdown(data_path):
+    with open(data_path, 'rb') as f:
+        result = chardet.detect(f.read())
+        encoding = result['encoding']
+
     headers_to_split_on = [
         ("#", "Header 1"),
         ("##", "Header 2"),
@@ -28,7 +33,8 @@ def load_markdown(data_path):
         headers_to_split_on=headers_to_split_on
     )
 
-    with open(data_path, 'r') as file:
+    with open(data_path, 'r', encoding=encoding) as file:
+        print(data_path)
         data_string = file.read()
         documents = markdown_splitter.split_text(data_string)
 
@@ -47,13 +53,17 @@ def load_markdown(data_path):
 
 
 def load_txt(data_path):
+    with open(data_path, 'rb') as f:
+        result = chardet.detect(f.read())
+        encoding = result['encoding']
+
     text_splitter = CharacterTextSplitter(
         separator="\n",
         length_function=len,
         is_separator_regex=False,
     )
 
-    with open(data_path, 'r') as file:
+    with open(data_path, 'r', encoding=encoding) as file:
         data_string = file.read().split("\n")
         domain = data_path  # os.path.basename(data_path)
         documents = text_splitter.create_documents(data_string)
@@ -222,9 +232,8 @@ if __name__ == "__main__":
         print("given from main.py")
     else:
         os.environ["OPENAI_API_KEY"] = ""
-
         # main.py의 gui 에서 실행한 경우가 아니고 단독으로 test_set_Creator.py를 실행한 경우
-        source_dir = rf"C:\exynos-ai-studio-docs-main_240924"
+        source_dir = rf"C:\ai_studio_2.0_markdown_documentation"
         test_size = 10
         simple_ratio = 0.9
         reasoning_ratio = 0.1
