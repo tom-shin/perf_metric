@@ -1,0 +1,9 @@
+# EDS Chatbot
+
+## Current Support
+
+- **User Base**: The EDS Chatbot currently supports users within the Exynos Developer Society.
+
+## Future Goals
+
+- **Information Provision**: The future goal of the EDS Chatbot is to provide information on technical issues, product details, events, and announcements pertinent to the Samsung S.LSI Exynos platform.

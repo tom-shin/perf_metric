@@ -27,7 +27,7 @@
        <item>
         <widget class="QTabWidget" name="tabWidget">
          <property name="currentIndex">
-          <number>2</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="tab">
           <attribute name="title">
@@ -52,7 +52,7 @@
              <item>
               <widget class="QLabel" name="label_12">
                <property name="text">
-                <string>support *.md file</string>
+                <string>support *.md/ *.txt file</string>
                </property>
               </widget>
              </item>
@@ -588,8 +588,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>800</width>
-                   <height>378</height>
+                   <width>716</width>
+                   <height>325</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_11">
@@ -742,7 +742,7 @@
      <x>0</x>
      <y>0</y>
      <width>1210</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

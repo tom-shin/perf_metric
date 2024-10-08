@@ -1,0 +1,26 @@
+# AI Challenger
+
+The AI Challenger is a developer program by Samsung S.LSI that emphasizes the use and development of AI technology through the Exynos ENN SDK.
+
+## Program Goals
+
+- **Technological Innovation**: Aims to drive technological innovation in AI.
+- **Edge AI Advancement**: Promotes the advancement of Edge AI technology.
+- **Industry-Academia Collaboration**: Encourages collaborations between industry and academia.
+- **Real-World Challenges**: Designed to tackle real-world technological challenges and stimulate the growth of the AI sector.
+
+## Target Audience
+
+- The program targets Korean students and postgraduates, aiming to enhance their AI expertise and competitiveness in the industry.
+
+## Program Structure
+
+The AI Challenger program consists of three stages:
+
+1. **Familiarization with Tools**: Getting to know the tools.
+2. **Active Research and Development**: In-depth research and development.
+3. **Finalizing and Presenting Projects**: Completing and showcasing projects.
+
+## Key Features
+
+- **Exynos 2200 Chipset**: The AI Challenger includes the use of the Exynos 2200 chipset, which is integral to the AI development tools provided.

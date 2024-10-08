@@ -1,0 +1,21 @@
+# Exynos Developer Society
+
+## Management and Resources
+
+- **Managed by**: Samsung S. LSI.
+- **Resources**: Offers a range of tools and training resources for development on the Exynos platform.
+
+## Best Lab Platform
+
+- **Function**: A platform where administrators select projects demonstrating excellence and potential.
+- **Project Submission**: Individuals cannot directly submit projects; administrators curate and showcase projects.
+
+## Account Security
+
+- **Lockout Policy**: An account gets locked after five consecutive incorrect password attempts.
+- **Unlocking Process**: Locked accounts can be unlocked through a verification process via steps sent to the linked email address.
+
+## Support and Assistance
+
+- **Public Forums**: Users are encouraged to participate for support with development tools.
+- **Personalized Assistance**: Can be obtained by submitting queries through the "Contact Us" page.

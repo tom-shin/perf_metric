@@ -1,0 +1,89 @@
+# Exynos Chipsets
+
+## Exynos 2200 Chipset
+
+### CPU and GPU
+
+- **CPU Configuration**: Cortex®-X2, Cortex®-A710, and Cortex®-A510.
+- **GPU**: Samsung Xclipse 920.
+
+### AI Capabilities
+
+- **AI Engine**: Dual-core NPU and DSP.
+
+### Camera Capabilities
+
+- **Single Camera Support**: Up to 200MP.
+- **Dual Camera Setup**: 64MP + 32MP at 30fps.
+
+### Video Performance
+
+- **Decoding**: Up to 8K at 60fps.
+- **Encoding**: 8K at 30fps.
+- **Supported Formats**: 10-bit HEVC (H.265) and VP9.
+
+### Display Capabilities
+
+- **4K/WQUXGA**: Up to 120Hz.
+- **QHD+**: Up to 144Hz.
+
+### Gaming Features
+
+- **Technologies**: Hardware-accelerated ray tracing and variable rate shading.
+
+### Supported Devices
+
+- **Smartphones**: Samsung Galaxy S22 Ultra, S22+, and S22.
+
+### Manufacturing and Integration
+
+- **Process**: 4-nanometer EUV.
+- **CPU Cores**: Armv9.
+- **Modem**: 5G, compliant with 3GPP Release 16.
+
+### Security and Additional Features
+
+- **Security**: Integrated Secure Element, robust encryption.
+- **ISP**: Supports up to 200MP, AI-integrated functionalities.
+- **Fourier Transform**: No native support; third-party libraries recommended.
+
+## Exynos 2400 Chipset
+
+### CPU and GPU
+
+- **CPU Configuration**: Cortex®-X4, Cortex®-A720, and Cortex®-A520.
+- **GPU**: Samsung Xclipse 940.
+
+### AI Capabilities
+
+- **AI Engine**: 17K MAC NPU (2-GNPU+2-SNPU) and DSP.
+
+### Camera Capabilities
+
+- **Single Camera Support**: Up to 320MP.
+- **Dual Camera Setup**: 64MP + 32MP at 30fps.
+
+### Video Performance
+
+- **Decoding**: Up to 8K at 60fps.
+- **Encoding**: 8K at 30fps.
+- **Supported Formats**: 10-bit HEVC (H.265) and VP9.
+
+### Display Capabilities
+
+- **4K/WQUXGA**: Up to 120Hz.
+- **QHD+**: Up to 144Hz.
+
+### Gaming Features
+
+- **Technologies**: Console-quality graphics and advanced GPU technology.
+
+### Supported Devices
+
+- **Smartphones**: Samsung Galaxy S24+ and Galaxy S24.
+
+### Performance and Connectivity
+
+- **AI Performance**: 14.7x improvement over predecessor.
+- **Modem**: 5G NR, supports up to 9.6Gbps downlink in FR1 and 12.1Gbps in FR2, compliant with 3GPP Rel.17.
+- **Connectivity Enhancements**: Supports NTN satellite connections, integrated GNSS block.

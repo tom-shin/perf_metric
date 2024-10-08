@@ -76,11 +76,14 @@ def load_txt(data_path):
 
 def load_general(base_dir):
     data = []
+    cnt = 0
     for root, dirs, files in os.walk(base_dir):
         for file in files:
             if ".txt" in file:
+                cnt += 1
                 data += load_txt(os.path.join(root, file))
 
+    print(f"the number of txt files is : {cnt}")
     return data
 
 
@@ -107,7 +110,9 @@ def X_get_markdown_files(source_dir):
 
 def get_markdown_files(source_dir):
     md_data = load_document(base_dir=source_dir)
-    return md_data
+    text_data = load_general(base_dir=source_dir)
+
+    return md_data + text_data
 
 
 def save_test_set(test_set):
