@@ -18,4 +18,6 @@ pip install langchain-text-splitters==0.2.2
 pip install langchain-together==0.1.5
 pip install langdetect==1.0.9
 pip install langsmith==0.1.82
+pip install python-dotenv
+pip install pymongo==4.10.1
 pause

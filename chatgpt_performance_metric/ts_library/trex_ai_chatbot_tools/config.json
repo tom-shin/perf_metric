@@ -1,0 +1,33 @@
+{
+    "PARSER": {
+        "MIN_TOKENS": 100,
+        "MAX_TOKENS": 300,
+        "OVERMAX_SLICEAT": 0.3
+    },
+    "EMBED": {
+        "MODEL": "text-embedding-3-small",
+        "MAX_TOKENS": 8191,
+        "DIM": 1536
+    },
+    "TEXTGEN": {
+        "MODEL": "gpt-4o-mini",
+        "MAX_TOKENS": 16385,
+        "INPUT_TOKENS": 10000,
+        "CONTEXT_TOKENS": 8000,
+        "LIMIT": 10,
+        "HYPERLINK_COUNT": 2,
+        "VECTOR_DISTANCE": 0.5,
+        "OUTPUT_TOKENS": 500
+    },
+    "FINE_TUNING": {
+        "MODEL": "gpt-4o-mini",
+        "RATIO": 0.2,
+        "TRAIN_PATH": "Output/training_data.jsonl",
+        "VALID_PATH": "Output/validation_data.jsonl"
+    },
+    "LAMBDA": {
+        "DB_ID": "vector_db",
+        "VDB_ID": "collection",
+        "CACHE_ID": "cache"
+    }
+}

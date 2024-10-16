@@ -5,11 +5,7 @@ import math
 from sentence_transformers import SentenceTransformer, util
 from ragas import evaluate
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-
 from datasets import Dataset
-# from ragas.metrics import faithfulness, context_relevancy, answer_relevancy, context_precision, context_recall, \
-#     context_entity_recall, \
-#     answer_similarity, answer_correctness
 
 from ragas.metrics import (
     faithfulness,
@@ -44,8 +40,16 @@ Models = {
 }
 
 """ 아래 부터는 수정 하지 말 것 """
-
 Rag_Models_Metric = {
+    "all-roberta-large-v1": "all-roberta-large-v1",
+    "all-MiniLM-L12-v2": "all-MiniLM-L12-v2",
+    "all-MiniLM-L6-v2": "all-MiniLM-L6-v2",
+    "all-mpnet-base-v2": "all-mpnet-base-v2",
+    "paraphrase-MiniLM-L6-v2": "paraphrase-MiniLM-L6-v2",
+    "distiluse-base-multilingual-cased-v2": "distiluse-base-multilingual-cased-v2",
+    "paraphrase-mpnet-base-v2": "paraphrase-mpnet-base-v2",
+    "all-distilroberta-v1": "all-distilroberta-v1",
+
     "Ragas(open-ai): Faithfulness": faithfulness,
     "Ragas(open-ai): Answer Relevancy": answer_relevancy,
     "Ragas(open-ai): Context Precision": context_precision,
@@ -85,7 +89,7 @@ def cal_iqr_mean_score(cal_data):
     return float(mean_score), float(median_filtered), float(mean_filtered)
 
 
-def common_llm_model(model, scenario_data, max_iter, thread, method="IQR-MEDIAN"):
+def common_llm_model(model, scenario_data, max_iter, thread):
     local_model_dir = os.path.join(parent_directory, "local_models", model)
     c_model = SentenceTransformer(local_model_dir)
     # 문장 임베딩 생성
@@ -117,22 +121,21 @@ def common_llm_model(model, scenario_data, max_iter, thread, method="IQR-MEDIAN"
         print("><==========================")
     else:
         print("==========================")
+    
+    # print("<", thread.method, ">")
 
-    if method == "IQR-MEDIAN":
-        # print(method)
+    if thread.method == "IQR-MEDIAN":
         return str(round(iqr_median_score, 5))
-    elif method == "IQR-MEAN":
-        # print(method)
+    elif thread.method == "IQR-MEAN":
         return str(round(iqr_mean_score, 5))
     else:
-        # print(method)
         return str(round(mean_score, 5))
 
 
-def common_ragas_metric_model(model, scenario_data, max_iter, thread, method="IQR-MEDIAN"):
+def common_ragas_metric_model(model, scenario_data, max_iter, thread):
     data_samples = {
         'question': [scenario_data["question"]],
-        'contexts': [[scenario_data["contexts"]]],
+        'contexts': [scenario_data["contexts"]],
         'answer': [scenario_data["answer"]],
         'ground_truth': [scenario_data["ground_truth"]]
     }
@@ -147,6 +150,7 @@ def common_ragas_metric_model(model, scenario_data, max_iter, thread, method="IQ
             print("쓰레드 작업 중지됨")
             break
 
+        # print("evaluation model", thread.openai_model)
         if "gpt-4o" == thread.openai_model:
             # print("evaluation model", thread.openai_model)
             llm = ChatOpenAI(model="gpt-4o")
@@ -179,10 +183,11 @@ def common_ragas_metric_model(model, scenario_data, max_iter, thread, method="IQ
     else:
         print("==========================")
 
-    if method == "IQR-MEDIAN":
+    # print("<", thread.method, ">")
+    if thread.method == "IQR-MEDIAN":
         # print(method)
         score = str(round(iqr_median_score, 5))
-    elif method == "IQR-MEAN":
+    elif thread.method == "IQR-MEAN":
         # print(method)
         return str(round(iqr_mean_score, 5))
     else:
