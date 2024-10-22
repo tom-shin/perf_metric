@@ -1,0 +1,26 @@
+241018 평가 히스토리 기록용 by Kendrick
+
+평가 결과 보고서 링크 : https://confluence.samsungds.com/pages/viewpage.action?pageId=145687075
+Dataset : 웹페이지 공통 자료(txt 파일 4개), FAQ, 9/24 AI Studio 2.0 문서, Device Farm 문서
+Testset 총 110개
+사용한 GPT : gpt-4o
+Score
+Faithfulness : 0.8790711009174311
+Context Relevancy : 0.03285201834862383
+Answer Correctness : 0.7258533027522935
+총 소요시간 약 4시간 30분
+
+Testset은 https://confluence.samsungds.com/pages/viewpage.action?pageId=140641212 페이지 참고.
+
+삼성에서 gpt-4o 사용 요청하여 gpt-4o-mini에서 gpt-4o로 변경.
+
+Dataset 중 9/24 AI Studio 2.0 문서에 대한 testset이 가장 많은데, document.json이 포함되어있지 않아 메타데이터가 이전 버전 문서에 비해 부족함.
+메타데이터가 부족한것이 스코어 하락에 영향 있을 수 있음. 이후 버전 문서 릴리즈때는 document.json 포함하여 릴리즈 요청 필요해보임.
+
+평가시 사용하는 DocumentDB는 dev, stg, prd 모두 아닌 별개의 DB라고 함.
+from trex_ai_chatbot_tools.db_ops import vector_col 에서 vector_col.insert_many() 메소드 사용하여 임베딩 데이터 업로드 가능.
+이 부분은 James가 스크립트를 공유해주었는데, 소스 싱크가 잘 맞지 않아 에러가 지속적으로 발생해 이번 평가에서는 James가 임베딩 도와줌.
+
+gpt-4o 사용시 Testset 생성 + Ragas Evaluation 수행하며 대략 $23 정도 소요.
+문서 양이 많아지거나 테스트셋이 많아질 경우 비용이 더 늘어날 수 있음.
+
