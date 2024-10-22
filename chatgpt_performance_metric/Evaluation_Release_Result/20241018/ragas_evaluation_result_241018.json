@@ -2151,7 +2151,7 @@
         "answer": "AI Applications that can be created using Recommendation System include Personalized online shopping, Content recommendation in streaming services, and Customized news feed.",
         "score": {
             "faithfulness": 1.0,
-            "context_relevancy": 0.0,
+            "context_relevancy": 0.04,
             "answer_correctness": 0.94083
         }
     },
@@ -2414,9 +2414,9 @@
         "ground_truth": "In the Eco System, an account gets locked after 5 consecutive incorrect password attempts. If your account is locked, you can unlock it by going through the verification process sent to your linked email address. Please check your email for the necessary steps to regain access to your account.",
         "answer": "In the Eco System, an account gets locked after 5 consecutive incorrect password attempts. If your account is locked, you can unlock it by going through the verification process sent to your linked email address. Please check your email for the necessary steps to regain access to your account.",
         "score": {
-            "faithfulness": 0.0,
-            "context_relevancy": 0.0,
-            "answer_correctness": 0.0
+            "faithfulness": 1.0,
+            "context_relevancy": 0.02857,
+            "answer_correctness": 1.0
         }
     }
 ]
