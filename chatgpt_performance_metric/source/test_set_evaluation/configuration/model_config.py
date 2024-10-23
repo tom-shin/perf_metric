@@ -13,9 +13,9 @@ from ragas.metrics import (
     context_precision,
     context_recall,
     context_entity_recall,
-    context_relevancy,
+    # context_relevancy,
     answer_similarity,
-    answer_correctness
+    answer_correctness    
 )
 """아래 Models에서 평가하고자 하는 모델만 enable 그리로 main.py 실행"""
 
@@ -32,9 +32,9 @@ Models = {
     "Ragas(open-ai): Faithfulness": None,
     # "Ragas(open-ai): Answer Relevancy": None,
     # "Ragas(open-ai): Context Precision": None,
-    # "Ragas(open-ai): Context Recall": None,
+    "Ragas(open-ai): Context Recall": None,
     # "Ragas(open-ai): Context Entity Recall": None,
-    "Ragas(open-ai): Context Relevancy": None,
+    # "Ragas(open-ai): Context Relevancy": None,
     # "Ragas(open-ai): Answer Similarity": None,
     "Ragas(open-ai): Answer Correctness": None
 }
@@ -55,7 +55,7 @@ Rag_Models_Metric = {
     "Ragas(open-ai): Context Precision": context_precision,
     "Ragas(open-ai): Context Recall": context_recall,
     "Ragas(open-ai): Context Entity Recall": context_entity_recall,
-    "Ragas(open-ai): Context Relevancy": context_relevancy,
+    # "Ragas(open-ai): Context Relevancy": context_relevancy,
     "Ragas(open-ai): Answer Similarity": answer_similarity,
     "Ragas(open-ai): Answer Correctness": answer_correctness
 }

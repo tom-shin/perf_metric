@@ -51,9 +51,13 @@ def save_context_answer_to_file(result_data):
         filetypes=["*.json"]
     )
 
-    ret = json_dump_f(file_path=file_path, data=result_data)
+    if file_path is None:
+        return False
 
-    return ret
+    modified_json_data, not_present = check_the_answer_is_not_present(data_=result_data)
+    ret = json_dump_f(file_path=file_path, data=modified_json_data)
+
+    return True, not_present
 
 
 class generator_context_answer_class:
@@ -104,9 +108,22 @@ class generator_context_answer_class:
             answer = msg_box.exec_()
 
             if answer == QtWidgets.QMessageBox.Yes:
-                save_successful = save_context_answer_to_file(result_data=result_data)
+                save_successful, not_present = save_context_answer_to_file(result_data=result_data)
                 if save_successful:
-                    print("\nTest set saved successfully.")
+                    _box = QtWidgets.QMessageBox()
+                    _box.setWindowTitle("Saved File")
+
+                    if not_present:
+                        _box.setText(
+                            "[Warning] Evaluation set saved successfully.\nBut 'The answer to given is not present' so Remove it")
+                    else:
+                        _box.setText("Evaluation set saved successfully.\n")
+
+                    _box.setStandardButtons(QtWidgets.QMessageBox.Yes)
+                    _box.setWindowFlags(_box.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
+
+                    _answer = _box.exec_()
+
                 else:
                     # 저장 실패 시 재시도 여부를 묻는 메시지 박스
                     retry_box = QtWidgets.QMessageBox()

@@ -50,6 +50,9 @@ def save_question_groundtruth_to_file(test_set):
         filetypes=["*.json"]
     )
 
+    if file_path is None:
+        return False, False
+
     df = test_set.to_pandas()
 
     if not df.empty:
@@ -64,8 +67,10 @@ def save_question_groundtruth_to_file(test_set):
             data_["answer"] = ""
 
         try:
-            ret = json_dump_f(file_path=file_path, data=json_data)
-            return ret
+            modified_json_data, not_present = check_the_answer_is_not_present(data_=json_data)
+
+            ret = json_dump_f(file_path=file_path, data=modified_json_data)
+            return ret, not_present
 
         except Exception as e:
             print(f"Error saving the file: {e}")
@@ -90,9 +95,22 @@ def complete_creating_question_groundTruth(test_set):
         answer = msg_box.exec_()
 
         if answer == QtWidgets.QMessageBox.Yes:
-            save_successful = save_question_groundtruth_to_file(test_set=test_set)
+            save_successful, not_present = save_question_groundtruth_to_file(test_set=test_set)
             if save_successful:
-                print("Test set saved successfully.")
+                _box = QtWidgets.QMessageBox()
+                _box.setWindowTitle("Saved File")
+
+                if not_present:
+                    _box.setText(
+                        "[Warning] Test set saved successfully.\nBut 'The answer to given is not present' so Remove it")
+                else:
+                    _box.setText("Test set saved successfully.\n")
+
+                _box.setStandardButtons(QtWidgets.QMessageBox.Yes)
+                _box.setWindowFlags(_box.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
+
+                _answer = _box.exec_()
+
             else:
                 # 저장 실패 시 재시도 여부를 묻는 메시지 박스
                 retry_box = QtWidgets.QMessageBox()

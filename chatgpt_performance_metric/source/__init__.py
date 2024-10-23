@@ -318,6 +318,24 @@ def load_document(base_dir):
     return data
 
 
+def check_the_answer_is_not_present(data_=None):
+    json_data = data_
+    modified_json_data = []
+
+    for cnt, t_set in enumerate(json_data):
+
+        exist_not_present = False
+        for key, value in t_set.items():
+            if "given" in value or "not present" in value:
+                exist_not_present = True
+                break
+
+        if not exist_not_present:
+            modified_json_data.append(t_set)
+
+    return modified_json_data, exist_not_present
+
+
 def X_get_markdown_files(source_dir):
     dir_ = source_dir
     loader = DirectoryLoader(dir_, glob="**/*.md", loader_cls=UnstructuredMarkdownLoader)

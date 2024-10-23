@@ -22,7 +22,7 @@ pd.set_option('display.max_colwidth', None)  # 각 열의 최대 너비를 제�
 
 # user defined module
 from source.test_set_evaluation.configuration.model_config import *
-from source.test_set_creation.context_answer_creator import generator_context_answer_class
+from source.test_set_creation.test_set_context_answer_creator import generator_context_answer_class
 from source.test_set_evaluation.set_metric_evaluator import performance_metric_evaluator_class
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -272,7 +272,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             print("creation model", model)
 
         # 실행할 파이썬 파일 경로와 전달할 인자들
-        script_path = os.path.join(BASE_DIR, "source", "test_set_creation", "question_ground_truth_creator.py")
+        script_path = os.path.join(BASE_DIR, "source", "test_set_creation", "evaluation_set_question_ground_truth_creator.py")
 
         # 다른 변수들도 문자열로 변환
         source_dir = str(self.directory)
@@ -361,8 +361,9 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
 
 def is_admin():
-    try:        
-        return ctypes.windll.shell32.IsUserAnAdmin()
+    try:
+        return True
+        # return ctypes.windll.shell32.IsUserAnAdmin()
     except:
         return False
 
