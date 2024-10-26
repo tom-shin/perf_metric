@@ -321,24 +321,29 @@ def load_document(base_dir):
 def check_the_answer_is_not_present(data_=None):
     json_data = data_
     modified_json_data = []
+    abnormal_cnt = 0
+
+    ERR_KEYWORD = ["not present", "We do not have the information you requested"]
 
     for cnt, t_set in enumerate(json_data):
 
-        exist_not_present = False
-        for key, value in t_set.items():
-            if "given" in value or "not present" in value:
-                exist_not_present = True
+        exist_error = False
+        for value in t_set.values():
+            if any(keyword in value for keyword in ERR_KEYWORD):
+                exist_error = True
+                abnormal_cnt += 1
                 break
 
-        if not exist_not_present:
+        if not exist_error:
             modified_json_data.append(t_set)
 
-    return modified_json_data, exist_not_present
+    if abnormal_cnt == 0:
+        exist_error = False
+    else:
+        exist_error = True
+
+    print(f" >>>>>>>>>>>>>>>> SKIP Test Set: {abnormal_cnt}")
+    return modified_json_data, exist_error
 
 
-def X_get_markdown_files(source_dir):
-    dir_ = source_dir
-    loader = DirectoryLoader(dir_, glob="**/*.md", loader_cls=UnstructuredMarkdownLoader)
-    documents = loader.load()
-    print("number of doc: ", len(documents))
-    return documents
+

@@ -25,8 +25,8 @@ class Creating_Contexts_Answer_thread(QThread):
             if not self.running:
                 break
 
-            response = self.tg.answer_question(obj["question"])
-            obj.update({"contexts": response["list"], "answer": response["response"]})
+            response = self.tg.answer_question(obj["eval_sample"]["user_input"])
+            obj["eval_sample"].update({"retrieved_contexts": response["list"], "response": response["response"]})
 
             self.progress_status.emit(i + 1, len(self.json_data))
 
@@ -52,7 +52,7 @@ def save_context_answer_to_file(result_data):
     )
 
     if file_path is None:
-        return False
+        return False, False
 
     modified_json_data, not_present = check_the_answer_is_not_present(data_=result_data)
     ret = json_dump_f(file_path=file_path, data=modified_json_data)
@@ -115,7 +115,7 @@ class generator_context_answer_class:
 
                     if not_present:
                         _box.setText(
-                            "[Warning] Evaluation set saved successfully.\nBut 'The answer to given is not present' so Remove it")
+                            f"[Warning] Evaluation set saved successfully.\nBut 'The answer to given is not present' so Remove it")
                     else:
                         _box.setText("Evaluation set saved successfully.\n")
 

@@ -1,1 +1,1 @@
-Chatgpt Performance Matrix 2.0.0_20241016 (made by tom.shin)
+Chatgpt Performance Matrix 3.0.0_20241030 (Ragas 0.2.1 or later) (made by tom.shin) 

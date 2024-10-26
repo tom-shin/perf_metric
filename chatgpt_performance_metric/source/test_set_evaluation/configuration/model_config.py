@@ -4,21 +4,14 @@ import math
 
 from sentence_transformers import SentenceTransformer, util
 from ragas import evaluate
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from datasets import Dataset
+from langchain_openai import ChatOpenAI
 
-from ragas.metrics import (
-    faithfulness,
-    answer_relevancy,
-    context_precision,
-    context_recall,
-    context_entity_recall,
-    # context_relevancy,
-    answer_similarity,
-    answer_correctness    
-)
+# ragas version 0.2.x 이상
+from ragas import EvaluationDataset, SingleTurnSample
+from ragas.metrics import Faithfulness, LLMContextRecall, FactualCorrectness, SemanticSimilarity
+
+
 """아래 Models에서 평가하고자 하는 모델만 enable 그리로 main.py 실행"""
-
 Models = {
     # "all-roberta-large-v1": None,
     # "all-MiniLM-L12-v2": None,
@@ -28,15 +21,10 @@ Models = {
     # "distiluse-base-multilingual-cased-v2": None,
     # "paraphrase-mpnet-base-v2": None,
     # "all-distilroberta-v1": None,
-
     "Ragas(open-ai): Faithfulness": None,
-    # "Ragas(open-ai): Answer Relevancy": None,
-    # "Ragas(open-ai): Context Precision": None,
-    "Ragas(open-ai): Context Recall": None,
-    # "Ragas(open-ai): Context Entity Recall": None,
-    # "Ragas(open-ai): Context Relevancy": None,
-    # "Ragas(open-ai): Answer Similarity": None,
-    "Ragas(open-ai): Answer Correctness": None
+    "Ragas(open-ai): LLMContextRecall": None,
+    "Ragas(open-ai): FactualCorrectness": None,
+    "Ragas(open-ai): SemanticSimilarity": None
 }
 
 """ 아래 부터는 수정 하지 말 것 """
@@ -50,23 +38,18 @@ Rag_Models_Metric = {
     "paraphrase-mpnet-base-v2": "paraphrase-mpnet-base-v2",
     "all-distilroberta-v1": "all-distilroberta-v1",
 
-    "Ragas(open-ai): Faithfulness": faithfulness,
-    "Ragas(open-ai): Answer Relevancy": answer_relevancy,
-    "Ragas(open-ai): Context Precision": context_precision,
-    "Ragas(open-ai): Context Recall": context_recall,
-    "Ragas(open-ai): Context Entity Recall": context_entity_recall,
-    # "Ragas(open-ai): Context Relevancy": context_relevancy,
-    "Ragas(open-ai): Answer Similarity": answer_similarity,
-    "Ragas(open-ai): Answer Correctness": answer_correctness
+    "Ragas(open-ai): Faithfulness": Faithfulness(),
+    "Ragas(open-ai): LLMContextRecall": LLMContextRecall(),
+    "Ragas(open-ai): FactualCorrectness": FactualCorrectness(),
+    "Ragas(open-ai): SemanticSimilarity": SemanticSimilarity()
 }
 
 # method for metric definition
 parent_directory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def cal_iqr_mean_score(cal_data):
-    if len(cal_data) == 0:   # 모두 non이라는 것임.
-        return 0, 0, 0
+def cal_iqr_mean_score(raw_cal_data):
+    cal_data = [x for x in raw_cal_data if not math.isnan(x)]
 
     # 평균 계산
     mean_score = np.mean(cal_data)
@@ -93,8 +76,8 @@ def common_llm_model(model, scenario_data, max_iter, thread):
     local_model_dir = os.path.join(parent_directory, "local_models", model)
     c_model = SentenceTransformer(local_model_dir)
     # 문장 임베딩 생성
-    embedding1 = c_model.encode(scenario_data["answer"], convert_to_tensor=True)
-    embedding2 = c_model.encode(scenario_data["ground_truth"], convert_to_tensor=True)
+    embedding1 = c_model.encode(scenario_data["response"], convert_to_tensor=True)
+    embedding2 = c_model.encode(scenario_data["reference"], convert_to_tensor=True)
 
     cal_data = []
     print(f"[{model}]")
@@ -106,14 +89,17 @@ def common_llm_model(model, scenario_data, max_iter, thread):
 
         cosine_score = util.pytorch_cos_sim(embedding1, embedding2)  # 코사인 유사도 계산
         temp = float(cosine_score.item())
-        if isinstance(temp, (int, float)) and not math.isnan(temp):
-            cal_data.append(temp)
+
+        cal_data.append(temp)
         print(i + 1, "th: ", temp)
 
     if not thread.working:
         return float(-999)
 
-    mean_score, iqr_median_score, iqr_mean_score = cal_iqr_mean_score(cal_data=cal_data)
+    if all(math.isnan(x) for x in cal_data):  # all float(nan)
+        return -998
+
+    mean_score, iqr_median_score, iqr_mean_score = cal_iqr_mean_score(raw_cal_data=cal_data)
     print(
         f"IQR(Median): {round(iqr_median_score, 3)}\nIQR(Mean): {round(iqr_mean_score, 3)}\nMean: {round(mean_score, 3)}")
 
@@ -121,7 +107,7 @@ def common_llm_model(model, scenario_data, max_iter, thread):
         print("><==========================")
     else:
         print("==========================")
-    
+
     # print("<", thread.method, ">")
 
     if thread.method == "IQR-MEDIAN":
@@ -133,14 +119,15 @@ def common_llm_model(model, scenario_data, max_iter, thread):
 
 
 def common_ragas_metric_model(model, scenario_data, max_iter, thread):
-    data_samples = {
-        'question': [scenario_data["question"]],
-        'contexts': [scenario_data["contexts"]],
-        'answer': [scenario_data["answer"]],
-        'ground_truth': [scenario_data["ground_truth"]]
-    }
-
-    dataset = Dataset.from_dict(data_samples)
+    sample = SingleTurnSample(
+        user_input=scenario_data["user_input"],
+        retrieved_contexts=scenario_data["retrieved_contexts"],
+        response=scenario_data["response"],
+        reference=scenario_data["reference"],
+        reference_contexts=scenario_data["reference_contexts"]
+    )
+    data_samples = [sample]
+    eval_dataset = EvaluationDataset(samples=data_samples)
 
     cal_data = []
     print(f"[{model}]")
@@ -161,20 +148,18 @@ def common_ragas_metric_model(model, scenario_data, max_iter, thread):
             # print("evaluation model", thread.openai_model)
             llm = ChatOpenAI(model="gpt-3.5-turbo-16k")
 
-        # embeddings = OpenAIEmbeddings()
-        # score = evaluate(dataset, llm=llm, embeddings=embeddings, metrics=[Rag_Models_Metric[model]])
-
-        score = evaluate(dataset, llm=llm, metrics=[Rag_Models_Metric[model]], raise_exceptions=False)
-        temp = float(score[str(Rag_Models_Metric[model].name)])
-
-        if isinstance(temp, (int, float)) and not math.isnan(temp):
-            cal_data.append(temp)
-        print(i + 1, "th: ", temp)
+        score = evaluate(eval_dataset, llm=llm, metrics=[Rag_Models_Metric[model]], raise_exceptions=False)
+        extract_score = float(score[Rag_Models_Metric[model].name][0])
+        cal_data.append(extract_score)
+        print(i + 1, "th: ", score)
 
     if not thread.working:
         return float(-999)
 
-    mean_score, iqr_median_score, iqr_mean_score = cal_iqr_mean_score(cal_data=cal_data)
+    if all(math.isnan(x) for x in cal_data):  # all float(nan)
+        return -998
+
+    mean_score, iqr_median_score, iqr_mean_score = cal_iqr_mean_score(raw_cal_data=cal_data)
     print(
         f"IQR(Median): {round(iqr_median_score, 3)}\nIQR(Mean): {round(iqr_mean_score, 3)}\nMean: {round(mean_score, 3)}")
 

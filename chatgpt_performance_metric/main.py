@@ -257,9 +257,10 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
     def start_question_ground_truth_gen(self):
         # Fetch all .md files from the current directory and subdirectories
         test_size_ = int(self.mainFrame_ui.n_lineEdit.text())
-        simple_ = float(self.mainFrame_ui.simplelineEdit.text())
-        reasoning_ = float(self.mainFrame_ui.reasonlineEdit.text())
-        multi_context_ = float(self.mainFrame_ui.multilineEdit.text())
+        SpecificQuerySynthesizer_cnt = float(self.mainFrame_ui.lineEdit_SpecificQuerySynthesizer.text())
+        ComparativeAbstractQuerySynthe_cnt = float(
+            self.mainFrame_ui.lineEdit_ComparativeAbstractQuerySynthesizer.text())
+        AbstractQuerySynthesizer_cnt = float(self.mainFrame_ui.lineEdit_AbstractQuerySynthesizer.text())
 
         if self.mainFrame_ui.creation_gpt4o_radioButton.isChecked():
             model = "gpt-4o"
@@ -272,18 +273,20 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             print("creation model", model)
 
         # 실행할 파이썬 파일 경로와 전달할 인자들
-        script_path = os.path.join(BASE_DIR, "source", "test_set_creation", "evaluation_set_question_ground_truth_creator.py")
+        script_path = os.path.join(BASE_DIR, "source", "test_set_creation",
+                                   "evaluation_set_question_ground_truth_creator.py")
 
         # 다른 변수들도 문자열로 변환
         source_dir = str(self.directory)
         test_size_str = str(test_size_)
-        simple_str = str(simple_)
-        reasoning_str = str(reasoning_)
-        multi_context_str = str(multi_context_)
+        SpecificQuerySynthesizer_str = str(SpecificQuerySynthesizer_cnt)
+        ComparativeAbstractQuerySynthesizer_str = str(ComparativeAbstractQuerySynthe_cnt)
+        AbstractQuerySynthesizer_str = str(AbstractQuerySynthesizer_cnt)
         model_str = str(model)
 
         # 인자로 넘길 리스트 (모두 문자열이어야 함)
-        arguments = [script_path, source_dir, test_size_str, simple_str, reasoning_str, multi_context_str, model_str,
+        arguments = [script_path, source_dir, test_size_str, SpecificQuerySynthesizer_str,
+                     ComparativeAbstractQuerySynthesizer_str, AbstractQuerySynthesizer_str, model_str,
                      self.get_OpenAIKey()]
 
         # QProcess로 파이썬 스크립트를 인자와 함께 실행
@@ -362,8 +365,8 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
 def is_admin():
     try:
-        return True
-        # return ctypes.windll.shell32.IsUserAnAdmin()
+        # return True
+        return ctypes.windll.shell32.IsUserAnAdmin()
     except:
         return False
 

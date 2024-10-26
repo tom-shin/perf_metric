@@ -27,19 +27,25 @@ class Load_test_scenario_thread(QtCore.QThread):
         self.send_max_scenario_cnt_sig.emit(len(scenarios) + 1)
 
         for idx, scenario in enumerate(scenarios):
-            question_data = scenario["question"]
+            question_data = scenario["eval_sample"]["user_input"]
 
-            modified_context = [element + "<context_split>\n" for element in scenario["contexts"]]
+            modified_context = [element + "<context_split>\n" for element in
+                                scenario["eval_sample"]["retrieved_contexts"]]
             contexts = modified_context
 
-            answer = scenario["answer"]
-            ground_truth = scenario["ground_truth"]
+            answer = scenario["eval_sample"]["response"]
+
+            ground_truth = scenario["eval_sample"]["reference"]
+            ref_modified_context = [element + "<context_split>\n" for element in
+                                    scenario["eval_sample"]["reference_contexts"]]
+            ref_contexts = ref_modified_context
 
             scenario_data = {
-                "question": question_data,
-                "contexts": contexts,
-                "answer": answer,
-                "ground_truth": ground_truth,
+                "user_input": question_data,
+                "retrieved_contexts": contexts,
+                "response": answer,
+                "reference": ground_truth,
+                "reference_contexts": ref_contexts,
                 "idx": idx
             }
 
@@ -104,10 +110,13 @@ class Metric_Evaluation_Thread(QThread):
 
             if widget_ui.scenario_checkBox.isChecked():
                 scenario_data = {
-                    "question": widget_ui.question_plainTextEdit.toPlainText(),
-                    "contexts": widget_ui.contexts_plainTextEdit.toPlainText().split("<context_split>\n")[:-1],
-                    "answer": widget_ui.answer_plainTextEdit.toPlainText(),
-                    "ground_truth": widget_ui.truth_plainTextEdit.toPlainText()
+                    "user_input": widget_ui.question_plainTextEdit.toPlainText(),
+                    "retrieved_contexts": widget_ui.contexts_plainTextEdit.toPlainText().split("<context_split>\n")[
+                                          :-1],
+                    "response": widget_ui.answer_plainTextEdit.toPlainText(),
+                    "reference": widget_ui.truth_plainTextEdit.toPlainText(),
+                    "reference_contexts": widget_ui.ref_contexts_plainTextEdit.toPlainText().split("<context_split>\n")[
+                                         :-1]
                 }
                 # print("===============================================")
                 # print(scenario_data)
@@ -202,10 +211,11 @@ class performance_metric_evaluator_class(QObject):
         widget_ui.setupUi(widget_instance)
 
         widget_ui.scenario_checkBox.setText(f"scenario_{idx + 1}")
-        widget_ui.question_plainTextEdit.setPlainText(scenario_data["question"])
-        widget_ui.contexts_plainTextEdit.setPlainText("".join(scenario_data["contexts"]))
-        widget_ui.answer_plainTextEdit.setPlainText(scenario_data["answer"])
-        widget_ui.truth_plainTextEdit.setPlainText(scenario_data["ground_truth"])
+        widget_ui.question_plainTextEdit.setPlainText(scenario_data["user_input"])
+        widget_ui.contexts_plainTextEdit.setPlainText("".join(scenario_data["retrieved_contexts"]))
+        widget_ui.answer_plainTextEdit.setPlainText(scenario_data["response"])
+        widget_ui.truth_plainTextEdit.setPlainText(scenario_data["reference"])
+        widget_ui.ref_contexts_plainTextEdit.setPlainText("".join(scenario_data["reference_contexts"]))
 
         font = QtGui.QFont()
         font.setBold(False)
@@ -296,10 +306,13 @@ class performance_metric_evaluator_class(QObject):
             progress += 1
             self.save_progress.onCountChanged(progress % 99)
 
-            result_out = {"question": widget_ui.question_plainTextEdit.toPlainText(),
-                          "contexts": widget_ui.contexts_plainTextEdit.toPlainText().split("<context_split>\n")[:-1],
-                          "ground_truth": widget_ui.truth_plainTextEdit.toPlainText(),
-                          "answer": widget_ui.answer_plainTextEdit.toPlainText(),
+            result_out = {"user_input": widget_ui.question_plainTextEdit.toPlainText(),
+                          "retrieved_contexts": widget_ui.contexts_plainTextEdit.toPlainText().split(
+                              "<context_split>\n")[:-1],
+                          "reference": widget_ui.truth_plainTextEdit.toPlainText(),
+                          "response": widget_ui.answer_plainTextEdit.toPlainText(),
+                          "reference_contexts": widget_ui.ref_contexts_plainTextEdit.toPlainText().split(
+                              "<context_split>\n")[:-1],
                           "score": ""
                           }
 
@@ -431,6 +444,11 @@ class performance_metric_evaluator_class(QObject):
             score_line = widget_ui_instance.findChild(QtWidgets.QLineEdit, f"score_line_{idx}_{cnt}")
 
             if score_line:
+                if score == -999:
+                    score = "thread terminated"
+                elif score == -998:
+                    score = "all NaN"
+
                 score_line.setText(score)
 
             # 프로그래스 바 업데이트
@@ -494,6 +512,7 @@ class performance_metric_evaluator_class(QObject):
         else:
             openai_model = "gpt-3.5-turbo-16k"
 
+        cal_method = ""
         if self.parent.mainFrame_ui.iqr_median_radioButton.isChecked():
             cal_method = "IQR-MEDIAN"
         elif self.parent.mainFrame_ui.iqr_mean_radioButton.isChecked():

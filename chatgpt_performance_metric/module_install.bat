@@ -4,7 +4,7 @@ pip install PyQt5
 pip install --upgrade PyQt5 PyQt5-sip
 pip install pyqt5-tools
 pip install easygui
-pip install ragas==0.1.10
+pip install ragas==0.2.1
 pip install openai
 pip install langchain_openai
 pip install unstructured==0.15.10

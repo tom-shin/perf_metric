@@ -4,9 +4,12 @@ import easygui
 
 from PyQt5 import QtWidgets, QtCore
 
-from ragas.testset.generator import TestsetGenerator
-from ragas.testset.evolutions import simple, reasoning, multi_context
+from ragas.testset import TestsetGenerator
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from ragas.testset.graph import KnowledgeGraph
+from ragas.testset.transforms import default_transforms, apply_transforms
+from ragas.testset.graph import Node, NodeType
+from ragas.testset.synthesizers import default_query_distribution
 
 ######################################################################
 # 아래 매우 중요
@@ -56,15 +59,18 @@ def save_question_groundtruth_to_file(test_set):
     df = test_set.to_pandas()
 
     if not df.empty:
-        json_data = df[['question', 'contexts', 'ground_truth', 'evolution_type', 'metadata']].to_dict(
-            orient='records')
+        json_data = df.to_dict(orient='records')
 
         # json_data가 주어진 데이터라고 가정
-        for data_ in json_data:
+        for cnt, data_ in enumerate(json_data):
             for key, val in data_.items():
-                if key == "contexts":
-                    data_["contexts"] = []  # contexts만 빈 리스트로 초기화
-            data_["answer"] = ""
+                if "eval" in key:
+                    for key2, val2 in val.items():
+                        if key2 == "retrieved_contexts":
+                            json_data[cnt][key][key2] = []
+                            continue
+                        if val2 is None:
+                            json_data[cnt][key][key2] = ""
 
         try:
             modified_json_data, not_present = check_the_answer_is_not_present(data_=json_data)
@@ -74,10 +80,10 @@ def save_question_groundtruth_to_file(test_set):
 
         except Exception as e:
             print(f"Error saving the file: {e}")
-            return False
+            return False, False
 
 
-def complete_creating_question_groundTruth(test_set):
+def complete_creating_question_groundTruth(test_set, query_synthesize=None):
     save_successful = False
 
     # 저장이 성공할 때까지 또는 사용자가 저장을 거부할 때까지 반복
@@ -102,7 +108,7 @@ def complete_creating_question_groundTruth(test_set):
 
                 if not_present:
                     _box.setText(
-                        "[Warning] Test set saved successfully.\nBut 'The answer to given is not present' so Remove it")
+                        f"[Warning] Test set saved successfully.\nBut 'The answer to given is not present' so Remove it")
                 else:
                     _box.setText("Test set saved successfully.\n")
 
@@ -128,23 +134,62 @@ def complete_creating_question_groundTruth(test_set):
             break
 
 
-def main(source_dir, test_size, simple_ratio, reasoning_ratio, multi_complex_ratio, model):
+def main(source_dir, test_size, query_synthesize, model):
     # QApplication 인스턴스를 먼저 생성
     app = QtWidgets.QApplication(sys.argv)
 
-    generator_llm = ChatOpenAI(model=model)
-    critic_llm = ChatOpenAI(model="gpt-4o")
-    embeddings = OpenAIEmbeddings()
-    generator = TestsetGenerator.from_langchain(
-        generator_llm, critic_llm, embeddings
-    )
-
     load_data = get_markdown_files(source_dir=source_dir)
+    # loader = DirectoryLoader(source_dir, glob="**/*.md")
+    # load_data = loader.load()
+
+    kg = KnowledgeGraph()
+    for doc in load_data:
+        kg.nodes.append(
+            Node(
+                type=NodeType.DOCUMENT,
+                properties={"page_content": doc.page_content, "document_metadata": doc.metadata}
+            )
+        )
+
+    trans = default_transforms()
+    apply_transforms(kg, trans)
+
+    cwd = os.path.join(os.getcwd(), 'knowledge_graph.json')
+    kg.save(cwd)
+    loaded_kg = KnowledgeGraph.load(cwd)
+
+    from ragas.embeddings import LangchainEmbeddingsWrapper
+    from ragas.llms import LangchainLLMWrapper
+
+    generator_llm = LangchainLLMWrapper(ChatOpenAI(model=model))
+    generator_embeddings = LangchainEmbeddingsWrapper(OpenAIEmbeddings())
+    transformer_llm = generator_llm
+    embedding_model = generator_embeddings
+
+    generator = TestsetGenerator(llm=generator_llm, knowledge_graph=loaded_kg)
+
+    query_distribution = default_query_distribution(generator_llm)
+
+    query_synthesize = {
+        "AbstractQuerySynthesizer": AbstractQuerySynthesizer_ratio,
+        "ComparativeAbstractQuerySynthesizer": ComparativeAbstractQuerySynthesizer_ratio,
+        "SpecificQuerySynthesizer": SpecificQuerySynthesizer_ratio
+    }
+
+    use_query_ratio = True   # True하면 생성 시 에러 발생 ????....
+    if use_query_ratio:
+        query_distribution[0] = (query_distribution[0][0], float(
+            query_synthesize["AbstractQuerySynthesizer"]))  # Adjust AbstractQuerySynthesizer to 30%
+        query_distribution[1] = (query_distribution[1][0], float(
+            query_synthesize["ComparativeAbstractQuerySynthesizer"]))  # Adjust ComparativeAbstractQuerySynthesizer to 20%
+        query_distribution[2] = (query_distribution[2][0], float(
+            query_synthesize["SpecificQuerySynthesizer"]))  # Adjust SpecificQuerySynthesizer to 50%
 
     if len(load_data) == 0:
         msg_box = QtWidgets.QMessageBox()
         msg_box.setWindowTitle("Check Files...")
-        msg_box.setText("There are no available files (either 0 bytes or unsupported format).\nPlease check the file size and format [*.md, *.txt]\n")
+        msg_box.setText(
+            "There are no available files (either 0 bytes or unsupported format).\nPlease check the file size and format [*.md, *.txt]\n")
         msg_box.setStandardButtons(QtWidgets.QMessageBox.Yes)
         # Always show the message box on top
         msg_box.setWindowFlags(msg_box.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
@@ -153,12 +198,7 @@ def main(source_dir, test_size, simple_ratio, reasoning_ratio, multi_complex_rat
         answer = msg_box.exec_()
 
     else:
-        test_set = generator.generate_with_langchain_docs(load_data,
-                                                          test_size=test_size,
-                                                          distributions={simple: simple_ratio,
-                                                                         reasoning: reasoning_ratio,
-                                                                         multi_context: multi_complex_ratio}
-                                                          )
+        test_set = generator.generate(testset_size=test_size, query_distribution=query_distribution)
 
         complete_creating_question_groundTruth(test_set=test_set)
 
@@ -169,12 +209,12 @@ def main(source_dir, test_size, simple_ratio, reasoning_ratio, multi_complex_rat
 if __name__ == "__main__":
     # OpenAI API 키 설정
 
-    if len(sys.argv) == 8:  # main.py gui parameter 전달 받음
+    if len(sys.argv) >= 4:  # main.py gui parameter 전달 받음
         source_dir = sys.argv[1]
         test_size = int(sys.argv[2])
-        simple_ratio = float(sys.argv[3])
-        reasoning_ratio = float(sys.argv[4])
-        multi_complex_ratio = float(sys.argv[5])
+        SpecificQuerySynthesizer_ratio = float(sys.argv[3])
+        ComparativeAbstractQuerySynthesizer_ratio = float(sys.argv[4])
+        AbstractQuerySynthesizer_ratio = float(sys.argv[5])
         model = sys.argv[6]
         openaikey = sys.argv[7]
         os.environ["OPENAI_API_KEY"] = openaikey
@@ -182,15 +222,19 @@ if __name__ == "__main__":
     else:
         os.environ["OPENAI_API_KEY"] = ""
         # main.py의 gui 에서 실행한 경우가 아니고 단독으로 test_set_Creator.py를 실행한 경우
-        source_dir = rf"C:\ai_studio_2.0_markdown_documentation"
-        test_size = 10
-        simple_ratio = 0.9
-        reasoning_ratio = 0.1
-        multi_complex_ratio = 0.0
-        model = "gpt-4o"
+        source_dir = rf"C:\Work\tom\python_project\Testset_Generation_Evaluation\perf_metric\chatgpt_performance_metric\documents\exynos-ai-studio-docs-main_240924"
+        test_size = 5
+        SpecificQuerySynthesizer_ratio = 0.7
+        ComparativeAbstractQuerySynthesizer_ratio = 0.2
+        AbstractQuerySynthesizer_ratio = 0.1
+        model = "gpt-4o-mini"
         print("given from test_set_creator.py")
 
+    query_synthesize = {
+        "AbstractQuerySynthesizer": AbstractQuerySynthesizer_ratio,
+        "ComparativeAbstractQuerySynthesizer": ComparativeAbstractQuerySynthesizer_ratio,
+        "SpecificQuerySynthesizer": SpecificQuerySynthesizer_ratio
+    }
+
     # main 함수 실행
-    main(source_dir=source_dir, test_size=test_size, simple_ratio=simple_ratio, reasoning_ratio=reasoning_ratio,
-         multi_complex_ratio=multi_complex_ratio,
-         model=model)
+    main(source_dir=source_dir, test_size=test_size, query_synthesize=query_synthesize, model=model)
