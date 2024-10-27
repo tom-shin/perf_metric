@@ -319,19 +319,37 @@ def load_document(base_dir):
 
 
 def check_the_answer_is_not_present(data_=None):
+    # return data_, False   # 아래 check skip하고다 할 때
+
     json_data = data_
     modified_json_data = []
     abnormal_cnt = 0
 
     ERR_KEYWORD = ["not present", "We do not have the information you requested"]
 
-    for cnt, t_set in enumerate(json_data):
+    for cnt, t_set in enumerate(json_data):    # json data :eval, query type 모두 포함 되어 있음.
 
         exist_error = False
         for value in t_set.values():
-            if any(keyword in value for keyword in ERR_KEYWORD):
-                exist_error = True
-                abnormal_cnt += 1
+            if type(value) is str:
+                continue
+
+            for compare_s in value.values():
+
+                if type(compare_s) is str:
+                    if any(keyword in value for keyword in ERR_KEYWORD):
+                        exist_error = True
+                        abnormal_cnt += 1
+                        break
+                elif type(compare_s) is list:
+                    for sub_ in compare_s:
+                        if any(keyword in sub_ for keyword in ERR_KEYWORD):
+                            exist_error = True
+                            abnormal_cnt += 1
+                            break
+                if exist_error:
+                    break
+            if exist_error:
                 break
 
         if not exist_error:
