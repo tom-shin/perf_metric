@@ -322,7 +322,7 @@ class performance_metric_evaluator_class(QObject):
                 if score_line and score_line.text() != "":
 
                     if "ragas" in model.lower():
-                        score_dict[Rag_Models_Metric[model].name] = float(score_line.text())
+                        score_dict[model.split(":")[-1]] = float(score_line.text())
                     else:
                         score_dict[Rag_Models_Metric[model]] = float(score_line.text())
 

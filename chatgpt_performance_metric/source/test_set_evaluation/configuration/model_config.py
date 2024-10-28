@@ -4,12 +4,14 @@ import math
 
 from sentence_transformers import SentenceTransformer, util
 from ragas import evaluate
-from langchain_openai import ChatOpenAI
 
 # ragas version 0.2.x 이상
 from ragas import EvaluationDataset, SingleTurnSample
 from ragas.metrics import Faithfulness, LLMContextRecall, FactualCorrectness, SemanticSimilarity
-
+from ragas.llms import LangchainLLMWrapper
+from ragas.embeddings import LangchainEmbeddingsWrapper
+from langchain_openai import ChatOpenAI
+from langchain_openai import OpenAIEmbeddings
 
 """아래 Models에서 평가하고자 하는 모델만 enable 그리로 main.py 실행"""
 Models = {
@@ -38,10 +40,10 @@ Rag_Models_Metric = {
     "paraphrase-mpnet-base-v2": "paraphrase-mpnet-base-v2",
     "all-distilroberta-v1": "all-distilroberta-v1",
 
-    "Ragas(open-ai): Faithfulness": Faithfulness(),
-    "Ragas(open-ai): LLMContextRecall": LLMContextRecall(),
-    "Ragas(open-ai): FactualCorrectness": FactualCorrectness(),
-    "Ragas(open-ai): SemanticSimilarity": SemanticSimilarity()
+    "Ragas(open-ai): Faithfulness": lambda llm: Faithfulness(llm=llm),
+    "Ragas(open-ai): LLMContextRecall": lambda llm: LLMContextRecall(llm=llm),
+    "Ragas(open-ai): FactualCorrectness": lambda llm: FactualCorrectness(llm=llm),
+    "Ragas(open-ai): SemanticSimilarity": lambda embeddings: SemanticSimilarity(embeddings=embeddings)
 }
 
 # method for metric definition
@@ -131,25 +133,29 @@ def common_ragas_metric_model(model, scenario_data, max_iter, thread):
 
     cal_data = []
     print(f"[{model}]")
+
+    use_legacy = True
     for i in range(max_iter):
 
         if not thread.working:
             print("쓰레드 작업 중지됨")
             break
 
-        # print("evaluation model", thread.openai_model)
-        if "gpt-4o" == thread.openai_model:
-            # print("evaluation model", thread.openai_model)
-            llm = ChatOpenAI(model="gpt-4o")
-        elif "gpt-4o-mini" == thread.openai_model:
-            # print("evaluation model", thread.openai_model)
-            llm = ChatOpenAI(model="gpt-4o-mini")
-        else:
-            # print("evaluation model", thread.openai_model)
-            llm = ChatOpenAI(model="gpt-3.5-turbo-16k")
+        evaluator_llm = LangchainLLMWrapper(ChatOpenAI(model=thread.openai_model))
+        evaluator_embeddings = LangchainEmbeddingsWrapper(OpenAIEmbeddings())
 
-        score = evaluate(eval_dataset, llm=llm, metrics=[Rag_Models_Metric[model]], raise_exceptions=False)
-        extract_score = float(score[Rag_Models_Metric[model].name][0])
+        if "SemanticSimilarity" in model:
+            metrics = [
+                Rag_Models_Metric[model](embeddings=evaluator_embeddings)
+            ]
+        else:
+            metrics = [
+                Rag_Models_Metric[model](llm=evaluator_llm)
+            ]
+
+        score = evaluate(dataset=eval_dataset, metrics=metrics)
+        extract_score = float(next(iter(score.scores[0].values())))
+
         cal_data.append(extract_score)
         print(i + 1, "th: ", score)
 
