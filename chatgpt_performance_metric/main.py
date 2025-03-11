@@ -364,11 +364,13 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
 
 def is_admin():
-    try:
-        # return True
-        return ctypes.windll.shell32.IsUserAnAdmin()
-    except:
-        return False
+    return True
+
+    # try:
+    #     # return True
+    #     return ctypes.windll.shell32.IsUserAnAdmin()
+    # except Exception as e:
+    #     return False
 
 
 if __name__ == "__main__":

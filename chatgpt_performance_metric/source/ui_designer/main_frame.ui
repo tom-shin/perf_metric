@@ -334,7 +334,7 @@
                       </font>
                      </property>
                      <property name="text">
-                      <string>0.2</string>
+                      <string>0.0</string>
                      </property>
                     </widget>
                    </item>
@@ -360,7 +360,7 @@
                       </font>
                      </property>
                      <property name="text">
-                      <string>0.7</string>
+                      <string>1.0</string>
                      </property>
                     </widget>
                    </item>
@@ -373,7 +373,7 @@
                       </font>
                      </property>
                      <property name="text">
-                      <string>0.1</string>
+                      <string>0.0</string>
                      </property>
                     </widget>
                    </item>
@@ -386,7 +386,7 @@
                       </font>
                      </property>
                      <property name="text">
-                      <string>SpecificQuerySynthesizer</string>
+                      <string>SingleHopSpecificQuerySynthesizer</string>
                      </property>
                     </widget>
                    </item>
@@ -399,7 +399,7 @@
                       </font>
                      </property>
                      <property name="text">
-                      <string>ComparativeAbstractQuerySynthesizer</string>
+                      <string>MultiHopAbstractQuerySynthesizer</string>
                      </property>
                     </widget>
                    </item>
@@ -412,7 +412,7 @@
                       </font>
                      </property>
                      <property name="text">
-                      <string>AbstractQuerySynthesizer</string>
+                      <string>MultiHopSpecificQuerySynthesizer</string>
                      </property>
                     </widget>
                    </item>
@@ -756,8 +756,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>886</width>
-                   <height>299</height>
+                   <width>944</width>
+                   <height>295</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_11">
@@ -905,7 +905,7 @@
      <x>0</x>
      <y>0</y>
      <width>1214</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

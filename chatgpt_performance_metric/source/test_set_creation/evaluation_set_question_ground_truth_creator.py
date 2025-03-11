@@ -10,6 +10,15 @@ from ragas.testset.graph import KnowledgeGraph
 from ragas.testset.transforms import default_transforms, apply_transforms
 from ragas.testset.graph import Node, NodeType
 from ragas.testset.synthesizers import default_query_distribution
+from ragas.embeddings import LangchainEmbeddingsWrapper
+from ragas.llms import LangchainLLMWrapper
+from ragas.testset.synthesizers.single_hop.specific import (
+    SingleHopSpecificQuerySynthesizer,
+)
+from ragas.testset.synthesizers.multi_hop import (
+    MultiHopAbstractQuerySynthesizer,
+    MultiHopSpecificQuerySynthesizer,
+)
 
 ######################################################################
 # 아래 매우 중요
@@ -74,8 +83,12 @@ def save_question_groundtruth_to_file(test_set):
 
         try:
             modified_json_data, not_present = check_the_answer_is_not_present(data_=json_data)
-
             ret = json_dump_f(file_path=file_path, data=modified_json_data)
+
+            # CSV 저장
+            csv_file_path = file_path.replace('.json', '.csv')+".csv"  # JSON 파일명을 기반으로 CSV 파일명 생성
+            df.to_csv(csv_file_path, index=False, encoding='utf-8-sig')  # CSV 저장
+
             return ret, not_present
 
         except Exception as e:
@@ -138,6 +151,11 @@ def main(source_dir, test_size, query_synthesize, model):
     # QApplication 인스턴스를 먼저 생성
     app = QtWidgets.QApplication(sys.argv)
 
+    generator_llm = LangchainLLMWrapper(ChatOpenAI(model=model))
+    generator_embeddings = LangchainEmbeddingsWrapper(OpenAIEmbeddings())
+    transformer_llm = generator_llm
+    embedding_model = generator_embeddings
+
     load_data = get_markdown_files(source_dir=source_dir)
     # loader = DirectoryLoader(source_dir, glob="**/*.md")
     # load_data = loader.load()
@@ -151,39 +169,23 @@ def main(source_dir, test_size, query_synthesize, model):
             )
         )
 
-    trans = default_transforms()
+    trans = default_transforms(documents=load_data, llm=transformer_llm, embedding_model=embedding_model)
     apply_transforms(kg, trans)
 
-    cwd = os.path.join(os.getcwd(), 'knowledge_graph.json')
-    kg.save(cwd)
-    loaded_kg = KnowledgeGraph.load(cwd)
+    # cwd = os.path.join(os.getcwd(), 'knowledge_graph.json')
+    # kg.save(cwd)
+    # loaded_kg = KnowledgeGraph.load(cwd)
 
-    from ragas.embeddings import LangchainEmbeddingsWrapper
-    from ragas.llms import LangchainLLMWrapper
+    generator = TestsetGenerator(llm=generator_llm, embedding_model=embedding_model, knowledge_graph=kg)
 
-    generator_llm = LangchainLLMWrapper(ChatOpenAI(model=model))
-    generator_embeddings = LangchainEmbeddingsWrapper(OpenAIEmbeddings())
-    transformer_llm = generator_llm
-    embedding_model = generator_embeddings
+    # query_distribution = default_query_distribution(generator_llm)
+    # print(query_distribution)
 
-    generator = TestsetGenerator(llm=generator_llm, knowledge_graph=loaded_kg)
-
-    query_distribution = default_query_distribution(generator_llm)
-
-    query_synthesize = {
-        "AbstractQuerySynthesizer": AbstractQuerySynthesizer_ratio,
-        "ComparativeAbstractQuerySynthesizer": ComparativeAbstractQuerySynthesizer_ratio,
-        "SpecificQuerySynthesizer": SpecificQuerySynthesizer_ratio
-    }
-
-    use_query_ratio = True   # True하면 생성 시 에러 발생 ????....
-    if use_query_ratio:
-        query_distribution[0] = (query_distribution[0][0], float(
-            query_synthesize["AbstractQuerySynthesizer"]))  # Adjust AbstractQuerySynthesizer to 30%
-        query_distribution[1] = (query_distribution[1][0], float(
-            query_synthesize["ComparativeAbstractQuerySynthesizer"]))  # Adjust ComparativeAbstractQuerySynthesizer to 20%
-        query_distribution[2] = (query_distribution[2][0], float(
-            query_synthesize["SpecificQuerySynthesizer"]))  # Adjust SpecificQuerySynthesizer to 50%
+    query_distribution = [
+        (SingleHopSpecificQuerySynthesizer(llm=generator_llm), query_synthesize["SingleHopSpecificQuerySynthesizer"]),
+        (MultiHopAbstractQuerySynthesizer(llm=generator_llm), query_synthesize["MultiHopAbstractQuerySynthesizer"]),
+        (MultiHopSpecificQuerySynthesizer(llm=generator_llm), query_synthesize["MultiHopSpecificQuerySynthesizer"]),
+    ]
 
     if len(load_data) == 0:
         msg_box = QtWidgets.QMessageBox()
@@ -220,20 +222,20 @@ if __name__ == "__main__":
         os.environ["OPENAI_API_KEY"] = openaikey
         print("given from main.py")
     else:
-        os.environ["OPENAI_API_KEY"] = ""
+        # os.environ["OPENAI_API_KEY"] = ""
         # main.py의 gui 에서 실행한 경우가 아니고 단독으로 test_set_Creator.py를 실행한 경우
-        source_dir = rf"C:\Work\tom\python_project\Testset_Generation_Evaluation\perf_metric\chatgpt_performance_metric\documents\exynos-ai-studio-docs-main_240924"
-        test_size = 5
-        SpecificQuerySynthesizer_ratio = 0.7
-        ComparativeAbstractQuerySynthesizer_ratio = 0.2
-        AbstractQuerySynthesizer_ratio = 0.1
+        source_dir = rf"C:\Users\User\Downloads\new_doc\ECO25_GENERAL_Doc\documentation"
+        test_size = 2
+        SpecificQuerySynthesizer_ratio = 1.0
+        ComparativeAbstractQuerySynthesizer_ratio = 0.0
+        AbstractQuerySynthesizer_ratio = 0.0
         model = "gpt-4o-mini"
         print("given from test_set_creator.py")
 
     query_synthesize = {
-        "AbstractQuerySynthesizer": AbstractQuerySynthesizer_ratio,
-        "ComparativeAbstractQuerySynthesizer": ComparativeAbstractQuerySynthesizer_ratio,
-        "SpecificQuerySynthesizer": SpecificQuerySynthesizer_ratio
+        "SingleHopSpecificQuerySynthesizer": SpecificQuerySynthesizer_ratio,
+        "MultiHopAbstractQuerySynthesizer": ComparativeAbstractQuerySynthesizer_ratio,
+        "MultiHopSpecificQuerySynthesizer": AbstractQuerySynthesizer_ratio
     }
 
     # main 함수 실행
