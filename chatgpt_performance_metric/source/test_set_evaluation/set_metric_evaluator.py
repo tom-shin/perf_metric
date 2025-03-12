@@ -27,25 +27,20 @@ class Load_test_scenario_thread(QtCore.QThread):
         self.send_max_scenario_cnt_sig.emit(len(scenarios) + 1)
 
         for idx, scenario in enumerate(scenarios):
-            question_data = scenario["eval_sample"]["user_input"]
+            user_input = scenario[0]["user_input"]
 
-            modified_context = [element + "<context_split>\n" for element in
-                                scenario["eval_sample"]["retrieved_contexts"]]
-            contexts = modified_context
+            reference_contexts = [element + "<context_split>\n" for element in scenario[0]["reference_contexts"]]
 
-            answer = scenario["eval_sample"]["response"]
-
-            ground_truth = scenario["eval_sample"]["reference"]
-            ref_modified_context = [element + "<context_split>\n" for element in
-                                    scenario["eval_sample"]["reference_contexts"]]
-            ref_contexts = ref_modified_context
+            reference = scenario[0]["reference"]
 
             scenario_data = {
-                "user_input": question_data,
-                "retrieved_contexts": contexts,
-                "response": answer,
-                "reference": ground_truth,
-                "reference_contexts": ref_contexts,
+                "user_input": user_input,
+
+                "retrieved_contexts": reference_contexts,
+                "response": reference,
+
+                "reference": "ground truth reference",
+                "reference_contexts": "ground truth reference_contexts",
                 "idx": idx
             }
 
@@ -116,7 +111,7 @@ class Metric_Evaluation_Thread(QThread):
                     "response": widget_ui.answer_plainTextEdit.toPlainText(),
                     "reference": widget_ui.truth_plainTextEdit.toPlainText(),
                     "reference_contexts": widget_ui.ref_contexts_plainTextEdit.toPlainText().split("<context_split>\n")[
-                                         :-1]
+                                          :-1]
                 }
                 # print("===============================================")
                 # print(scenario_data)

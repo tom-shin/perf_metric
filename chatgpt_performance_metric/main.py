@@ -106,6 +106,9 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             checkbox.setText(model)
             self.mainFrame_ui.verticalLayout_5.addWidget(checkbox)
 
+        self.mainFrame_ui.tabWidget.setTabEnabled(1, False)
+        self.mainFrame_ui.tabWidget.setTabEnabled(3, False)
+
     def closeEvent(self, event):
         answer = QtWidgets.QMessageBox.question(self,
                                                 "Confirm Exit...",

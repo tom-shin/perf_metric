@@ -185,7 +185,7 @@ class Modal_ProgressDialog(QDialog):  # popup 메뉴가 있으면 뒤 main gui�
         self.radio_state = not self.radio_state
 
 
-def json_dump_f(file_path, data, use_encoding=False):
+def json_dump_f(file_path, data, use_encoding=False, append=False):
     if file_path is None:
         return False
 
@@ -199,8 +199,25 @@ def json_dump_f(file_path, data, use_encoding=False):
     else:
         encoding = "utf-8"
 
-    with open(file_path, "w", encoding=encoding) as f:
-        json.dump(data, f, indent=4, ensure_ascii=False, sort_keys=False)
+    if append:
+        if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+            with open(file_path, "r", encoding="utf-8") as f:
+                existing_data = json.load(f)  # 기존 데이터 로드
+        else:
+            existing_data = []  # 파일이 없거나 비어있으면 빈 리스트로 초기화
+
+        # 새로운 데이터 추가
+        if isinstance(existing_data, list):
+            existing_data.append(data)  # 리스트라면 추가
+        elif isinstance(existing_data, dict):
+            existing_data.update(data)  # 딕셔너리라면 업데이트
+
+        # JSON 파일에 다시 저장 (덮어쓰기)
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(existing_data, f, indent=4, ensure_ascii=False)
+    else:
+        with open(file_path, "w", encoding=encoding) as f:
+            json.dump(data, f, indent=4, ensure_ascii=False, sort_keys=False)
 
     return True
 
@@ -238,7 +255,7 @@ def load_markdown(data_path):
     )
 
     with open(data_path, 'r', encoding=encoding) as file:
-        print(data_path)
+        # print(data_path)
         data_string = file.read()
         documents = markdown_splitter.split_text(data_string)
 
@@ -306,13 +323,24 @@ def load_general(base_dir):
 def load_document(base_dir):
     data = []
     cnt = 0
-    for root, dirs, files in os.walk(base_dir):
-        for file in files:
-            if file.endswith(".md"):
-                file_path = os.path.join(root, file)
-                if os.path.getsize(file_path) > 0:
-                    cnt += 1
-                    data += load_markdown(file_path)
+
+    if os.path.isdir(base_dir):
+        for root, dirs, files in os.walk(base_dir):
+            for file in files:
+                if file.endswith(".md"):
+                    file_path = os.path.join(root, file)
+                    if os.path.getsize(file_path) > 0:
+                        cnt += 1
+                        data += load_markdown(file_path)
+
+    elif os.path.isfile(base_dir):
+        if base_dir.endswith(".md"):
+            if os.path.getsize(base_dir) > 0:
+                cnt += 1
+                data += load_markdown(base_dir)
+
+    else:
+        print("No File")
 
     print(f"the number of md files is : {cnt}")
     return data
