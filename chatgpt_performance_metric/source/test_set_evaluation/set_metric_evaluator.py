@@ -30,17 +30,18 @@ class Load_test_scenario_thread(QtCore.QThread):
             user_input = scenario[0]["user_input"]
 
             reference_contexts = [element + "<context_split>\n" for element in scenario[0]["reference_contexts"]]
-
             reference = scenario[0]["reference"]
+
+            chatbot_response = scenario[0]["chatbot_response"]
 
             scenario_data = {
                 "user_input": user_input,
 
-                "retrieved_contexts": reference_contexts,
-                "response": reference,
+                "reference_contexts": reference_contexts,
+                "reference": reference,
 
-                "reference": "ground truth reference",
-                "reference_contexts": "ground truth reference_contexts",
+                "trex_reference": "response from james",
+                "chatbot_response": chatbot_response,
                 "idx": idx
             }
 
@@ -106,13 +107,13 @@ class Metric_Evaluation_Thread(QThread):
             if widget_ui.scenario_checkBox.isChecked():
                 scenario_data = {
                     "user_input": widget_ui.question_plainTextEdit.toPlainText(),
-                    "retrieved_contexts": widget_ui.contexts_plainTextEdit.toPlainText().split("<context_split>\n")[
+                    "reference_contexts": widget_ui.contexts_plainTextEdit.toPlainText().split("<context_split>\n")[
                                           :-1],
-                    "response": widget_ui.answer_plainTextEdit.toPlainText(),
-                    "reference": widget_ui.truth_plainTextEdit.toPlainText(),
-                    "reference_contexts": widget_ui.ref_contexts_plainTextEdit.toPlainText().split("<context_split>\n")[
-                                          :-1]
+                    "reference": widget_ui.answer_plainTextEdit.toPlainText(),
+                    "trex_reference": widget_ui.truth_plainTextEdit.toPlainText(),
+                    "chatbot_response": widget_ui.ref_contexts_plainTextEdit.toPlainText()
                 }
+
                 # print("===============================================")
                 # print(scenario_data)
                 # print("===============================================")
@@ -207,10 +208,10 @@ class performance_metric_evaluator_class(QObject):
 
         widget_ui.scenario_checkBox.setText(f"scenario_{idx + 1}")
         widget_ui.question_plainTextEdit.setPlainText(scenario_data["user_input"])
-        widget_ui.contexts_plainTextEdit.setPlainText("".join(scenario_data["retrieved_contexts"]))
-        widget_ui.answer_plainTextEdit.setPlainText(scenario_data["response"])
-        widget_ui.truth_plainTextEdit.setPlainText(scenario_data["reference"])
-        widget_ui.ref_contexts_plainTextEdit.setPlainText("".join(scenario_data["reference_contexts"]))
+        widget_ui.contexts_plainTextEdit.setPlainText("".join(scenario_data["reference_contexts"]))
+        widget_ui.answer_plainTextEdit.setPlainText(scenario_data["reference"])
+        widget_ui.truth_plainTextEdit.setPlainText(scenario_data["trex_reference"])
+        widget_ui.ref_contexts_plainTextEdit.setPlainText(scenario_data["chatbot_response"])
 
         font = QtGui.QFont()
         font.setBold(False)
@@ -302,12 +303,11 @@ class performance_metric_evaluator_class(QObject):
             self.save_progress.onCountChanged(progress % 99)
 
             result_out = {"user_input": widget_ui.question_plainTextEdit.toPlainText(),
-                          "retrieved_contexts": widget_ui.contexts_plainTextEdit.toPlainText().split(
+                          "reference_contexts": widget_ui.contexts_plainTextEdit.toPlainText().split(
                               "<context_split>\n")[:-1],
-                          "reference": widget_ui.truth_plainTextEdit.toPlainText(),
-                          "response": widget_ui.answer_plainTextEdit.toPlainText(),
-                          "reference_contexts": widget_ui.ref_contexts_plainTextEdit.toPlainText().split(
-                              "<context_split>\n")[:-1],
+                          "reference": widget_ui.answer_plainTextEdit.toPlainText(),
+                          "trex_reference":  widget_ui.truth_plainTextEdit.toPlainText(),
+                          "chatbot_response": widget_ui.ref_contexts_plainTextEdit.toPlainText(),
                           "score": ""
                           }
 

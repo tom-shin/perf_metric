@@ -217,16 +217,16 @@ def main(source_dir, test_size, query_synthesize, model, append=False):
             answer = msg_box.exec_()
 
         else:
-            print("----------------------------------------------------------------")
-            print(test_size)
-            print(query_distribution)
+            # print("----------------------------------------------------------------")
+            # print(test_size)
+            # print(query_distribution)
 
             test_set = generator.generate(testset_size=test_size, query_distribution=query_distribution)
 
             complete_creating_question_groundTruth(test_set=test_set, append=append, source_dir=source_dir)
 
         # QApplication 종료
-        print(source_dir)
+        # print(source_dir)
         if not append:
             sys.exit(0)
 
@@ -264,6 +264,8 @@ if __name__ == "__main__":
         files = find_files(source_dir, file_extensions)
 
         for idx, file in enumerate(files):
+            print(rf"[{idx+1}/{len(files)}] Generating.... Wait until Finished.   File: {file}")
+
             query_synthesize = {
                 "SingleHopSpecificQuerySynthesizer": SpecificQuerySynthesizer_ratio,
                 "MultiHopAbstractQuerySynthesizer": ComparativeAbstractQuerySynthesizer_ratio,
@@ -271,6 +273,8 @@ if __name__ == "__main__":
             }
 
             main(source_dir=file, test_size=test_size, query_synthesize=query_synthesize, model=model, append=True)
+
+        print("Completed Test Generation..")
 
     else:
         if len(sys.argv) >= 4:  # main.py gui parameter 전달 받음

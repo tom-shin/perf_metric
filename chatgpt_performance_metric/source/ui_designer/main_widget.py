@@ -172,10 +172,10 @@ class Ui_Form(object):
         Form.setWindowTitle(_translate("Form", "Form"))
         self.scenario_checkBox.setText(_translate("Form", "CheckBox"))
         self.questioin_groupBox.setTitle(_translate("Form", "User Input (Question)"))
-        self.contexts_groupBox.setTitle(_translate("Form", "Retrieved Contexts (Contexts)"))
-        self.answer_groupBox.setTitle(_translate("Form", "Response (Answer)"))
-        self.ground_truth_groupBox.setTitle(_translate("Form", "Reference (Ground_Truth)"))
-        self.groupBox.setTitle(_translate("Form", "Reference Contexts"))
+        self.contexts_groupBox.setTitle(_translate("Form", "Reference Contexts"))
+        self.answer_groupBox.setTitle(_translate("Form", "Reference (Answer from OpenAI)"))
+        self.ground_truth_groupBox.setTitle(_translate("Form", "Reference (Answer from Trex Core - James)"))
+        self.groupBox.setTitle(_translate("Form", "Reference (Answer from Chatbot)"))
         self.groupBox_2.setTitle(_translate("Form", "Score"))
 
 

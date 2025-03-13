@@ -316,7 +316,7 @@ def load_general(base_dir):
                     cnt += 1
                     data += load_txt(file_path)
 
-    print(f"the number of txt files is : {cnt}")
+    # print(f"the number of txt files is : {cnt}")
     return data
 
 
@@ -342,7 +342,7 @@ def load_document(base_dir):
     else:
         print("No File")
 
-    print(f"the number of md files is : {cnt}")
+    # print(f"the number of md files is : {cnt}")
     return data
 
 

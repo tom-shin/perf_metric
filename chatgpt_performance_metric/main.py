@@ -1,4 +1,5 @@
 import subprocess
+import time
 import warnings
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -8,6 +9,18 @@ import easygui
 import site
 import shutil
 import ctypes
+import chardet
+import json
+from collections import OrderedDict
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.edge.service import Service
+from selenium.webdriver.edge.options import Options
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 from PyQt5.QtCore import pyqtSignal, QObject, QProcess
 from PyQt5 import QtWidgets, QtCore, QtGui
@@ -24,6 +37,7 @@ pd.set_option('display.max_colwidth', None)  # 각 열의 최대 너비를 제�
 from source.test_set_evaluation.configuration.model_config import *
 from source.test_set_creation.test_set_context_answer_creator import generator_context_answer_class
 from source.test_set_evaluation.set_metric_evaluator import performance_metric_evaluator_class
+from source.test_set_creation.chatbot_execution import ChatBotGenerationThread
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -58,6 +72,8 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
 
+        self.chatbot_instance = None
+        self.edge_driver = None
         self.context_ground = None
         self.directory = None
         self.openaikey = None
@@ -76,14 +92,19 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
         self.evaluation_ctrl = None
 
+        self.chatbot_xpath = {
+            "text_input": "/html/body/div/div/form/div/div/div/textarea[1]",
+            "gpt_answer": "/html/body/div/div/div[2]/div/div/div[ThunderSoft]/div[2]/div/div[1]/div/div"
+        }
+
     def handle_stdout(self):
         output = self.process_ground_truth_ground_truth.readAllStandardOutput().data().decode()
         print(output)
 
     def handle_stderr(self):
         error = self.process_ground_truth_ground_truth.readAllStandardError().data().decode()
-        if len(error) != 0:
-            print(f"Error: {error}")
+        # if len(error) != 0:
+        #     print(f"Error: {error}")
 
     def setupUi(self):
         # Load the main window's UI module
@@ -105,9 +126,6 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             checkbox.setObjectName(f"metric_{model}_{idx}")
             checkbox.setText(model)
             self.mainFrame_ui.verticalLayout_5.addWidget(checkbox)
-
-        self.mainFrame_ui.tabWidget.setTabEnabled(1, False)
-        self.mainFrame_ui.tabWidget.setTabEnabled(3, False)
 
     def closeEvent(self, event):
         answer = QtWidgets.QMessageBox.question(self,
@@ -165,6 +183,10 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.mainFrame_ui.testset_pushButton.clicked.connect(self.open_file_for_generating_contexts_answer_test_set)
         self.mainFrame_ui.vector_env_pushButton.clicked.connect(self.environment_setup)
         self.mainFrame_ui.vector_start_pushButton.clicked.connect(self.context_answer_generation)
+
+        self.mainFrame_ui.questionlistWidget.itemDoubleClicked.connect(self.question_item_double_clicked)
+        self.mainFrame_ui.chatbotpushButton.clicked.connect(self.chatbot_generation)
+        self.mainFrame_ui.delqlistpushButton.clicked.connect(self.delete_all_question_items)
 
     def context_answer_generation(self):
         if self.embed_open_scenario_file is None or len(self.mainFrame_ui.testset_lineEdit.text()) == 0:
@@ -245,6 +267,21 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             return
 
         self.mainFrame_ui.dirlineEdit.setText(self.directory)
+        self.mainFrame_ui.filelistlistWidget.clear()
+
+        def find_files(root_dir, extensions):
+            found_files = []
+            for dirpath, _, filenames in os.walk(root_dir):
+                for filename in filenames:
+                    if any(filename.lower().endswith(ext) for ext in extensions):
+                        found_files.append(os.path.join(dirpath, filename))
+            return found_files
+
+        file_extensions = [".md", ".txt"]
+
+        files = find_files(self.directory.replace("\\", "/"), file_extensions)
+        self.mainFrame_ui.filelistlistWidget.addItems(files)
+        self.mainFrame_ui.filenumlineEdit.setText(str(len(files)))
 
     def question_ground_truth_generation(self):
         if self.directory is None:
@@ -295,6 +332,77 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         # QProcess로 파이썬 스크립트를 인자와 함께 실행
         self.process_ground_truth_ground_truth.start(sys.executable, arguments)
 
+    def start_browser(self, initial_open=True):
+        try:
+            subprocess.run("taskkill /F /IM msedgedriver.exe /T", shell=True, check=True)
+        except subprocess.CalledProcessError:
+            print("")
+
+        ms_drive = os.path.join(BASE_DIR, "ts_library", "edgedriver_win64", "msedgedriver.exe")
+
+        """Edge 브라우저 실행"""
+        edge_options = Options()
+        edge_options.use_chromium = True  # Chromium 기반 Edge 사용 설정
+
+        # Edge WebDriver 경로 지정
+        driver_path = ms_drive.replace("\\", "/")
+        service = Service(driver_path)
+
+        # Edge 브라우저 실행
+        driver = webdriver.Edge(service=service, options=edge_options)
+
+        gpt_server = self.mainFrame_ui.gptserverlineEdit.text().strip()
+        driver.get(gpt_server)
+
+        self.edge_driver = driver
+
+        if not initial_open:
+            initial_display_xpath = "/html/body/div/div/div[2]/div/div/div[1]/div[2]/div/p"
+            input_field = WebDriverWait(self.edge_driver, 300).until(
+                EC.presence_of_element_located((By.XPATH, initial_display_xpath))
+            )
+        time.sleep(2)
+
+    def delete_all_question_items(self):
+        self.mainFrame_ui.questionlistWidget.clear()
+        self.mainFrame_ui.questionnumlineEdit.setText("0")
+
+    def question_item_double_clicked(self, item):
+        """ 더블 클릭한 항목의 텍스트 출력 """
+        text_to_copy = item.text()
+        timeout = 30
+
+        try:
+            # 입력 필드가 나타날 때까지 기다림 (최대 10초)
+            input_field = WebDriverWait(self.edge_driver, timeout).until(
+                EC.presence_of_element_located((By.XPATH, self.chatbot_xpath["text_input"]))
+            )
+            input_field.clear()
+            input_field.send_keys(text_to_copy)
+            time.sleep(0.5)
+            input_field.send_keys(Keys.RETURN)  # 'Enter' 키 입력
+
+        except TimeoutException:
+            print("Error: 입력 필드를 찾을 수 없습니다. 페이지 로딩을 확인하세요.")
+        except NoSuchElementException as e:
+            print(f"Error: Element not found - {e}")
+
+    def chatbot_generation(self):
+        item_count = self.mainFrame_ui.questionlistWidget.count()
+        # print(item_count)
+        if item_count == 0:
+            print("There are No Questions")
+            return
+
+        self.start_browser(initial_open=False)
+
+        self.chatbot_instance = ChatBotGenerationThread(base_dir=BASE_DIR, q_lists=self.mainFrame_ui.questionlistWidget,
+                                                        drive=self.edge_driver,
+                                                        gpt_xpath=self.chatbot_xpath,
+                                                        source_result_file=self.mainFrame_ui.testset_lineEdit.text()
+                                                        )
+        self.chatbot_instance.start()
+
     def open_file_for_generating_contexts_answer_test_set(self):
         file_path = easygui.fileopenbox(
             msg="Select Test Set Scenario",
@@ -308,6 +416,42 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
         self.embed_open_scenario_file = file_path
         self.mainFrame_ui.testset_lineEdit.setText(self.embed_open_scenario_file)
+        self.mainFrame_ui.questionlistWidget.clear()
+
+        self.start_browser()
+
+        def json_load_f(file_path, use_encoding=False):
+            if file_path is None:
+                return False, False
+
+            if use_encoding:
+                with open(file_path, 'rb') as f:
+                    result = chardet.detect(f.read())
+                    encoding = result['encoding']
+            else:
+                encoding = "utf-8"
+
+            with open(file_path, "r", encoding=encoding) as f:
+                json_data = json.load(f, object_pairs_hook=OrderedDict)
+
+            return True, json_data
+
+        ret, scenarios = json_load_f(file_path=file_path.replace("\\", "/"))
+        cnt = 0
+        for scenario in scenarios:
+            for data in scenario:
+                # user_input 키에 해당하는 질문만 리스트에 추가
+                if isinstance(data, dict) and "user_input" in data:
+                    user_input = data["user_input"]
+                    if isinstance(user_input, str):
+                        self.mainFrame_ui.questionlistWidget.addItem(user_input)
+                        cnt += 1
+                    elif isinstance(user_input, list):
+                        for question in user_input:
+                            self.mainFrame_ui.questionlistWidget.addItem(question)
+                            cnt += 1
+
+        self.mainFrame_ui.questionnumlineEdit.setText(str(cnt))
 
     def open_file_for_evaluation(self):
         file_path = easygui.fileopenbox(

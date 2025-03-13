@@ -123,11 +123,23 @@ def common_llm_model(model, scenario_data, max_iter, thread):
 def common_ragas_metric_model(model, scenario_data, max_iter, thread):
     sample = SingleTurnSample(
         user_input=scenario_data["user_input"],
-        retrieved_contexts=scenario_data["retrieved_contexts"],
+        retrieved_contexts=scenario_data["reference_contexts"],
+
         response=scenario_data["response"],
         reference=scenario_data["reference"],
         reference_contexts=scenario_data["reference_contexts"]
     )
+    #
+    # """
+    #                 "user_input": widget_ui.question_plainTextEdit.toPlainText(),
+    #                 "reference_contexts": widget_ui.contexts_plainTextEdit.toPlainText().split("<context_split>\n")[
+    #                                       :-1],
+    #                 "reference": widget_ui.answer_plainTextEdit.toPlainText(),
+    #                 "trex_reference": widget_ui.truth_plainTextEdit.toPlainText(),
+    #                 "chatbot_response": widget_ui.ref_contexts_plainTextEdit.toPlainText()
+    #
+    # """
+    #
     data_samples = [sample]
     eval_dataset = EvaluationDataset(samples=data_samples)
 
