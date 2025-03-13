@@ -68,6 +68,19 @@
            </item>
            <item>
             <layout class="QGridLayout" name="gridLayout_6">
+             <item row="1" column="1">
+              <widget class="QLineEdit" name="connection_lineEdit">
+               <property name="font">
+                <font>
+                 <weight>50</weight>
+                 <bold>false</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>mongodb://root:ThunderSoft!88@localhost:27017/?directConnection=true&amp;tls=false</string>
+               </property>
+              </widget>
+             </item>
              <item row="2" column="0">
               <widget class="QLabel" name="label_2">
                <property name="font">
@@ -93,6 +106,27 @@
                </property>
                <property name="text">
                 <string>Trex Test Server(RAG)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLineEdit" name="gptserverlineEdit">
+               <property name="text">
+                <string>https://prd.ai-studio-farm.com/global/chatbot</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_6">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <italic>true</italic>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>LLM Model               </string>
                </property>
               </widget>
              </item>
@@ -209,33 +243,6 @@
                </item>
               </layout>
              </item>
-             <item row="1" column="1">
-              <widget class="QLineEdit" name="connection_lineEdit">
-               <property name="font">
-                <font>
-                 <weight>50</weight>
-                 <bold>false</bold>
-                </font>
-               </property>
-               <property name="text">
-                <string>mongodb://root:ThunderSoft!88@localhost:27017/?directConnection=true&amp;tls=false</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="0">
-              <widget class="QLabel" name="label_6">
-               <property name="font">
-                <font>
-                 <weight>75</weight>
-                 <italic>true</italic>
-                 <bold>true</bold>
-                </font>
-               </property>
-               <property name="text">
-                <string>LLM Model               </string>
-               </property>
-              </widget>
-             </item>
              <item row="0" column="0">
               <widget class="QLabel" name="label_3">
                <property name="font">
@@ -250,10 +257,10 @@
                </property>
               </widget>
              </item>
-             <item row="0" column="1">
-              <widget class="QLineEdit" name="gptserverlineEdit">
+             <item row="1" column="2">
+              <widget class="QPushButton" name="vector_env_pushButton">
                <property name="text">
-                <string>https://prd.ai-studio-farm.com/global/chatbot</string>
+                <string>Copy Trex Core Library</string>
                </property>
               </widget>
              </item>
@@ -664,19 +671,6 @@
                    </size>
                   </property>
                  </spacer>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="vector_env_pushButton">
-                  <property name="font">
-                   <font>
-                    <weight>50</weight>
-                    <bold>false</bold>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string>Copy Trex Core Library</string>
-                  </property>
-                 </widget>
                 </item>
                 <item>
                  <widget class="QPushButton" name="vector_start_pushButton">

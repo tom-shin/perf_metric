@@ -203,14 +203,12 @@ def json_dump_f(file_path, data, use_encoding=False, append=False):
         if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
             with open(file_path, "r", encoding="utf-8") as f:
                 existing_data = json.load(f)  # 기존 데이터 로드
-        else:
-            existing_data = []  # 파일이 없거나 비어있으면 빈 리스트로 초기화
 
-        # 새로운 데이터 추가
-        if isinstance(existing_data, list):
-            existing_data.append(data)  # 리스트라면 추가
-        elif isinstance(existing_data, dict):
-            existing_data.update(data)  # 딕셔너리라면 업데이트
+            # 새로운 데이터 추가
+            existing_data.extend(data)  # 리스트라면 추가
+
+        else:
+            existing_data = data  # 파일이 없거나 비어있으면 빈 리스트로 초기화
 
         # JSON 파일에 다시 저장 (덮어쓰기)
         with open(file_path, "w", encoding="utf-8") as f:
@@ -347,7 +345,7 @@ def load_document(base_dir):
 
 
 def check_the_answer_is_not_present(data_=None):
-    return data_, False   # 아래 check skip하고다 할 때
+    return data_, False  # 아래 check skip하고다 할 때
 
     # json_data = data_
     # modified_json_data = []
@@ -390,6 +388,3 @@ def check_the_answer_is_not_present(data_=None):
     #
     # print(f" >>>>>>>>>>>>>>>> SKIP Test Set: {abnormal_cnt}")
     # return modified_json_data, exist_error
-
-
-

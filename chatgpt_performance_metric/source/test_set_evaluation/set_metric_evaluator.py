@@ -27,12 +27,12 @@ class Load_test_scenario_thread(QtCore.QThread):
         self.send_max_scenario_cnt_sig.emit(len(scenarios) + 1)
 
         for idx, scenario in enumerate(scenarios):
-            user_input = scenario[0]["user_input"]
+            user_input = scenario["user_input"]
 
-            reference_contexts = [element + "<context_split>\n" for element in scenario[0]["reference_contexts"]]
-            reference = scenario[0]["reference"]
+            reference_contexts = [element + "<context_split>\n" for element in scenario["reference_contexts"]]
+            reference = scenario["reference"]
 
-            chatbot_response = scenario[0]["chatbot_response"]
+            chatbot_response = scenario["chatbot_response"]
 
             scenario_data = {
                 "user_input": user_input,

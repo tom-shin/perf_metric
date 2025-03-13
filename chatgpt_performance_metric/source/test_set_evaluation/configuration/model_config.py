@@ -123,11 +123,13 @@ def common_llm_model(model, scenario_data, max_iter, thread):
 def common_ragas_metric_model(model, scenario_data, max_iter, thread):
     sample = SingleTurnSample(
         user_input=scenario_data["user_input"],
-        retrieved_contexts=scenario_data["reference_contexts"],
+        # retrieved_contexts=scenario_data["reference_contexts"],
 
-        response=scenario_data["response"],
-        reference=scenario_data["reference"],
-        reference_contexts=scenario_data["reference_contexts"]
+        response=scenario_data["reference"],
+        # reference_contexts=scenario_data["reference_contexts"],
+        #
+        reference=scenario_data["chatbot_response"]
+
     )
     #
     # """

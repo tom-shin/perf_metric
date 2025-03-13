@@ -74,16 +74,16 @@ def save_question_groundtruth_to_file(test_set, append, source_dir=''):
     if not df.empty:
         json_data = df.to_dict(orient='records')
 
-        # json_data가 주어진 데이터라고 가정
-        for cnt, data_ in enumerate(json_data):
-            for key, val in data_.items():
-                if "eval" in key:
-                    for key2, val2 in val.items():
-                        if key2 == "retrieved_contexts":
-                            json_data[cnt][key][key2] = []
-                            continue
-                        if val2 is None:
-                            json_data[cnt][key][key2] = ""
+        # # json_data가 주어진 데이터라고 가정
+        # for cnt, data_ in enumerate(json_data):
+        #     for key, val in data_.items():
+        #         if "eval" in key:
+        #             for key2, val2 in val.items():
+        #                 if key2 == "retrieved_contexts":
+        #                     json_data[cnt][key][key2] = []
+        #                     continue
+        #                 if val2 is None:
+        #                     json_data[cnt][key][key2] = ""
 
         try:
             modified_json_data, not_present = check_the_answer_is_not_present(data_=json_data)

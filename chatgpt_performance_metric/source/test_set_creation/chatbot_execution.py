@@ -173,7 +173,7 @@ class ChatBotGenerationThread(QThread):
                 print(f"{text_to_copy}  : Done")
 
             self.result_data_merge()
-            print("Finished Chatbot Evaluation\n")
+            print("\vFinished Chatbot Evaluation\n")
 
         except TimeoutException:
             print("Error: 입력 필드를 찾을 수 없습니다. 페이지 로딩을 확인하세요.")
@@ -189,12 +189,11 @@ class ChatBotGenerationThread(QThread):
             question = chatbot[0]
             answer = chatbot[1]
 
-            for scenario in self.json_result_data:
-                for data in scenario:
-                    # user_input 키에 해당하는 질문만 리스트에 추가
-                    if isinstance(data, dict) and "user_input" in data:
-                        if data["user_input"] == question:
-                            data["chatbot_response"] = answer
+            for data in self.json_result_data:
+                # user_input 키에 해당하는 질문만 리스트에 추가
+                if isinstance(data, dict) and "user_input" in data:
+                    if data["user_input"] == question:
+                        data["chatbot_response"] = answer
 
         json_dump_f(file_path=self.filepath.replace("\\", "/"), data=self.json_result_data)
 

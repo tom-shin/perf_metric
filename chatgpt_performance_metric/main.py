@@ -438,18 +438,18 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
         ret, scenarios = json_load_f(file_path=file_path.replace("\\", "/"))
         cnt = 0
-        for scenario in scenarios:
-            for data in scenario:
-                # user_input 키에 해당하는 질문만 리스트에 추가
-                if isinstance(data, dict) and "user_input" in data:
-                    user_input = data["user_input"]
-                    if isinstance(user_input, str):
-                        self.mainFrame_ui.questionlistWidget.addItem(user_input)
+
+        for data in scenarios:
+            # user_input 키에 해당하는 질문만 리스트에 추가
+            if isinstance(data, dict) and "user_input" in data:
+                user_input = data["user_input"]
+                if isinstance(user_input, str):
+                    self.mainFrame_ui.questionlistWidget.addItem(user_input)
+                    cnt += 1
+                elif isinstance(user_input, list):
+                    for question in user_input:
+                        self.mainFrame_ui.questionlistWidget.addItem(question)
                         cnt += 1
-                    elif isinstance(user_input, list):
-                        for question in user_input:
-                            self.mainFrame_ui.questionlistWidget.addItem(question)
-                            cnt += 1
 
         self.mainFrame_ui.questionnumlineEdit.setText(str(cnt))
 
