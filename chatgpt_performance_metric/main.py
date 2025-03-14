@@ -12,6 +12,8 @@ import ctypes
 import chardet
 import json
 from collections import OrderedDict
+from datetime import datetime
+import pytz
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -377,6 +379,11 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             with open(file_path, "r", encoding="utf-8") as file:
                 data = json.load(file)  # JSON 데이터 로드
 
+            # 한국 시간대 설정
+            korea_tz = pytz.timezone('Asia/Seoul')
+            # 현재 시간 가져오기
+            now = datetime.now(korea_tz)
+                
             new_item = {
                 "user_input": text,
                 "reference_contexts": [""],
@@ -385,7 +392,8 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
                 "file": "manual",
                 "retrieved_contexts": "",
                 "response": "",
-                "chatbot_response": ""
+                "chatbot_response": "",
+                "date_time": str(now)
             }
             data.append(new_item)
 

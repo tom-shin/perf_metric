@@ -274,5 +274,82 @@
         "retrieved_contexts": "",
         "response": "",
         "chatbot_response": "You are inquiring about the Exynos AI chipset.\nThe Exynos AI chipset, developed by Samsung S.LSI, is a series of system-on-chip (SoC) products that incorporate artificial intelligence (AI) capabilities. These chipsets are designed to enhance various applications, particularly in mobile devices, by providing optimized performance for processing AI and machine learning tasks. The Exynos AI chipsets, such as the Exynos 2400, include specialized hardware components, like neural processing units (NPUs), that enable efficient execution of AI algorithms, allowing for real-time data analysis, image recognition, natural language processing, and more.\nThe Exynos AI Studio serves as the accompanying software development kit for developers to create, optimize, and implement AI models on devices powered by these chipsets, ensuring they can fully utilize the capabilities of the Exynos processors.\nIf you have further questions or need more details about the Exynos AI chipsets or how to work with them, feel free to ask!"
+    },
+    {
+        "user_input": "what is your role? i mean ur purpose.",
+        "reference_contexts": [
+            ""
+        ],
+        "reference": "",
+        "synthesizer_name": "",
+        "file": "manual",
+        "retrieved_contexts": "",
+        "response": "",
+        "chatbot_response": ""
+    },
+    {
+        "user_input": "what ai model does ai studio support ?",
+        "reference_contexts": [
+            ""
+        ],
+        "reference": "",
+        "synthesizer_name": "",
+        "file": "manual",
+        "retrieved_contexts": "",
+        "response": "",
+        "chatbot_response": "",
+        "date_time": "2025-03-14 20:43:18.221057+09:00"
+    },
+    {
+        "user_input": "ai studio supports qualcomm chip ?",
+        "reference_contexts": [
+            ""
+        ],
+        "reference": "",
+        "synthesizer_name": "",
+        "file": "manual",
+        "retrieved_contexts": "",
+        "response": "",
+        "chatbot_response": "",
+        "date_time": "2025-03-14 20:44:32.682358+09:00"
+    },
+    {
+        "user_input": "What are the key functionalities of the Android Sample Application as described in the document?",
+        "reference_contexts": [
+            "This document explains how a simple Android Sample Application operates using the [Detr\\_resnet50\\_dc5](https://prd.ai-studio-farm.com/global/solution/ai/models/detail/a631921e-dc8b-46cb-ac17-d23c5a54db26) model optimized for Exynos hardware. **1\\. Functionality** This Sample Application identifies objects in images either from stored image files or input via the camera. Detected objects are highlighted with bounding boxes, and the label and score of each object are displayed. Additionally, the inference time is shown at the bottom of the application interface. ![](images/sample_application/phone_1.png) **2\\. Prerequisites** * To download [Android Studio](https://developer.android.com/studio), go to the official website and download it. * To run the Sample Application, clone the following repository. ```sh git clone https://github.com/exynos-eco/enn-sdk-samples-9925.git ``` * If there is no device available to run the application, you can use a real device provided in the Device Farm. For guidance on connecting a device in Android Studio, refer to the ADB proxy guide. **3. Starting Sample Application** * Open the cmd window and check if adb is connected. ```sh adb device List of devices attached 000011b58d246013 device ``` * Push a sample image for testing to the following path using adb push. ```sh adb push sample.jpg /storage/emulated/0/Pictures/ ``` * If the sample image is not visible after running the Sample Application, the media scanner may not have been updated, preventing the app from detecting the file. In this case, run the following command in adb shell to trigger media scanning. ```sh adb adb shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///storage/emulated/0/Pictures/sample.jpg ``` * After confirming a proper connection with Device Farm, select Tools \\-\\> Device Manager in Android Studio. ![](images/sample_application/device_manager_1.png) * After that check if the physical device is properly connected. ![](images/sample_application/samsung_electronics_1.png) * Run the Object Detection project from the Sample Applications obtained via git clone in Android Studio. ![](images/sample_application/object_detection_1.png) * When you select the object-detection project Android Studio will automatically perform a gradle sync. * The application in the selected project checks the connected device and runs when you click the Run button. ![](images/sample_application/run_1.png) * Select image mode and provide the data to be used for inference. ![](images/sample_application/camera_1.png) **4\\. I/O Specs** | INPUT | Description | Shape | Data Type | | :---: | :---: | :---: | :---: | | input | An RGB image | \\[1, 3, 480, 480\\] | float32 | | OUTPUT | Description | Shape | Data Type | | :---: | :---: | :---: | :---: | | output | Class score value | \\[1, 100, 92\\] | float32 | | 4363 | Show bounding box | \\[1, 100, 4\\] | Float32 | **5\\."
+        ],
+        "reference": "The Android Sample Application identifies objects in images either from stored image files or input via the camera. Detected objects are highlighted with bounding boxes, and the label and score of each object are displayed. Additionally, the inference time is shown at the bottom of the application interface.",
+        "synthesizer_name": "single_hop_specifc_query_synthesizer",
+        "file": "C:\\Users\\User\\Downloads\\new_doc\\ECO25_GENERAL_Doc\\documentation\\eht.md",
+        "retrieved_contexts": "",
+        "response": "",
+        "chatbot_response": "",
+        "date_time": "2025-03-14 20:51:07.815847+09:00"
+    },
+    {
+        "user_input": "What is Exynos AI Stodio used for?",
+        "reference_contexts": [
+            "This guide provides a comprehensive overview for developing an image classification Android application using the Exynos Neural Network Software Development Kit (Exynos AI Studio).\nIt outlines the steps for creating an application that utilizes the Exynos AI Studio to run neural network models on Samsung Exynos hardware.\nThis guide covers the important steps that also include Android project setup, function implementation, and NNC model conversion.\nThe guide aims at equipping developers with the necessary knowledge to use the Exynos AI Studio in their Android applications."
+        ],
+        "reference": "Exynos AI Studio is used for developing an image classification Android application by utilizing the Exynos Neural Network Software Development Kit to run neural network models on Samsung Exynos hardware.",
+        "synthesizer_name": "single_hop_specifc_query_synthesizer",
+        "file": "C:\\Users\\User\\Downloads\\new_doc\\ECO25_GENERAL_Doc\\documentation\\README.md",
+        "retrieved_contexts": "",
+        "response": "",
+        "chatbot_response": "",
+        "date_time": "2025-03-14 20:51:18.157864+09:00"
+    },
+    {
+        "user_input": "what is Exynos AI Studio Farm used for?",
+        "reference_contexts": [
+            ""
+        ],
+        "reference": "",
+        "synthesizer_name": "",
+        "file": "manual",
+        "retrieved_contexts": "",
+        "response": "",
+        "chatbot_response": "",
+        "date_time": "2025-03-14 20:52:44.074134+09:00"
     }
 ]

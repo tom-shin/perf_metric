@@ -1,6 +1,8 @@
 import sys
 import os
 import easygui
+from datetime import datetime
+import pytz
 
 from PyQt5 import QtWidgets, QtCore
 
@@ -73,6 +75,12 @@ def save_question_groundtruth_to_file(test_set, append, source_dir=''):
     df["retrieved_contexts"] = ""
     df["response"] = ""
     df["chatbot_response"] = ""
+
+    # 한국 시간대 설정
+    korea_tz = pytz.timezone('Asia/Seoul')
+    # 현재 시간 가져오기
+    now = datetime.now(korea_tz)
+    df["date_time"] = str(now)
 
     if not df.empty:
         json_data = df.to_dict(orient='records')
