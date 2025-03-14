@@ -15,12 +15,7 @@ Thumbs.db
 .idea
 
 
-# Test resutl 폴더
-Result
-test*
-dist
-build
-*.spec
+
 
 # Git ignore 파일
 #.gitignore
