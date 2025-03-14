@@ -14,8 +14,6 @@ Thumbs.db
 # pycharm 파일
 .idea
 
-*.csv
-*.json
 
 # Test resutl 폴더
 Result
