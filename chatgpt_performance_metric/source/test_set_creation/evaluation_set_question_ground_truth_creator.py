@@ -92,13 +92,13 @@ def save_question_groundtruth_to_file(test_set, append, source_dir=''):
             modified_json_data, not_present = check_the_answer_is_not_present(data_=json_data)
             ret = json_dump_f(file_path=file_path, data=modified_json_data, append=append)
 
-            # CSV 저장
-            csv_file_path = file_path.replace('.json', '.csv') + ".csv"  # JSON 파일명을 기반으로 CSV 파일명 생성
+            # # CSV 저장
+            # csv_file_path = file_path.replace('.json', '.csv') + ".csv"  # JSON 파일명을 기반으로 CSV 파일명 생성
 
-            if append:
-                df.to_csv(csv_file_path, mode='a', index=False, encoding='utf-8-sig', header=False)
-            else:
-                df.to_csv(csv_file_path, index=False, encoding='utf-8-sig')  # CSV 저장
+            # if append:
+            #     df.to_csv(csv_file_path, mode='a', index=False, encoding='utf-8-sig', header=False)
+            # else:
+            #     df.to_csv(csv_file_path, index=False, encoding='utf-8-sig')  # CSV 저장
 
             return ret, not_present
 

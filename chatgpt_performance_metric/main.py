@@ -188,6 +188,8 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.mainFrame_ui.chatbotpushButton.clicked.connect(self.chatbot_generation)
         self.mainFrame_ui.delqlistpushButton.clicked.connect(self.delete_all_question_items)
 
+        self.mainFrame_ui.qinput_lineEdit.returnPressed.connect(self.add_to_question_list)
+
     def context_answer_generation(self):
         if self.embed_open_scenario_file is None or len(self.mainFrame_ui.testset_lineEdit.text()) == 0:
             print("Select File for Generating Context/ Answer : Open Button ")
@@ -362,6 +364,34 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
                 EC.presence_of_element_located((By.XPATH, initial_display_xpath))
             )
         time.sleep(2)
+
+    def add_to_question_list(self):
+        text = self.mainFrame_ui.qinput_lineEdit.text().strip()  # 입력된 텍스트 가져오기
+        if text:  # 빈 값이 아니면 추가
+            self.mainFrame_ui.questionlistWidget.addItem(text)  # 리스트 마지막에 추가
+            self.mainFrame_ui.questionlistWidget.setCurrentRow(self.mainFrame_ui.questionlistWidget.count() - 1)  # 마지막 아이템 선택
+            self.mainFrame_ui.qinput_lineEdit.clear()  # 입력 필드 초기화
+
+            file_path = os.path.join(os.getcwd(), "result.json").replace("\\", "/")
+            # 1. JSON 파일 읽기
+            with open(file_path, "r", encoding="utf-8") as file:
+                data = json.load(file)  # JSON 데이터 로드
+
+            new_item = {
+                "user_input": text,
+                "reference_contexts": [""],
+                "reference": "",
+                "synthesizer_name": "",
+                "file": "manual",
+                "retrieved_contexts": "",
+                "response": "",
+                "chatbot_response": ""
+            }
+            data.append(new_item)
+
+            # 3. JSON 파일 다시 저장
+            with open(file_path, "w", encoding="utf-8") as file:
+                json.dump(data, file, ensure_ascii=False, indent=4)  # 보기 좋게 저장
 
     def delete_all_question_items(self):
         self.mainFrame_ui.questionlistWidget.clear()
