@@ -70,6 +70,9 @@ def save_question_groundtruth_to_file(test_set, append, source_dir=''):
 
     df = test_set.to_pandas()
     df["file"] = str(source_dir)
+    df["retrieved_contexts"] = ""
+    df["response"] = ""
+    df["chatbot_response"] = ""
 
     if not df.empty:
         json_data = df.to_dict(orient='records')
