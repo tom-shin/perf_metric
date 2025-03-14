@@ -15,9 +15,10 @@ class Load_test_scenario_thread(QtCore.QThread):
     send_max_scenario_cnt_sig = QtCore.pyqtSignal(int)
     send_finish_scenario_update_ui_sig = QtCore.pyqtSignal()
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, use_chatbot_response=False):
         super().__init__()
         self.file_path = file_path
+        self.use_chatbot_response = use_chatbot_response
 
     def run(self):
         scenario_path = self.file_path
@@ -32,16 +33,19 @@ class Load_test_scenario_thread(QtCore.QThread):
             reference_contexts = [element + "<context_split>\n" for element in scenario["reference_contexts"]]
             reference = scenario["reference"]
 
-            chatbot_response = scenario["chatbot_response"]
+            retrieved_contexts = [element + "<context_split>\n" for element in scenario["retrieved_contexts"]]
+
+            if self.use_chatbot_response :
+                response = scenario["chatbot_response"]
+            else:
+                response = scenario["response"]
 
             scenario_data = {
                 "user_input": user_input,
-
                 "reference_contexts": reference_contexts,
                 "reference": reference,
-
-                "trex_reference": "response from james",
-                "chatbot_response": chatbot_response,
+                "retrieved_contexts": retrieved_contexts,
+                "response": response,
                 "idx": idx
             }
 
@@ -106,12 +110,13 @@ class Metric_Evaluation_Thread(QThread):
 
             if widget_ui.scenario_checkBox.isChecked():
                 scenario_data = {
-                    "user_input": widget_ui.question_plainTextEdit.toPlainText(),
-                    "reference_contexts": widget_ui.contexts_plainTextEdit.toPlainText().split("<context_split>\n")[
-                                          :-1],
-                    "reference": widget_ui.answer_plainTextEdit.toPlainText(),
-                    "trex_reference": widget_ui.truth_plainTextEdit.toPlainText(),
-                    "chatbot_response": widget_ui.ref_contexts_plainTextEdit.toPlainText()
+                    "user_input": widget_ui.userinpput_plainTextEdit.toPlainText(),
+                    "reference_contexts": widget_ui.reference_context_plainTextEdit.toPlainText().split(
+                        "<context_split>\n")[:-1],
+                    "reference": widget_ui.reference_plainTextEdit.toPlainText(),
+                    "retrieved_contexts": widget_ui.retrieved_context_plainTextEdit.toPlainText().split(
+                        "<context_split>\n")[:-1],
+                    "response": widget_ui.response_plainTextEdit.toPlainText()
                 }
 
                 # print("===============================================")
@@ -191,7 +196,7 @@ class performance_metric_evaluator_class(QObject):
             self.update_sub_widget_progress = Modal_ProgressDialog(message="Loading Scenario")
 
         self.added_scenario_widgets = []
-        self.update_thread = Load_test_scenario_thread(self.open_scenario_file)
+        self.update_thread = Load_test_scenario_thread(self.open_scenario_file, use_chatbot_response=self.parent.mainFrame_ui.usechatbotcheckBox.isChecked())
         self.update_thread.send_scenario_update_ui_sig.connect(self.add_scenario_widget)
         self.update_thread.send_max_scenario_cnt_sig.connect(self.set_max_progressbar_cnt)
         self.update_thread.send_finish_scenario_update_ui_sig.connect(self.finished_add_scenario_widget)
@@ -207,11 +212,13 @@ class performance_metric_evaluator_class(QObject):
         widget_ui.setupUi(widget_instance)
 
         widget_ui.scenario_checkBox.setText(f"scenario_{idx + 1}")
-        widget_ui.question_plainTextEdit.setPlainText(scenario_data["user_input"])
-        widget_ui.contexts_plainTextEdit.setPlainText("".join(scenario_data["reference_contexts"]))
-        widget_ui.answer_plainTextEdit.setPlainText(scenario_data["reference"])
-        widget_ui.truth_plainTextEdit.setPlainText(scenario_data["trex_reference"])
-        widget_ui.ref_contexts_plainTextEdit.setPlainText(scenario_data["chatbot_response"])
+        widget_ui.userinpput_plainTextEdit.setPlainText(scenario_data["user_input"])
+
+        widget_ui.reference_context_plainTextEdit.setPlainText("".join(scenario_data["reference_contexts"]))
+        widget_ui.reference_plainTextEdit.setPlainText(scenario_data["reference"])
+
+        widget_ui.retrieved_context_plainTextEdit.setPlainText("".join(scenario_data["retrieved_contexts"]))
+        widget_ui.response_plainTextEdit.setPlainText(scenario_data["response"])
 
         font = QtGui.QFont()
         font.setBold(False)
@@ -302,12 +309,15 @@ class performance_metric_evaluator_class(QObject):
             progress += 1
             self.save_progress.onCountChanged(progress % 99)
 
-            result_out = {"user_input": widget_ui.question_plainTextEdit.toPlainText(),
-                          "reference_contexts": widget_ui.contexts_plainTextEdit.toPlainText().split(
+            result_out = {"user_input": widget_ui.userinpput_plainTextEdit.toPlainText(),
+                          "reference_contexts": widget_ui.reference_context_plainTextEdit.toPlainText().split(
                               "<context_split>\n")[:-1],
-                          "reference": widget_ui.answer_plainTextEdit.toPlainText(),
-                          "trex_reference":  widget_ui.truth_plainTextEdit.toPlainText(),
-                          "chatbot_response": widget_ui.ref_contexts_plainTextEdit.toPlainText(),
+                          "reference": widget_ui.reference_plainTextEdit.toPlainText(),
+
+                          "retrieved_contexts": widget_ui.retrieved_context_plainTextEdit.toPlainText().split(
+                              "<context_split>\n")[:-1],
+
+                          "response": widget_ui.response_plainTextEdit.toPlainText(),
                           "score": ""
                           }
 

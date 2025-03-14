@@ -173,7 +173,7 @@ class ChatBotGenerationThread(QThread):
                 print(f"{text_to_copy}  : Done")
 
             self.result_data_merge()
-            print("\vFinished Chatbot Evaluation\n")
+            print("\nFinished Chatbot Evaluation\n")
 
         except TimeoutException:
             print("Error: 입력 필드를 찾을 수 없습니다. 페이지 로딩을 확인하세요.")
