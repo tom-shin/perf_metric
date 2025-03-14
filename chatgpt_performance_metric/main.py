@@ -103,8 +103,8 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
     def handle_stderr(self):
         error = self.process_ground_truth_ground_truth.readAllStandardError().data().decode()
-        # if len(error) != 0:
-        #     print(f"Error: {error}")
+        if len(error) != 0:
+            print(f"{error}")
 
     def setupUi(self):
         # Load the main window's UI module
