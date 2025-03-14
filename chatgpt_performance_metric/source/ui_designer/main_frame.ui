@@ -379,7 +379,7 @@
                  </font>
                 </property>
                 <property name="title">
-                 <string>Ctrl.params.</string>
+                 <string>Ctrl.params. (1+2+3 비율이 1 초과되면 안됨)</string>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_6">
                  <item>
@@ -419,7 +419,7 @@
                       </font>
                      </property>
                      <property name="text">
-                      <string>Number of Scenario</string>
+                      <string>Number of Scenario (파일당 몇개 씩 질문, 답변 만들 것인가)</string>
                      </property>
                     </widget>
                    </item>
@@ -458,7 +458,7 @@
                       </font>
                      </property>
                      <property name="text">
-                      <string>SingleHopSpecificQuerySynthesizer</string>
+                      <string>1. SingleHopSpecificQuerySynthesizer (단순 명료한 문장 만들기)</string>
                      </property>
                     </widget>
                    </item>
@@ -471,7 +471,7 @@
                       </font>
                      </property>
                      <property name="text">
-                      <string>MultiHopAbstractQuerySynthesizer</string>
+                      <string>2. MultiHopAbstractQuerySynthesizer (복합적으로 추상적인 질문 만들기)</string>
                      </property>
                     </widget>
                    </item>
@@ -484,7 +484,7 @@
                       </font>
                      </property>
                      <property name="text">
-                      <string>MultiHopSpecificQuerySynthesizer</string>
+                      <string>3. MultiHopSpecificQuerySynthesizer (복잡하지만 자세한 문장 만들기)</string>
                      </property>
                     </widget>
                    </item>
@@ -517,7 +517,7 @@
                    </font>
                   </property>
                   <property name="text">
-                   <string>Generate</string>
+                   <string>Generate (질문 생성)</string>
                   </property>
                  </widget>
                 </item>
@@ -674,6 +674,9 @@
                 </item>
                 <item>
                  <widget class="QPushButton" name="vector_start_pushButton">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
                   <property name="font">
                    <font>
                     <weight>50</weight>
@@ -681,7 +684,7 @@
                    </font>
                   </property>
                   <property name="text">
-                   <string>RAG Generation(James)</string>
+                   <string>RAG Generation(James 만든 라이브로리 분석 후 연결 예정)</string>
                   </property>
                  </widget>
                 </item>
@@ -694,7 +697,7 @@
                    </font>
                   </property>
                   <property name="text">
-                   <string>Chatbot Generation</string>
+                   <string> Chatbot 응답 실행 </string>
                   </property>
                  </widget>
                 </item>
@@ -1033,7 +1036,7 @@
                 <item>
                  <widget class="QPushButton" name="analyze_pushButton">
                   <property name="text">
-                   <string>Evaluation</string>
+                   <string>Evaluation (점수 보기)</string>
                   </property>
                  </widget>
                 </item>
