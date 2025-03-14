@@ -37,9 +37,9 @@ pd.set_option('display.max_colwidth', None)  # 각 열의 최대 너비를 제�
 
 # user defined module
 from source.test_set_evaluation.configuration.model_config import *
-from source.test_set_creation.test_set_context_answer_creator import generator_context_answer_class
-from source.test_set_evaluation.set_metric_evaluator import performance_metric_evaluator_class
-from source.test_set_creation.chatbot_execution import ChatBotGenerationThread
+from source.test_set_creation.execute_trex_ai_chatbot_tools import generator_context_answer_class
+from source.test_set_evaluation.execute_ragas_metrics import performance_metric_evaluator_class
+from source.test_set_creation.execute_chatbot import ChatBotGenerationThread
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -132,7 +132,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
     def closeEvent(self, event):
         answer = QtWidgets.QMessageBox.question(self,
                                                 "Confirm Exit...",
-                                                "Are you sure you want to exit?\nAll data will be lost.",
+                                                "Are you sure you want to exit?",
                                                 QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
 
         if answer == QtWidgets.QMessageBox.Yes:
@@ -318,7 +318,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
         # 실행할 파이썬 파일 경로와 전달할 인자들
         script_path = os.path.join(BASE_DIR, "source", "test_set_creation",
-                                   "evaluation_set_question_ground_truth_creator.py")
+                                   "execute_question_extraction.py")
 
         # 다른 변수들도 문자열로 변환
         source_dir = str(self.directory)
@@ -327,11 +327,12 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         ComparativeAbstractQuerySynthesizer_str = str(ComparativeAbstractQuerySynthe_cnt)
         AbstractQuerySynthesizer_str = str(AbstractQuerySynthesizer_cnt)
         model_str = str(model)
+        chatbot_server = self.mainFrame_ui.gptserverlineEdit.text().strip()
 
         # 인자로 넘길 리스트 (모두 문자열이어야 함)
         arguments = [script_path, source_dir, test_size_str, SpecificQuerySynthesizer_str,
                      ComparativeAbstractQuerySynthesizer_str, AbstractQuerySynthesizer_str, model_str,
-                     self.get_OpenAIKey()]
+                     self.get_OpenAIKey(), chatbot_server]
 
         # QProcess로 파이썬 스크립트를 인자와 함께 실행
         self.process_ground_truth_ground_truth.start(sys.executable, arguments)
@@ -355,8 +356,8 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         # Edge 브라우저 실행
         driver = webdriver.Edge(service=service, options=edge_options)
 
-        gpt_server = self.mainFrame_ui.gptserverlineEdit.text().strip()
-        driver.get(gpt_server)
+        chatbot_server = self.mainFrame_ui.gptserverlineEdit.text().strip()
+        driver.get(chatbot_server)
 
         self.edge_driver = driver
 
@@ -374,7 +375,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             self.mainFrame_ui.questionlistWidget.setCurrentRow(self.mainFrame_ui.questionlistWidget.count() - 1)  # 마지막 아이템 선택
             self.mainFrame_ui.qinput_lineEdit.clear()  # 입력 필드 초기화
 
-            file_path = os.path.join(os.getcwd(), "result.json").replace("\\", "/")
+            file_path = os.path.join(os.getcwd(), "TestSet_Result.json").replace("\\", "/")
             # 1. JSON 파일 읽기
             with open(file_path, "r", encoding="utf-8") as file:
                 data = json.load(file)  # JSON 데이터 로드
@@ -383,6 +384,8 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             korea_tz = pytz.timezone('Asia/Seoul')
             # 현재 시간 가져오기
             now = datetime.now(korea_tz)
+
+            chatbot_server = self.mainFrame_ui.gptserverlineEdit.text().strip()
                 
             new_item = {
                 "user_input": text,
@@ -393,7 +396,8 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
                 "retrieved_contexts": "",
                 "response": "",
                 "chatbot_response": "",
-                "date_time": str(now)
+                "date_time": str(now),
+                "chatbot_server": chatbot_server
             }
             data.append(new_item)
 
