@@ -191,6 +191,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.mainFrame_ui.delqlistpushButton.clicked.connect(self.delete_all_question_items)
 
         self.mainFrame_ui.qinput_lineEdit.returnPressed.connect(self.add_to_question_list)
+        self.mainFrame_ui.msgwritepushButton.clicked.connect(self.message_write_on_item)
 
     def context_answer_generation(self):
         if self.embed_open_scenario_file is None or len(self.mainFrame_ui.testset_lineEdit.text()) == 0:
@@ -397,7 +398,8 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
                 "response": "",
                 "chatbot_response": "",
                 "date_time": str(now),
-                "chatbot_server": chatbot_server
+                "chatbot_server": chatbot_server,
+                "user_comment": ""
             }
             data.append(new_item)
 
@@ -408,6 +410,14 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
     def delete_all_question_items(self):
         self.mainFrame_ui.questionlistWidget.clear()
         self.mainFrame_ui.questionnumlineEdit.setText("0")
+
+    def message_write_on_item(self):
+        selected_items = self.mainFrame_ui.questionlistWidget.selectedItems()
+        if selected_items:
+            for item in selected_items:
+                print(item.text())  # 선택된 아이템의 텍스트 출력
+        else:
+            print("No item selected")
 
     def question_item_double_clicked(self, item):
         """ 더블 클릭한 항목의 텍스트 출력 """
