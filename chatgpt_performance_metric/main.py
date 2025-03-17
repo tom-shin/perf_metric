@@ -189,7 +189,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.mainFrame_ui.vector_env_pushButton.clicked.connect(self.environment_setup)
         self.mainFrame_ui.vector_start_pushButton.clicked.connect(self.context_answer_generation)
 
-        self.mainFrame_ui.questionlistWidget.itemDoubleClicked.connect(self.question_item_double_clicked)
+        # self.mainFrame_ui.questionlistWidget.itemDoubleClicked.connect(self.question_item_double_clicked)
         self.mainFrame_ui.chatbotpushButton.clicked.connect(self.chatbot_generation)
         self.mainFrame_ui.delqlistpushButton.clicked.connect(self.delete_all_question_items)
 
@@ -197,11 +197,20 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.mainFrame_ui.msgwritepushButton.clicked.connect(self.message_write_on_item)
 
         self.mainFrame_ui.responsestop_pushButton.clicked.connect(self.stop_response)
+        self.mainFrame_ui.suspendpushButton.clicked.connect(self.suspend_resume_response)
+
+    def suspend_resume_response(self):
+        if self.chatbot_instance is not None:
+            if not self.chatbot_instance.suspended:
+                self.chatbot_instance.suspend()
+                self.mainFrame_ui.suspendpushButton.setText("Resume")
+            else:
+                self.chatbot_instance.resume()
+                self.mainFrame_ui.suspendpushButton.setText("Suspend")
 
     def stop_response(self):
         if self.chatbot_instance is not None:
-            self.chatbot_instance.stop()
-            self.chatbot_instance = None
+            self.reset_chatbot()
 
     def setUserName(self, user=''):
         self.mainFrame_ui.userlineEdit.setText(user)
@@ -494,12 +503,13 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             print(f"Error: Element not found - {e}")
 
     def chatbot_generation(self):
+
         item_count = self.mainFrame_ui.questionlistWidget.count()
         # print(item_count)
         if item_count == 0:
             print("There are No Questions")
             return
-
+        self.reset_chatbot()
         self.start_browser(initial_open=False)
 
         self.chatbot_instance = ChatBotGenerationThread(base_dir=BASE_DIR, q_lists=self.mainFrame_ui.questionlistWidget,
@@ -559,6 +569,14 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
         self.mainFrame_ui.questionnumlineEdit.setText(str(cnt))
         self.mainFrame_ui.chatbotpushButton.setEnabled(True)
+
+        self.reset_chatbot()
+
+    def reset_chatbot(self):
+        self.mainFrame_ui.suspendpushButton.setText("Suspend")
+        if self.chatbot_instance is not None:
+            self.chatbot_instance.stop()
+            self.chatbot_instance = None
 
     def open_file_for_evaluation(self):
         file_path = easygui.fileopenbox(
@@ -638,7 +656,7 @@ class SimpleMsg(QtWidgets.QDialog):
 
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)  # 항상 위에 표시
 
-        self.setMinimumSize(400,40)  # Set a larger window size
+        self.setMinimumSize(400, 40)  # Set a larger window size
 
         layout = QtWidgets.QVBoxLayout()
 

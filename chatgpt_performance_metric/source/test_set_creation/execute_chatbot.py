@@ -10,7 +10,7 @@ import traceback
 import json
 import chardet
 from collections import OrderedDict
-from PyQt5.QtCore import QThread, QCoreApplication
+from PyQt5.QtCore import QThread, QCoreApplication, QMutex, QWaitCondition
 
 
 def json_load_f(file_path, use_encoding=False):
@@ -68,6 +68,141 @@ def json_dump_f(file_path, data, use_encoding=False, append=False):
 
 
 class ChatBotGenerationThread(QThread):
+    def __init__(self, base_dir, q_lists, drive, gpt_xpath, source_result_file):
+        super().__init__()
+
+        self.running = True
+        self.suspended = False
+
+        self.base_dir = base_dir
+        self.q_list = q_lists
+        self.edge_drive = drive
+        self.chatbot_answer = []
+        self.gpt_xpath = gpt_xpath
+        self.filepath = source_result_file
+
+        self.mutex = QMutex()
+        self.pause_condition = QWaitCondition()
+
+        ret, self.json_result_data = json_load_f(file_path=self.filepath.replace("\\", "/"))
+
+    def send_text_to_browser(self, question):
+        try:
+            input_field = WebDriverWait(self.edge_drive, 60).until(
+                EC.presence_of_element_located((By.XPATH, self.gpt_xpath["text_input"]))
+            )
+            input_field.clear()
+            input_field.send_keys(question)
+            time.sleep(0.7)
+            input_field.send_keys(Keys.RETURN)
+        except TimeoutException:
+            print("Error: 입력 필드를 찾을 수 없습니다. 페이지 로딩을 확인하세요.")
+        except NoSuchElementException as e:
+            print(f"Error: Element not found - {e}")
+
+    def get_web_data(self, cnt):
+        start_time = time.time()
+        timeout = 3600
+        final_text = ""
+
+        formular = 2 * cnt + 3
+
+        while True:
+            self.check_pause()  # <<<< 일시중지 상태 체크
+
+            try:
+                if time.time() - start_time > timeout:
+                    traceback.print_exc()
+                    sys.exit(0)
+
+                current_x_path = self.gpt_xpath["gpt_answer"].replace("ThunderSoft", str(formular))
+                parent_element = self.edge_drive.find_element(By.XPATH, current_x_path)
+                p_elements = parent_element.find_elements(By.TAG_NAME, "p")
+
+                if p_elements and any(p.text.strip() for p in p_elements):
+                    extracted_texts = [p.text.strip() for p in p_elements if p.text.strip()]
+                    final_text = "\n".join(extracted_texts)
+                    return final_text
+
+            except NoSuchElementException:
+                pass
+
+            QCoreApplication.processEvents()
+            time.sleep(1)
+
+    def run(self):
+        try:
+            total = self.q_list.count()
+            for i in range(total):
+
+                if not self.running:
+                    break
+
+                text_to_copy = self.q_list.item(i).text()
+                self.send_text_to_browser(question=text_to_copy)
+                answer = self.get_web_data(i)
+                self.chatbot_answer.append((text_to_copy, answer))
+
+                # self.single_data_merge(question=text_to_copy, answer=answer)
+                print(f"[{i + 1}/{total}].  {text_to_copy}  : Done")
+                self.check_pause()  # <<<< 일시중지 상태 체크
+
+                time.sleep(1)
+
+            print("\nFinished Chatbot Evaluation\n")
+
+        except TimeoutException:
+            print("Error: 입력 필드를 찾을 수 없습니다. 페이지 로딩을 확인하세요.")
+        except NoSuchElementException as e:
+            print(f"Error: Element not found - {e}")
+
+    def check_pause(self):
+        """Suspend 상태일 경우 대기"""
+        self.mutex.lock()
+        while self.suspended:
+            self.pause_condition.wait(self.mutex)
+        self.mutex.unlock()
+
+    def suspend(self):
+        """일시중지"""
+        self.mutex.lock()
+        self.suspended = True
+        self.mutex.unlock()
+        print("Thread suspended.")
+
+    def resume(self):
+        """재개"""
+        self.mutex.lock()
+        self.suspended = False
+        self.mutex.unlock()
+        self.pause_condition.wakeAll()
+        print("Thread resumed.")
+
+    def stop(self):
+        self.running = False
+        self.resume()  # 중지시 일시중지 상태라도 해제해야 종료 가능
+        self.quit()
+        self.wait(3000)
+
+    def single_data_merge(self, question, answer):
+        for data in self.json_result_data:
+            if isinstance(data, dict) and "user_input" in data:
+                if data["user_input"] == question:
+                    data["chatbot_response"] = answer
+
+        json_dump_f(file_path=self.filepath.replace("\\", "/"), data=self.json_result_data)
+
+    def result_data_merge(self):
+        for question, answer in self.chatbot_answer:
+            for data in self.json_result_data:
+                if isinstance(data, dict) and "user_input" in data:
+                    if data["user_input"] == question:
+                        data["chatbot_response"] = answer
+
+        json_dump_f(file_path=self.filepath.replace("\\", "/"), data=self.json_result_data)
+
+
+class X_ChatBotGenerationThread(QThread):
     def __init__(self, base_dir, q_lists, drive, gpt_xpath, source_result_file):
         super().__init__()
 
