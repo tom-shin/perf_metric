@@ -165,7 +165,8 @@ class ChatBotGenerationThread(QThread):
 
             # print("last_valid_idx",last_valid_idx)  # 마지막으로 존재한 idx만 출력
 
-            for i in range(self.q_list.count()):
+            total = self.q_list.count()
+            for i in range(total):
                 if not self.running:
                     # print("Terminated")
                     break
@@ -176,16 +177,30 @@ class ChatBotGenerationThread(QThread):
                 answer = self.get_web_data(i)
                 self.chatbot_answer.append((text_to_copy, answer))
 
-                print(f"{text_to_copy}  : Done")
+                print(f"[{i + 1}/{total}].  {text_to_copy}  : Done")
+                self.single_data_merge(question=text_to_copy, answer=answer)
                 time.sleep(1)
 
-            self.result_data_merge()
+            # self.result_data_merge()
             print("\nFinished Chatbot Evaluation\n")
 
         except TimeoutException:
             print("Error: 입력 필드를 찾을 수 없습니다. 페이지 로딩을 확인하세요.")
         except NoSuchElementException as e:
             print(f"Error: Element not found - {e}")
+
+    def single_data_merge(self, question, answer):
+        #     self.chatbot_answer:
+        # self.json_result_data
+        # cnt = 0
+
+        for data in self.json_result_data:
+            # user_input 키에 해당하는 질문만 리스트에 추가
+            if isinstance(data, dict) and "user_input" in data:
+                if data["user_input"] == question:
+                    data["chatbot_response"] = answer
+
+        json_dump_f(file_path=self.filepath.replace("\\", "/"), data=self.json_result_data)
 
     def result_data_merge(self):
         #     self.chatbot_answer:
