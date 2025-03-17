@@ -171,6 +171,7 @@ class ChatBotGenerationThread(QThread):
                 self.chatbot_answer.append((text_to_copy, answer))
 
                 print(f"{text_to_copy}  : Done")
+                time.sleep(1)
 
             self.result_data_merge()
             print("\nFinished Chatbot Evaluation\n")

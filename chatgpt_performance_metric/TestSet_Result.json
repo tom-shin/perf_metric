@@ -1,19 +1,6 @@
 [
     {
-        "user_input": "What is Exynos AI Stodio used for?",
-        "reference_contexts": [
-            "This guide provides a comprehensive overview for developing an image classification Android application using the Exynos Neural Network Software Development Kit (Exynos AI Studio).\nIt outlines the steps for creating an application that utilizes the Exynos AI Studio to run neural network models on Samsung Exynos hardware.\nThis guide covers the important steps that also include Android project setup, function implementation, and NNC model conversion.\nThe guide aims at equipping developers with the necessary knowledge to use the Exynos AI Studio in their Android applications."
-        ],
-        "reference": "Exynos AI Studio is used for developing an image classification Android application by utilizing the Exynos Neural Network Software Development Kit to run neural network models on Samsung Exynos hardware.",
-        "synthesizer_name": "single_hop_specifc_query_synthesizer",
-        "file": "C:\\Users\\User\\Downloads\\new_doc\\ECO25_GENERAL_Doc\\documentation\\README.md",
-        "retrieved_contexts": "",
-        "response": "",
-        "chatbot_response": "You are asking about the purpose of Exynos AI Studio.\nExynos AI Studio is a software development kit (SDK) specifically designed for optimizing and implementing AI and machine learning models on devices powered by Exynos chipsets. It facilitates the conversion of AI models to be compatible with these devices, ensuring efficient performance and resource utilization.\nKey uses include:\nIn summary, Exynos AI Studio serves as a vital tool for developers seeking to harness the power of AI on Exynos-based devices, enhancing their applications' performance and capabilities. If you have further questions or need more specific information, feel free to ask!",
-        "date_time": "2025-03-14 20:51:18.157864+09:00"
-    },
-    {
-        "user_input": "what is Exynos AI Studio Farm used for?",
+        "user_input": "hello",
         "reference_contexts": [
             ""
         ],
@@ -22,7 +9,9 @@
         "file": "manual",
         "retrieved_contexts": "",
         "response": "",
-        "chatbot_response": "You are asking about the purpose of Exynos AI Studio Farm.\nExynos AI Studio Farm is a testing service that allows developers to test their applications on real mobile devices remotely. This service is particularly beneficial for those working with AI and machine learning models, as it provides a controlled environment to ensure that applications perform accurately and efficiently on Exynos-based devices.\nKey uses of Exynos AI Studio Farm include:\nIn summary, Exynos AI Studio Farm is designed to support developers in optimizing and validating their AI applications, ensuring that they can operate seamlessly on Exynos chipsets. If you have more questions or need further details, feel free to ask!",
-        "date_time": "2025-03-14 20:52:44.074134+09:00"
+        "chatbot_response": "Hello! 🖐️ How can I assist you today? If you have any questions about the Exynos AI Studio or related topics, feel free to ask!",
+        "date_time": "2025-03-17 12:16:59.824898+09:00",
+        "chatbot_server": "https://prd.ai-studio-farm.com/global/chatbot",
+        "user_comment": ""
     }
 ]

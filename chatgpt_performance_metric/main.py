@@ -96,7 +96,8 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
         self.chatbot_xpath = {
             "text_input": "/html/body/div/div/form/div/div/div/textarea[1]",
-            "gpt_answer": "/html/body/div/div/div[2]/div/div/div[ThunderSoft]/div[2]/div/div[1]/div/div"
+            "gpt_answer": "/html/body/div/div/div[2]/div/div/div[ThunderSoft]/div[2]/div/div[1]/div/div",
+            "check_chatbot_ready_status": "/html/body/div/div/div[2]/div/div/div[1]/div[2]/div/p"
         }
 
     def handle_stdout(self):
@@ -192,6 +193,9 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
         self.mainFrame_ui.qinput_lineEdit.returnPressed.connect(self.add_to_question_list)
         self.mainFrame_ui.msgwritepushButton.clicked.connect(self.message_write_on_item)
+
+    def setUserName(self, user=''):
+        self.mainFrame_ui.userlineEdit.setText(user)
 
     def context_answer_generation(self):
         if self.embed_open_scenario_file is None or len(self.mainFrame_ui.testset_lineEdit.text()) == 0:
@@ -350,6 +354,19 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         edge_options = Options()
         edge_options.use_chromium = True  # Chromium 기반 Edge 사용 설정
 
+        # "http://d1x4texestgncv.cloudfront.net/global/chatbot"
+
+        # # HTTPS 업그레이드 방지
+
+        # edge_options.add_argument(
+        #     "--disable-features=BlockInsecurePrivateNetworkRequests,InsecurePrivateNetworkRequestsAllowed")
+        # edge_options.add_argument("--disable-features=UpgradeHttpToHttps")  # 강제 변환 방지
+        # """
+        # reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge" /v InsecurePrivateNetworkRequestsAllowed /t REG_DWORD /d 1 /f
+        # reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge" /v UpgradeHttpToHttpsEnabled /t REG_DWORD /d 0 /f
+        #
+        # """
+
         # Edge WebDriver 경로 지정
         driver_path = ms_drive.replace("\\", "/")
         service = Service(driver_path)
@@ -363,17 +380,21 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.edge_driver = driver
 
         if not initial_open:
-            initial_display_xpath = "/html/body/div/div/div[2]/div/div/div[1]/div[2]/div/p"
             input_field = WebDriverWait(self.edge_driver, 300).until(
-                EC.presence_of_element_located((By.XPATH, initial_display_xpath))
+                EC.presence_of_element_located((By.XPATH, self.chatbot_xpath["check_chatbot_ready_status"]))
             )
         time.sleep(2)
+
+    def delete_all_question_items(self):
+        self.mainFrame_ui.questionlistWidget.clear()
+        self.mainFrame_ui.questionnumlineEdit.setText("0")
 
     def add_to_question_list(self):
         text = self.mainFrame_ui.qinput_lineEdit.text().strip()  # 입력된 텍스트 가져오기
         if text:  # 빈 값이 아니면 추가
             self.mainFrame_ui.questionlistWidget.addItem(text)  # 리스트 마지막에 추가
-            self.mainFrame_ui.questionlistWidget.setCurrentRow(self.mainFrame_ui.questionlistWidget.count() - 1)  # 마지막 아이템 선택
+            self.mainFrame_ui.questionlistWidget.setCurrentRow(
+                self.mainFrame_ui.questionlistWidget.count() - 1)  # 마지막 아이템 선택
             self.mainFrame_ui.qinput_lineEdit.clear()  # 입력 필드 초기화
 
             file_path = os.path.join(os.getcwd(), "TestSet_Result.json").replace("\\", "/")
@@ -387,7 +408,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             now = datetime.now(korea_tz)
 
             chatbot_server = self.mainFrame_ui.gptserverlineEdit.text().strip()
-                
+
             new_item = {
                 "user_input": text,
                 "reference_contexts": [""],
@@ -407,17 +428,41 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             with open(file_path, "w", encoding="utf-8") as file:
                 json.dump(data, file, ensure_ascii=False, indent=4)  # 보기 좋게 저장
 
-    def delete_all_question_items(self):
-        self.mainFrame_ui.questionlistWidget.clear()
-        self.mainFrame_ui.questionnumlineEdit.setText("0")
-
     def message_write_on_item(self):
-        selected_items = self.mainFrame_ui.questionlistWidget.selectedItems()
-        if selected_items:
-            for item in selected_items:
-                print(item.text())  # 선택된 아이템의 텍스트 출력
-        else:
-            print("No item selected")
+        current_row = self.mainFrame_ui.questionlistWidget.currentRow()  # 현재 선택된 인덱스
+        item_text = self.mainFrame_ui.questionlistWidget.item(current_row).text()  # 해당 인덱스의 텍스트
+
+        def message():
+            dialog = SimpleMsg(message=True)
+            if dialog.exec_() == QtWidgets.QDialog.Accepted:
+                input_text = dialog.get_input_text()
+
+                if input_text:  # 입력값이 있으면 관리자 모드 실행
+                    print("message", input_text)
+                    return input_text
+                else:  # 입력 없으면 경고 후 종료
+                    return ""
+            else:
+                # 이 경우는 사실상 실행되지 않겠지만, 대비용
+                return ""
+
+        comment = message()
+        if len(comment) == 0:
+            return
+
+        file_path = os.path.join(os.getcwd(), "TestSet_Result.json").replace("\\", "/")
+        # 1. JSON 파일 읽기
+        with open(file_path, "r", encoding="utf-8") as file:
+            datas = json.load(file)  # JSON 데이터 로드
+
+        for data in datas:
+            if data["user_input"] == item_text:
+                data["user_comment"] = comment
+                break
+
+        # 3. JSON 파일 다시 저장
+        with open(file_path, "w", encoding="utf-8") as file:
+            json.dump(datas, file, ensure_ascii=False, indent=4)  # 보기 좋게 저장
 
     def question_item_double_clicked(self, item):
         """ 더블 클릭한 항목의 텍스트 출력 """
@@ -572,6 +617,76 @@ def is_admin():
     #     return False
 
 
+class SimpleMsg(QtWidgets.QDialog):
+    def __init__(self, message=False):
+        super().__init__()
+
+        if message:
+            self.setWindowTitle("Check User")
+        else:
+            self.setWindowTitle("Write Message")
+
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)  # 항상 위에 표시
+
+        self.setMinimumSize(400,40)  # Set a larger window size
+
+        layout = QtWidgets.QVBoxLayout()
+
+        # 메시지 라벨
+        if message:
+            self.label = QtWidgets.QLabel("Write Message.\n")
+        else:
+            self.label = QtWidgets.QLabel("User Name is Required.\n")
+
+        layout.addWidget(self.label)
+
+        # 입력 필드
+        self.input_field = QtWidgets.QLineEdit()
+        if message:
+            self.input_field.setPlaceholderText("Message")
+        else:
+            self.input_field.setPlaceholderText("Enter your name")
+
+        self.input_field.setMinimumHeight(40)  # Make the input taller
+        font = self.input_field.font()
+        font.setPointSize(12)  # Optional: larger font
+        self.input_field.setFont(font)
+
+        layout.addWidget(self.input_field)
+
+        # # Enter 키가 기본적으로 accept() 호출하지 않도록 설정
+        # self.input_field.returnPressed.connect(lambda: None)
+        #
+        # # 버튼 추가
+        # self.button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok)
+        # self.button_box.accepted.connect(self.accept)  # OK 버튼 클릭 시만 accept
+        # layout.addWidget(self.button_box)
+
+        self.setLayout(layout)
+
+        # Enter 키 입력 시 다이얼로그 종료 (accept)
+        self.input_field.returnPressed.connect(self.accept)
+
+    def get_input_text(self):
+        return self.input_field.text().strip()
+
+
+def checkUserName():
+    dialog = SimpleMsg()
+    if dialog.exec_() == QtWidgets.QDialog.Accepted:
+        input_text = dialog.get_input_text()
+
+        if input_text:  # 입력값이 있으면 관리자 모드 실행
+            print("Your name is", input_text)
+            return input_text
+        else:  # 입력 없으면 경고 후 종료
+            QtWidgets.QMessageBox.warning(None, "Error", "You must enter user name.")
+            sys.exit(0)
+    else:
+        # 이 경우는 사실상 실행되지 않겠지만, 대비용
+        sys.exit(0)
+
+
 if __name__ == "__main__":
     import sys
     from PyQt5 import QtWidgets
@@ -596,8 +711,12 @@ if __name__ == "__main__":
             print("Normal Termination.")
             sys.exit(0)  # 일반 모드 실행 종료
 
+    user = checkUserName()
+
     app.setStyle("Fusion")
     ui = Performance_metrics_MainWindow()
+
+    ui.setUserName(user)
     ui.showMaximized()
     ui.connectSlotSignal()
 

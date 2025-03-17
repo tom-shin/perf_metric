@@ -1,0 +1,194 @@
+[
+    {
+        "user_input": "What is Exynos AI Stodio used for?",
+        "reference_contexts": [
+            "This guide provides a comprehensive overview for developing an image classification Android application using the Exynos Neural Network Software Development Kit (Exynos AI Studio).\nIt outlines the steps for creating an application that utilizes the Exynos AI Studio to run neural network models on Samsung Exynos hardware.\nThis guide covers the important steps that also include Android project setup, function implementation, and NNC model conversion.\nThe guide aims at equipping developers with the necessary knowledge to use the Exynos AI Studio in their Android applications."
+        ],
+        "reference": "Exynos AI Studio is used for developing an image classification Android application by utilizing the Exynos Neural Network Software Development Kit to run neural network models on Samsung Exynos hardware.",
+        "synthesizer_name": "single_hop_specifc_query_synthesizer",
+        "file": "C:\\Users\\User\\Downloads\\new_doc\\ECO25_GENERAL_Doc\\documentation\\README.md",
+        "retrieved_contexts": "",
+        "response": "",
+        "chatbot_response": "You are asking about the purpose of Exynos AI Studio.\nExynos AI Studio is a software development kit (SDK) specifically designed for optimizing and implementing AI and machine learning models on devices powered by Exynos chipsets. It facilitates the conversion of AI models to be compatible with these devices, ensuring efficient performance and resource utilization.\nKey uses include:\nIn summary, Exynos AI Studio serves as a vital tool for developers seeking to harness the power of AI on Exynos-based devices, enhancing their applications' performance and capabilities. If you have further questions or need more specific information, feel free to ask!",
+        "date_time": "2025-03-14 20:51:18.157864+09:00",
+        "user_comment": "스튜디오 팜하고 구분을 잘 하는 것 같데"
+    },
+    {
+        "user_input": "what is Exynos AI Studio Farm used for?",
+        "reference_contexts": [
+            ""
+        ],
+        "reference": "",
+        "synthesizer_name": "",
+        "file": "manual",
+        "retrieved_contexts": "",
+        "response": "",
+        "chatbot_response": "You are asking about the purpose of Exynos AI Studio Farm.\nExynos AI Studio Farm is a testing service that allows developers to test their applications on real mobile devices remotely. This service is particularly beneficial for those working with AI and machine learning models, as it provides a controlled environment to ensure that applications perform accurately and efficiently on Exynos-based devices.\nKey uses of Exynos AI Studio Farm include:\nIn summary, Exynos AI Studio Farm is designed to support developers in optimizing and validating their AI applications, ensuring that they can operate seamlessly on Exynos chipsets. If you have more questions or need further details, feel free to ask!",
+        "date_time": "2025-03-14 20:52:44.074134+09:00"
+    },
+    {
+        "user_input": "how is the weather ?",
+        "reference_contexts": [
+            ""
+        ],
+        "reference": "",
+        "synthesizer_name": "",
+        "file": "manual",
+        "retrieved_contexts": "",
+        "response": "",
+        "chatbot_response": "I'm sorry, I don't understand. If you wish to contact support about this inquiry, please send an email to seed.ai@samsung.com.",
+        "date_time": "2025-03-17 10:39:38.532942+09:00",
+        "chatbot_server": "https://prd.ai-studio-farm.com/global/chatbot",
+        "user_comment": "good job/"
+    },
+    {
+        "user_input": "hi ai studio ?",
+        "reference_contexts": [
+            ""
+        ],
+        "reference": "",
+        "synthesizer_name": "",
+        "file": "manual",
+        "retrieved_contexts": "",
+        "response": "",
+        "chatbot_response": "You seem to be reaching out about Exynos AI Studio!\nExynos AI Studio is a specialized software development kit (SDK) created for optimizing and implementing AI and machine learning models on devices powered by Exynos processors. It provides developers with tools to convert and fine-tune AI models for compatibility and efficiency on Exynos chipsets. Key features include model optimization for various AI algorithms, a user-friendly interface, and support for mobile and edge device applications.\nIf you have more specific inquiries or areas you'd like to explore about Exynos AI Studio, feel free to ask!",
+        "date_time": "2025-03-17 10:39:58.217753+09:00",
+        "chatbot_server": "https://prd.ai-studio-farm.com/global/chatbot",
+        "user_comment": "잘 살펴봐야 햄"
+    },
+    {
+        "user_input": "exynos developer site 와 exynos developer socity ?",
+        "reference_contexts": [
+            ""
+        ],
+        "reference": "",
+        "synthesizer_name": "",
+        "file": "manual",
+        "retrieved_contexts": "",
+        "response": "",
+        "chatbot_response": "I'm sorry, I don't understand. Could you please rephrase your question in English?",
+        "date_time": "2025-03-17 10:45:49.736960+09:00",
+        "chatbot_server": "https://prd.ai-studio-farm.com/global/chatbot",
+        "user_comment": ""
+    },
+    {
+        "user_input": "exynos developer site 와 exynos developer socity 차이는 ?",
+        "reference_contexts": [
+            ""
+        ],
+        "reference": "",
+        "synthesizer_name": "",
+        "file": "manual",
+        "retrieved_contexts": "",
+        "response": "",
+        "chatbot_response": "I'm sorry, I don't understand. Could you please rephrase your question in English?",
+        "date_time": "2025-03-17 10:46:33.443731+09:00",
+        "chatbot_server": "https://prd.ai-studio-farm.com/global/chatbot",
+        "user_comment": ""
+    },
+    {
+        "user_input": "what is difference between exynos developer site and exynos developer socity?",
+        "reference_contexts": [
+            ""
+        ],
+        "reference": "",
+        "synthesizer_name": "",
+        "file": "manual",
+        "retrieved_contexts": "",
+        "response": "",
+        "chatbot_response": "You are inquiring about the difference between the Exynos Developer Site and the Exynos Developer Society.\nExynos Developer Site: This is a dedicated platform that provides developers with resources, documentation, and tools necessary for working with Exynos chipsets. It hosts technical documents, SDK downloads, tutorials, and forums to support developers in optimizing and implementing AI and machine learning models on Exynos devices. Essentially, it serves as a comprehensive resource hub for developers.\nExynos Developer Society: This typically refers to a community or network of developers who work with Exynos technology. It may function as a forum or social group where developers share knowledge, collaborate on projects, discuss innovations, and provide mutual support. Members may engage in discussions, events, and activities centered around Exynos development.\nIn summary, the Exynos Developer Site is focused on providing tools and resources, while the Exynos Developer Society is more about fostering a community of developers. If you have more questions or need further clarification, feel free to ask!",
+        "date_time": "2025-03-17 10:47:21.806490+09:00",
+        "chatbot_server": "https://prd.ai-studio-farm.com/global/chatbot",
+        "user_comment": ""
+    },
+    {
+        "user_input": "could you let me know each web site?",
+        "reference_contexts": [
+            ""
+        ],
+        "reference": "",
+        "synthesizer_name": "",
+        "file": "manual",
+        "retrieved_contexts": "",
+        "response": "",
+        "chatbot_response": "You are asking about the specific websites related to Exynos development.\nExynos Developer Site: This is the primary platform where developers can access resources, documentation, tools, and support for working with Exynos chipsets and the Exynos AI Studio. It typically includes technical documents, software downloads, tutorials, and community forums. You can usually find it by searching for \"Exynos Developer Site\" in your web browser.\nExynos Developer Society: This is a community-focused site managed by Samsung S.LSI, where developers can engage with each other, share knowledge, and access additional training and development resources. The site may also feature programs like Best Lab, where standout projects are showcased. For access, you can search for \"Exynos Developer Society\" online.\nIf you have further questions or need additional information about what each website offers, feel free to ask!",
+        "date_time": "2025-03-17 10:47:59.981317+09:00",
+        "chatbot_server": "https://prd.ai-studio-farm.com/global/chatbot",
+        "user_comment": ""
+    },
+    {
+        "user_input": "i mean that i'd like to know web address.",
+        "reference_contexts": [
+            ""
+        ],
+        "reference": "",
+        "synthesizer_name": "",
+        "file": "manual",
+        "retrieved_contexts": "",
+        "response": "",
+        "chatbot_response": "You are looking for the web addresses of the Exynos Developer Site and the Exynos Developer Society.\nExynos Developer Site: Typically, you can find it at https://developer.samsung.com/exynos. This site provides resources, documentation, and tools for developers working with Exynos chipsets.\nExynos Developer Society: You may visit it at https://www.exynos.dev. This community platform allows developers to engage with each other and access additional training and development resources.\nIf you have more questions or need further assistance, feel free to ask!",
+        "date_time": "2025-03-17 10:48:37.678909+09:00",
+        "chatbot_server": "https://prd.ai-studio-farm.com/global/chatbot",
+        "user_comment": "알려 준 두개의 주소가 모두 이상해. 없는 주소 같아. 다시 살펴 볼 필요 있어"
+    },
+    {
+        "user_input": "good morning",
+        "reference_contexts": [
+            ""
+        ],
+        "reference": "",
+        "synthesizer_name": "",
+        "file": "manual",
+        "retrieved_contexts": "",
+        "response": "",
+        "chatbot_response": "Good morning! How can I assist you today? If you have any questions about Exynos AI Studio or related topics, feel free to ask!",
+        "date_time": "2025-03-17 11:02:15.109858+09:00",
+        "chatbot_server": "https://prd.ai-studio-farm.com/global/chatbot",
+        "user_comment": "good answer"
+    },
+    {
+        "user_input": "hello",
+        "reference_contexts": [
+            ""
+        ],
+        "reference": "",
+        "synthesizer_name": "",
+        "file": "manual",
+        "retrieved_contexts": "",
+        "response": "",
+        "chatbot_response": "Hello! How can I assist you today? If you have any questions about Exynos AI Studio or related topics, feel free to ask!",
+        "date_time": "2025-03-17 11:08:50.691486+09:00",
+        "chatbot_server": "https://prd.ai-studio-farm.com/global/chatbot",
+        "user_comment": ""
+    },
+    {
+        "user_input": "today is fine how are you?",
+        "reference_contexts": [
+            ""
+        ],
+        "reference": "",
+        "synthesizer_name": "",
+        "file": "manual",
+        "retrieved_contexts": "",
+        "response": "",
+        "chatbot_response": "I'm here and ready to assist you! If you have any questions about Exynos AI Studio or related topics, feel free to ask!",
+        "date_time": "2025-03-17 11:09:18.269750+09:00",
+        "chatbot_server": "https://prd.ai-studio-farm.com/global/chatbot",
+        "user_comment": ""
+    },
+    {
+        "user_input": "what is exynos ai studio ?",
+        "reference_contexts": [
+            ""
+        ],
+        "reference": "",
+        "synthesizer_name": "",
+        "file": "manual",
+        "retrieved_contexts": "",
+        "response": "",
+        "chatbot_response": "You are asking about Exynos AI Studio.\nExynos AI Studio is a software development kit (SDK) created by Samsung S.LSI, designed specifically for optimizing and implementing artificial intelligence (AI) and machine learning models on devices powered by Exynos chipsets. It provides developers with the necessary tools and resources to convert, fine-tune, and deploy AI models effectively on Exynos-based hardware.\nKey features of Exynos AI Studio include:\nIn summary, Exynos AI Studio serves as a vital toolkit for developers seeking to leverage AI capabilities on Exynos chipsets, ensuring their applications run optimally. If you have more questions or need additional information, feel free to ask!",
+        "date_time": "2025-03-17 11:24:35.164760+09:00",
+        "chatbot_server": "https://prd.ai-studio-farm.com/global/chatbot",
+        "user_comment": ""
+    }
+]
