@@ -71,6 +71,8 @@ class ChatBotGenerationThread(QThread):
     def __init__(self, base_dir, q_lists, drive, gpt_xpath, source_result_file):
         super().__init__()
 
+        self.running = True
+
         self.base_dir = base_dir
         self.q_list = q_lists
         self.edge_drive = drive
@@ -164,6 +166,10 @@ class ChatBotGenerationThread(QThread):
             # print("last_valid_idx",last_valid_idx)  # 마지막으로 존재한 idx만 출력
 
             for i in range(self.q_list.count()):
+                if not self.running:
+                    # print("Terminated")
+                    break
+
                 text_to_copy = self.q_list.item(i).text()
 
                 self.send_text_to_browser(question=text_to_copy)
@@ -199,5 +205,6 @@ class ChatBotGenerationThread(QThread):
         json_dump_f(file_path=self.filepath.replace("\\", "/"), data=self.json_result_data)
 
     def stop(self):
+        self.running = False
         self.quit()
         self.wait(3000)

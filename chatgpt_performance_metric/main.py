@@ -130,6 +130,8 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             checkbox.setText(model)
             self.mainFrame_ui.verticalLayout_5.addWidget(checkbox)
 
+        self.mainFrame_ui.chatbotpushButton.setEnabled(False)
+
     def closeEvent(self, event):
         answer = QtWidgets.QMessageBox.question(self,
                                                 "Confirm Exit...",
@@ -193,6 +195,13 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
         self.mainFrame_ui.qinput_lineEdit.returnPressed.connect(self.add_to_question_list)
         self.mainFrame_ui.msgwritepushButton.clicked.connect(self.message_write_on_item)
+
+        self.mainFrame_ui.responsestop_pushButton.clicked.connect(self.stop_response)
+
+    def stop_response(self):
+        if self.chatbot_instance is not None:
+            self.chatbot_instance.stop()
+            self.chatbot_instance = None
 
     def setUserName(self, user=''):
         self.mainFrame_ui.userlineEdit.setText(user)
@@ -438,7 +447,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
                 input_text = dialog.get_input_text()
 
                 if input_text:  # 입력값이 있으면 관리자 모드 실행
-                    print("message", input_text)
+                    # print("message", input_text)
                     return input_text
                 else:  # 입력 없으면 경고 후 종료
                     return ""
@@ -515,7 +524,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.mainFrame_ui.testset_lineEdit.setText(self.embed_open_scenario_file)
         self.mainFrame_ui.questionlistWidget.clear()
 
-        self.start_browser()
+        # self.start_browser()
 
         def json_load_f(file_path, use_encoding=False):
             if file_path is None:
@@ -549,6 +558,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
                         cnt += 1
 
         self.mainFrame_ui.questionnumlineEdit.setText(str(cnt))
+        self.mainFrame_ui.chatbotpushButton.setEnabled(True)
 
     def open_file_for_evaluation(self):
         file_path = easygui.fileopenbox(

@@ -1,17 +1,3 @@
 [
-    {
-        "user_input": "hello",
-        "reference_contexts": [
-            ""
-        ],
-        "reference": "",
-        "synthesizer_name": "",
-        "file": "manual",
-        "retrieved_contexts": "",
-        "response": "",
-        "chatbot_response": "Hello! 🖐️ How can I assist you today? If you have any questions about the Exynos AI Studio or related topics, feel free to ask!",
-        "date_time": "2025-03-17 12:16:59.824898+09:00",
-        "chatbot_server": "https://prd.ai-studio-farm.com/global/chatbot",
-        "user_comment": ""
-    }
+
 ]
