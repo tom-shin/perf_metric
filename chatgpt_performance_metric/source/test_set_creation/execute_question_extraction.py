@@ -179,6 +179,17 @@ def main(source_dir, test_size, query_synthesize, model, append=False, test_serv
         if not append:
             app = QtWidgets.QApplication(sys.argv)
 
+        # Test 용도
+        # loader = DirectoryLoader(source_dir, glob="**/*.txt")
+        # docs = loader.load()
+        # generator_llm = LangchainLLMWrapper(ChatOpenAI(model=model))
+        # generator_embeddings = LangchainEmbeddingsWrapper(OpenAIEmbeddings())
+        # generator = TestsetGenerator(llm=generator_llm, embedding_model=generator_embeddings)
+        # test_set = generator.generate_with_langchain_docs(docs, testset_size=test_size)
+        # complete_creating_question_groundTruth(test_set=test_set, append=True, source_dir=source_dir,
+        #                                        test_server=test_server)
+        # return
+
         generator_llm = LangchainLLMWrapper(ChatOpenAI(model=model))
         generator_embeddings = LangchainEmbeddingsWrapper(OpenAIEmbeddings())
         transformer_llm = generator_llm
@@ -240,6 +251,7 @@ def main(source_dir, test_size, query_synthesize, model, append=False, test_serv
 
         # QApplication 종료
         # print(source_dir)
+
         if not append:
             sys.exit(0)
 
@@ -305,9 +317,9 @@ if __name__ == "__main__":
         else:
             # os.environ["OPENAI_API_KEY"] = ""
             # main.py의 gui 에서 실행한 경우가 아니고 단독으로 test_set_Creator.py를 실행한 경우
-            source_dir = rf"C:\Users\User\Downloads\new_doc\ECO25_MX_Doc\documentation\getting-started-with-android-samples\guide"
+            source_dir = rf"C:\Users\User\Downloads\20250317_input\Input\testset_2503\fail"
 
-            test_size = 2
+            test_size = 10
             SpecificQuerySynthesizer_ratio = 1.0
             ComparativeAbstractQuerySynthesizer_ratio = 0.0
             AbstractQuerySynthesizer_ratio = 0.0
