@@ -372,6 +372,8 @@ if __name__ == "__main__":
     individual_file = True
 
     if individual_file:  # file 하나 씩 생성
+        NEW_VERSION = True
+
         source_dir = sys.argv[1]
         test_size = int(sys.argv[2])
         SpecificQuerySynthesizer_ratio = float(sys.argv[3])
@@ -383,45 +385,48 @@ if __name__ == "__main__":
         chatbot_server = sys.argv[8]
         user_name = sys.argv[9]
 
-        instance = TestSetCreation(src_dir_path=source_dir.replace("\\", "/"), test_size=test_size, gpt_model=model,
-                                   user_name=user_name)
-        instance.execute()
+        if NEW_VERSION:
 
-        if len(instance.testSetGenFailList) != 0:
-            ErrorPath = "Fail_Generate_Question.txt"
+            instance = TestSetCreation(src_dir_path=source_dir.replace("\\", "/"), test_size=test_size, gpt_model=model,
+                                       user_name=user_name)
+            instance.execute()
 
-            with open(ErrorPath, "w", encoding="utf-8") as f:
-                for data in instance.testSetGenFailList:
-                    file = data[0]  # 파일명
-                    reason = data[1]  # 실패 원인
-                    f.write(f"{file}\nReason: {reason}\n\n")
+            if len(instance.testSetGenFailList) != 0:
+                ErrorPath = "Fail_Generate_Question.txt"
 
-            print("실패한 파일이 있음. Fail_Generate_Question.txt 파일을 학인하세요")
+                with open(ErrorPath, "w", encoding="utf-8") as f:
+                    for data in instance.testSetGenFailList:
+                        file = data[0]  # 파일명
+                        reason = data[1]  # 실패 원인
+                        f.write(f"{file}\nReason: {reason}\n\n")
 
-        # def find_files(root_dir, extensions):
-        #     found_files = []
-        #     for dirpath, _, filenames in os.walk(root_dir):
-        #         for filename in filenames:
-        #             if any(filename.lower().endswith(ext) for ext in extensions):
-        #                 found_files.append(os.path.join(dirpath, filename))
-        #     return found_files
-        #
-        #
-        # file_extensions = [".md", ".txt"]
-        #
-        # files = find_files(source_dir, file_extensions)
-        #
-        # for idx, file in enumerate(files):
-        #     print(rf"[{idx+1}/{len(files)}] Generating.... Wait until Finished.   File: {file}")
-        #
-        #     query_synthesize = {
-        #         "SingleHopSpecificQuerySynthesizer": SpecificQuerySynthesizer_ratio,
-        #         "MultiHopAbstractQuerySynthesizer": ComparativeAbstractQuerySynthesizer_ratio,
-        #         "MultiHopSpecificQuerySynthesizer": AbstractQuerySynthesizer_ratio
-        #     }
-        #
-        #     main(source_dir=file, test_size=test_size, query_synthesize=query_synthesize, model=model, append=True, test_server=chatbot_server)
-        #
+                print("실패한 파일이 있음. Fail_Generate_Question.txt 파일을 학인하세요")
+
+        else:
+            def find_files(root_dir, extensions):
+                found_files = []
+                for dirpath, _, filenames in os.walk(root_dir):
+                    for filename in filenames:
+                        if any(filename.lower().endswith(ext) for ext in extensions):
+                            found_files.append(os.path.join(dirpath, filename))
+                return found_files
+
+
+            file_extensions = [".md", ".txt"]
+
+            files = find_files(source_dir, file_extensions)
+
+            for idx, file in enumerate(files):
+                print(rf"[{idx+1}/{len(files)}] Generating.... Wait until Finished.   File: {file}")
+
+                query_synthesize = {
+                    "SingleHopSpecificQuerySynthesizer": SpecificQuerySynthesizer_ratio,
+                    "MultiHopAbstractQuerySynthesizer": ComparativeAbstractQuerySynthesizer_ratio,
+                    "MultiHopSpecificQuerySynthesizer": AbstractQuerySynthesizer_ratio
+                }
+
+                main(source_dir=file, test_size=test_size, query_synthesize=query_synthesize, model=model, append=True, test_server=chatbot_server)
+
         print("Completed Test Generation..")
 
     else:
