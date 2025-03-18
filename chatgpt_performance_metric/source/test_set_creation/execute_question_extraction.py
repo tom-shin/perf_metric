@@ -21,6 +21,8 @@ from ragas.testset.synthesizers.multi_hop import (
     MultiHopAbstractQuerySynthesizer,
     MultiHopSpecificQuerySynthesizer,
 )
+from langchain_community.document_loaders import TextLoader
+import fnmatch
 
 ######################################################################
 # 아래 매우 중요
@@ -39,6 +41,107 @@ else:
 import nltk
 
 nltk.download('punkt')
+
+
+class TestSetCreation:
+    korea_tz = pytz.timezone('Asia/Seoul')
+
+    def __init__(self, src_dir_path=None, test_size=10, gpt_model="gpt-4o", user_name="admin"):
+        super().__init__()
+        self.test_size = test_size
+        self.gpt_model = gpt_model
+        self.includeList = ["*.md", "*.txt"]
+        self.src_path = src_dir_path
+        self.file_list = []  # 추출된 파일 목록 저장
+        self.outputPath = "Generate_Question.json"
+        self.user = user_name
+        self.testSetGenFailList = []
+
+        self.extractFileList()
+
+    def extractFileList(self):
+        self.file_list = []
+        for root, _, files in os.walk(self.src_path):
+            for pattern in self.includeList:
+                matched_files = fnmatch.filter(files, pattern)
+                for file in matched_files:
+                    full_path = os.path.join(root, file)
+                    self.file_list.append(full_path)
+
+    @staticmethod
+    def json_dump_f(file_path, data, use_encoding=False, append=False):
+        if file_path is None:
+            return False
+
+        if not file_path.endswith(".json"):
+            file_path += ".json"
+
+        if use_encoding:
+            with open(file_path, 'rb') as f:
+                result = chardet.detect(f.read())
+                encoding = result['encoding']
+        else:
+            encoding = "utf-8"
+
+        if append:
+            if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    existing_data = json.load(f)  # 기존 데이터 로드
+
+                # 새로운 데이터 추가
+                existing_data.extend(data)  # 리스트라면 추가
+
+            else:
+                existing_data = data  # 파일이 없거나 비어있으면 빈 리스트로 초기화
+
+            # JSON 파일에 다시 저장 (덮어쓰기)
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(existing_data, f, indent=4, ensure_ascii=False)
+        else:
+            with open(file_path, "w", encoding=encoding) as f:
+                json.dump(data, f, indent=4, ensure_ascii=False, sort_keys=False)
+
+        return True
+
+    def execute(self):
+        generator_llm = LangchainLLMWrapper(ChatOpenAI(model=self.gpt_model))
+        generator_embeddings = LangchainEmbeddingsWrapper(OpenAIEmbeddings())
+
+        all_data = []
+
+        for file_ in self.file_list:
+            file_path = file_.replace("\\", "/")
+            try:
+                loader = TextLoader(file_path, autodetect_encoding=True)
+                docs = loader.load()
+
+                generator = TestsetGenerator(llm=generator_llm, embedding_model=generator_embeddings)
+                dataset = generator.generate_with_langchain_docs(docs, testset_size=self.test_size)
+
+                df = dataset.to_pandas()
+
+                """ 추가 필드 """
+                df["file"] = file_path  # 파일 경로 추가
+                df["retrieved_contexts"] = ""
+                df["response"] = ""
+                df["chatbot_response"] = ""
+                df["user_comment"] = ""
+                df["date_time"] = str(datetime.now(self.korea_tz))
+                df["chatbot_server"] = ""
+                df["user"] = self.user
+
+                if not df.empty:
+                    json_data = df.to_dict(orient='records')  # 리스트 of dict
+                    all_data.extend(json_data)  # 하나씩 추가
+                else:
+                    self.testSetGenFailList.append((file_path, "empty"))
+
+            except Exception as e:
+                self.testSetGenFailList.append((file_path, e))
+
+        # 루프 끝나고 전체 리스트를 JSON 파일로 저장
+        if all_data:
+            self.json_dump_f(file_path=self.outputPath, data=all_data, append=False)
 
 
 def get_markdown_dir(source_dir):
@@ -117,10 +220,11 @@ def save_question_groundtruth_to_file(test_set, append, source_dir='', test_serv
             return False, False
 
 
-def complete_creating_question_groundTruth(test_set, query_synthesize=None, append=False, source_dir='', test_server=''):
-
+def complete_creating_question_groundTruth(test_set, query_synthesize=None, append=False, source_dir='',
+                                           test_server=''):
     if append:
-        save_question_groundtruth_to_file(test_set=test_set, append=append, source_dir=source_dir,test_server=test_server)
+        save_question_groundtruth_to_file(test_set=test_set, append=append, source_dir=source_dir,
+                                          test_server=test_server)
 
     else:
         save_successful = False
@@ -140,7 +244,8 @@ def complete_creating_question_groundTruth(test_set, query_synthesize=None, appe
             answer = msg_box.exec_()
 
             if answer == QtWidgets.QMessageBox.Yes:
-                save_successful, not_present = save_question_groundtruth_to_file(test_set=test_set, test_server=test_server)
+                save_successful, not_present = save_question_groundtruth_to_file(test_set=test_set,
+                                                                                 test_server=test_server)
                 if save_successful:
                     _box = QtWidgets.QMessageBox()
                     _box.setWindowTitle("Saved File")
@@ -247,7 +352,8 @@ def main(source_dir, test_size, query_synthesize, model, append=False, test_serv
 
             test_set = generator.generate(testset_size=test_size, query_distribution=query_distribution)
 
-            complete_creating_question_groundTruth(test_set=test_set, append=append, source_dir=source_dir, test_server=test_server)
+            complete_creating_question_groundTruth(test_set=test_set, append=append, source_dir=source_dir,
+                                                   test_server=test_server)
 
         # QApplication 종료
         # print(source_dir)
@@ -275,31 +381,47 @@ if __name__ == "__main__":
         openaikey = sys.argv[7]
         os.environ["OPENAI_API_KEY"] = openaikey
         chatbot_server = sys.argv[8]
+        user_name = sys.argv[9]
 
-        def find_files(root_dir, extensions):
-            found_files = []
-            for dirpath, _, filenames in os.walk(root_dir):
-                for filename in filenames:
-                    if any(filename.lower().endswith(ext) for ext in extensions):
-                        found_files.append(os.path.join(dirpath, filename))
-            return found_files
+        instance = TestSetCreation(src_dir_path=source_dir.replace("\\", "/"), test_size=test_size, gpt_model=model,
+                                   user_name=user_name)
+        instance.execute()
 
+        if len(instance.testSetGenFailList) != 0:
+            ErrorPath = "Fail_Generate_Question.txt"
 
-        file_extensions = [".md", ".txt"]
+            with open(ErrorPath, "w", encoding="utf-8") as f:
+                for data in instance.testSetGenFailList:
+                    file = data[0]  # 파일명
+                    reason = data[1]  # 실패 원인
+                    f.write(f"{file}\nReason: {reason}\n\n")
 
-        files = find_files(source_dir, file_extensions)
+            print("실패한 파일이 있음. Fail_Generate_Question.txt 파일을 학인하세요")
 
-        for idx, file in enumerate(files):
-            print(rf"[{idx+1}/{len(files)}] Generating.... Wait until Finished.   File: {file}")
-
-            query_synthesize = {
-                "SingleHopSpecificQuerySynthesizer": SpecificQuerySynthesizer_ratio,
-                "MultiHopAbstractQuerySynthesizer": ComparativeAbstractQuerySynthesizer_ratio,
-                "MultiHopSpecificQuerySynthesizer": AbstractQuerySynthesizer_ratio
-            }
-
-            main(source_dir=file, test_size=test_size, query_synthesize=query_synthesize, model=model, append=True, test_server=chatbot_server)
-
+        # def find_files(root_dir, extensions):
+        #     found_files = []
+        #     for dirpath, _, filenames in os.walk(root_dir):
+        #         for filename in filenames:
+        #             if any(filename.lower().endswith(ext) for ext in extensions):
+        #                 found_files.append(os.path.join(dirpath, filename))
+        #     return found_files
+        #
+        #
+        # file_extensions = [".md", ".txt"]
+        #
+        # files = find_files(source_dir, file_extensions)
+        #
+        # for idx, file in enumerate(files):
+        #     print(rf"[{idx+1}/{len(files)}] Generating.... Wait until Finished.   File: {file}")
+        #
+        #     query_synthesize = {
+        #         "SingleHopSpecificQuerySynthesizer": SpecificQuerySynthesizer_ratio,
+        #         "MultiHopAbstractQuerySynthesizer": ComparativeAbstractQuerySynthesizer_ratio,
+        #         "MultiHopSpecificQuerySynthesizer": AbstractQuerySynthesizer_ratio
+        #     }
+        #
+        #     main(source_dir=file, test_size=test_size, query_synthesize=query_synthesize, model=model, append=True, test_server=chatbot_server)
+        #
         print("Completed Test Generation..")
 
     else:
@@ -313,6 +435,7 @@ if __name__ == "__main__":
             openaikey = sys.argv[7]
             os.environ["OPENAI_API_KEY"] = openaikey
             chatbot_server = sys.argv[8]
+            user_name = sys.argv[9]
             # print("given from main.py")
         else:
             # os.environ["OPENAI_API_KEY"] = ""
@@ -325,6 +448,7 @@ if __name__ == "__main__":
             AbstractQuerySynthesizer_ratio = 0.0
             model = "gpt-4o-mini"
             chatbot_server = ""
+            user_name = "admin"
             # print("given from test_set_creator.py")
 
         query_synthesize = {
@@ -334,4 +458,5 @@ if __name__ == "__main__":
         }
 
         # main 함수 실행
-        main(source_dir=source_dir, test_size=test_size, query_synthesize=query_synthesize, model=model, test_server=chatbot_server)
+        main(source_dir=source_dir, test_size=test_size, query_synthesize=query_synthesize, model=model,
+             test_server=chatbot_server)

@@ -27,6 +27,22 @@ from selenium.webdriver.support import expected_conditions as EC
 from PyQt5.QtCore import pyqtSignal, QObject, QProcess
 from PyQt5 import QtWidgets, QtCore, QtGui
 
+import os
+import fnmatch
+import chardet
+import json
+from datetime import datetime
+import pytz
+
+from ragas.llms import LangchainLLMWrapper
+from ragas.embeddings import LangchainEmbeddingsWrapper
+from langchain_community.document_loaders import DirectoryLoader, TextLoader
+from langchain_openai import ChatOpenAI
+from langchain_openai import OpenAIEmbeddings
+from ragas.testset import TestsetGenerator
+
+from PyQt5.QtCore import QThread
+
 import pandas as pd
 
 # 모든 행과 열을 출력할 수 있도록 설정 변경
@@ -74,6 +90,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
 
+        self.testset_creation_instance = None
         self.chatbot_instance = None
         self.edge_driver = None
         self.context_ground = None
@@ -199,6 +216,14 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.mainFrame_ui.responsestop_pushButton.clicked.connect(self.stop_response)
         self.mainFrame_ui.suspendpushButton.clicked.connect(self.suspend_resume_response)
 
+        self.mainFrame_ui.label_SpecificQuerySynthesizer.hide()
+        self.mainFrame_ui.label_ComparativeAbstractQuerySynthesizer.hide()
+        self.mainFrame_ui.label_11.hide()
+
+        self.mainFrame_ui.lineEdit_SpecificQuerySynthesizer.hide()
+        self.mainFrame_ui.lineEdit_ComparativeAbstractQuerySynthesizer.hide()
+        self.mainFrame_ui.lineEdit_AbstractQuerySynthesizer.hide()
+
     def suspend_resume_response(self):
         if self.chatbot_instance is not None:
             if not self.chatbot_instance.suspended:
@@ -322,29 +347,30 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.start_question_ground_truth_gen()
 
     def start_question_ground_truth_gen(self):
-        # Fetch all .md files from the current directory and subdirectories
+
         test_size_ = int(self.mainFrame_ui.n_lineEdit.text())
+        if self.mainFrame_ui.creation_gpt4o_radioButton.isChecked():
+            model = "gpt-4o"
+        elif self.mainFrame_ui.creation_gpt4omini_radioButton.isChecked():
+            model = "gpt-4o-mini"
+        else:
+            model = "gpt-3.5-turbo-16k"
+
+        source_dir = str(self.directory)
+
+        user_name = self.mainFrame_ui.userlineEdit.text().strip()
+
         SpecificQuerySynthesizer_cnt = float(self.mainFrame_ui.lineEdit_SpecificQuerySynthesizer.text())
         ComparativeAbstractQuerySynthe_cnt = float(
             self.mainFrame_ui.lineEdit_ComparativeAbstractQuerySynthesizer.text())
         AbstractQuerySynthesizer_cnt = float(self.mainFrame_ui.lineEdit_AbstractQuerySynthesizer.text())
-
-        if self.mainFrame_ui.creation_gpt4o_radioButton.isChecked():
-            model = "gpt-4o"
-            print("creation model", model)
-        elif self.mainFrame_ui.creation_gpt4omini_radioButton.isChecked():
-            model = "gpt-4o-mini"
-            print("creation model", model)
-        else:
-            model = "gpt-3.5-turbo-16k"
-            print("creation model", model)
 
         # 실행할 파이썬 파일 경로와 전달할 인자들
         script_path = os.path.join(BASE_DIR, "source", "test_set_creation",
                                    "execute_question_extraction.py")
 
         # 다른 변수들도 문자열로 변환
-        source_dir = str(self.directory)
+
         test_size_str = str(test_size_)
         SpecificQuerySynthesizer_str = str(SpecificQuerySynthesizer_cnt)
         ComparativeAbstractQuerySynthesizer_str = str(ComparativeAbstractQuerySynthe_cnt)
@@ -355,7 +381,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         # 인자로 넘길 리스트 (모두 문자열이어야 함)
         arguments = [script_path, source_dir, test_size_str, SpecificQuerySynthesizer_str,
                      ComparativeAbstractQuerySynthesizer_str, AbstractQuerySynthesizer_str, model_str,
-                     self.get_OpenAIKey(), chatbot_server]
+                     self.get_OpenAIKey(), chatbot_server, user_name]
 
         # QProcess로 파이썬 스크립트를 인자와 함께 실행
         self.process_ground_truth_ground_truth.start(sys.executable, arguments)

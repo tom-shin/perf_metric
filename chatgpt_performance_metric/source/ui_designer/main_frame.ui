@@ -397,7 +397,7 @@
                  </font>
                 </property>
                 <property name="title">
-                 <string>Ctrl.params. (1+2+3 비율이 1 초과되면 안됨)</string>
+                 <string>Ctrl.params.</string>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_6">
                  <item>

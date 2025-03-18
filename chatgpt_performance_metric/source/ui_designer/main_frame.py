@@ -662,7 +662,7 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_5), _translate("MainWindow", "Env. Setup"))
         self.label_5.setText(_translate("MainWindow", "Source Directory"))
         self.dirpushButton.setText(_translate("MainWindow", "Open (*.md/ *.txt file)"))
-        self.groupBox_4.setTitle(_translate("MainWindow", "Ctrl.params. (1+2+3 비율이 1 초과되면 안됨)"))
+        self.groupBox_4.setTitle(_translate("MainWindow", "Ctrl.params."))
         self.n_lineEdit.setText(_translate("MainWindow", "10"))
         self.lineEdit_ComparativeAbstractQuerySynthesizer.setText(_translate("MainWindow", "0.0"))
         self.label_8.setText(_translate("MainWindow", "파일별 질문 갯수"))
