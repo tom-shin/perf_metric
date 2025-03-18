@@ -161,7 +161,12 @@ def get_markdown_files(source_dir):
 
 def save_question_groundtruth_to_file(test_set, append, source_dir='', test_server=''):
     if append:
-        file_path = os.path.join(os.getcwd(), "TestSet_Result").replace("\\", "/")
+        file_path = os.path.join(os.getcwd(), "TestSet_Result.json").replace("\\", "/")
+        # 파일이 없으면 빈 리스트로 새 파일 생성
+        if not os.path.exists(file_path):
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump([], f, indent=4, ensure_ascii=False) 
+        
     else:
         file_path = easygui.filesavebox(
             msg="Want to Save Test Set File?",
