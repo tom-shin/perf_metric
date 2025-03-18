@@ -139,12 +139,15 @@ class ChatBotGenerationThread(QThread):
                     break
 
                 text_to_copy = self.q_list.item(i).text()
+                print(f"Send: {text_to_copy}")
                 self.send_text_to_browser(question=text_to_copy)
+                print(f"Send 완료 및 답변 대기")
+
                 answer = self.get_web_data(i)
                 self.chatbot_answer.append((text_to_copy, answer))
 
-                # self.single_data_merge(question=text_to_copy, answer=answer)
-                print(f"[{i + 1}/{total}].  {text_to_copy}  : Done")
+                self.single_data_merge(question=text_to_copy, answer=answer)
+                print(f"[{i + 1}/{total}].  Chatbot 답변 완료\n\n")
                 self.check_pause()  # <<<< 일시중지 상태 체크
 
                 time.sleep(1)
