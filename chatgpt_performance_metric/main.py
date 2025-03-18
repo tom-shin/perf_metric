@@ -441,7 +441,8 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
                 self.mainFrame_ui.questionlistWidget.count() - 1)  # 마지막 아이템 선택
             self.mainFrame_ui.qinput_lineEdit.clear()  # 입력 필드 초기화
 
-            file_path = os.path.join(os.getcwd(), "TestSet_Result.json").replace("\\", "/")
+            file_ = self.mainFrame_ui.testset_lineEdit.text().strip()
+            file_path = file_.replace("\\", "/")
             # 1. JSON 파일 읽기
             with open(file_path, "r", encoding="utf-8") as file:
                 data = json.load(file)  # JSON 데이터 로드
@@ -494,7 +495,9 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         if len(comment) == 0:
             return
 
-        file_path = os.path.join(os.getcwd(), "TestSet_Result.json").replace("\\", "/")
+        file_ = self.mainFrame_ui.testset_lineEdit.text().strip()
+        file_path = file_.replace("\\", "/")
+
         # 1. JSON 파일 읽기
         with open(file_path, "r", encoding="utf-8") as file:
             datas = json.load(file)  # JSON 데이터 로드
