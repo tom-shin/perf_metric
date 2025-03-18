@@ -980,7 +980,7 @@
                    <item row="0" column="1">
                     <widget class="QLabel" name="label_14">
                      <property name="text">
-                      <string>Response &lt;--&gt; Reference 관계</string>
+                      <string>Response &lt;--&gt; Reference 관계, 사실성</string>
                      </property>
                     </widget>
                    </item>
@@ -994,7 +994,7 @@
                    <item row="1" column="1">
                     <widget class="QLabel" name="label_16">
                      <property name="text">
-                      <string>Question &lt;--&gt; Response 관계</string>
+                      <string>Response &lt;--&gt; Reference 관계, 의미 유사성</string>
                      </property>
                     </widget>
                    </item>
@@ -1111,7 +1111,7 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>776</width>
+                   <width>704</width>
                    <height>365</height>
                   </rect>
                  </property>
