@@ -93,47 +93,65 @@ class ChatBotGenerationThread(QThread):
 
     def send_text_to_browser(self, question):
         try:
+            # 요소가 클릭 가능한 상태인지 대기
             input_field = WebDriverWait(self.edge_drive, 60).until(
-                EC.presence_of_element_located((By.XPATH, self.gpt_xpath["text_input"]))
+                EC.element_to_be_clickable((By.XPATH, self.gpt_xpath["text_input"]))
             )
             input_field.clear()
             input_field.send_keys(question)
-            time.sleep(0.7)
+            time.sleep(1.5)
             input_field.send_keys(Keys.RETURN)
+            time.sleep(1)
         except TimeoutException:
             print("Error: 입력 필드를 찾을 수 없습니다. 페이지 로딩을 확인하세요.")
         except NoSuchElementException as e:
             print(f"Error: Element not found - {e}")
+        except Exception as e:
+            print(f"예상치 못한 에러: {e}")
 
     def get_web_data(self, cnt):
         start_time = time.time()
-        timeout = 3600
+        timeout = 3600  # 1시간
         final_text = ""
 
         formular = 2 * cnt + 3
-
+        cnt = 0
         while True:
-            self.check_pause()  # <<<< 일시중지 상태 체크
+            self.check_pause()  # 일시중지 체크
 
             try:
                 if time.time() - start_time > timeout:
+                    print("Timeout occurred while waiting for web data.")
                     traceback.print_exc()
-                    sys.exit(0)
+                    return None  # 안전하게 종료
 
                 current_x_path = self.gpt_xpath["gpt_answer"].replace("ThunderSoft", str(formular))
-                parent_element = self.edge_drive.find_element(By.XPATH, current_x_path)
-                p_elements = parent_element.find_elements(By.TAG_NAME, "p")
 
+                # ⏳ 요소 로드 대기 (최대 10초 기다림)
+                parent_element = WebDriverWait(self.edge_drive, 60).until(
+                    EC.presence_of_element_located((By.XPATH, current_x_path))
+                )
+
+                try:
+                    # 💡 자식 <p> 요소 찾기
+                    p_elements = parent_element.find_elements(By.TAG_NAME, "p")
+                except StaleElementReferenceException:
+                    cnt += 1
+                    print("StaleElementReferenceException 발생, 요소 재탐색 중...", cnt)
+                    continue  # 다시 루프 시작해서 재탐색
+
+                # 텍스트 추출
                 if p_elements and any(p.text.strip() for p in p_elements):
                     extracted_texts = [p.text.strip() for p in p_elements if p.text.strip()]
                     final_text = "\n".join(extracted_texts)
                     return final_text
 
-            except NoSuchElementException:
-                pass
+            except (NoSuchElementException, StaleElementReferenceException) as e:
+                print(f"예외 발생: {e.__class__.__name__}, 재시도 중...")
+                # 요소가 없거나 stale일 때는 무시하고 다시 시도
 
-            QCoreApplication.processEvents()
-            time.sleep(1)
+            QCoreApplication.processEvents()  # UI 응답 유지
+            time.sleep(1)  # 1초 대기 후 다시 시도
 
     def run(self):
         try:
