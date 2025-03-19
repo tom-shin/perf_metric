@@ -202,7 +202,8 @@ class ChatBotGenerationThread(QThread):
 
                 text_to_copy = self.q_list.item(i).text()
                 print(f"Send: {text_to_copy}")
-                self.send_text_to_browser(question=text_to_copy)
+
+                ret = self.send_text_to_browser(question=text_to_copy)
 
                 current_time = datetime.datetime.now()
                 formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
