@@ -97,7 +97,9 @@ class ChatBotGenerationThread(QThread):
             input_field = WebDriverWait(self.edge_drive, 60).until(
                 EC.element_to_be_clickable((By.XPATH, self.gpt_xpath["text_input"]))
             )
+            time.sleep(1)
             input_field.clear()
+            time.sleep(0.7)
             input_field.send_keys(question)
             time.sleep(1.5)
             input_field.send_keys(Keys.RETURN)
