@@ -104,8 +104,23 @@ class ChatBotGenerationThread(QThread):
             time.sleep(1.5)
             input_field.send_keys(Keys.RETURN)
             time.sleep(1)
+
+            # print("-----------------------------------------------")
+            # print(self.edge_drive)
+            # print(self.gpt_xpath["text_input"])
+            # print("현재 URL:", self.edge_drive.current_url)
+            # print("페이지 타이틀:", self.edge_drive.title)
+            # print("-----------------------------------------------")
+
         except TimeoutException:
+            print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++")
             print("Error: 입력 필드를 찾을 수 없습니다. 페이지 로딩을 확인하세요.")
+            print(self.edge_drive)
+            print(self.gpt_xpath["text_input"])
+            print("현재 URL:", self.edge_drive.current_url)
+            print("페이지 타이틀:", self.edge_drive.title)
+            print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+
         except NoSuchElementException as e:
             print(f"Error: Element not found - {e}")
         except Exception as e:
@@ -117,7 +132,7 @@ class ChatBotGenerationThread(QThread):
         final_text = ""
 
         formular = 2 * cnt + 3
-        cnt = 0
+
         while True:
             self.check_pause()  # 일시중지 체크
 
@@ -125,7 +140,9 @@ class ChatBotGenerationThread(QThread):
                 if time.time() - start_time > timeout:
                     print("Timeout occurred while waiting for web data.")
                     traceback.print_exc()
-                    return None  # 안전하게 종료
+                    current_time = datetime.datetime.now()
+                    formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
+                    return f"[Error: Server Reset] 60 Timeout: {formatted_time}"  # 안전하게 종료
 
                 current_x_path = self.gpt_xpath["gpt_answer"].replace("ThunderSoft", str(formular))
 
@@ -138,9 +155,10 @@ class ChatBotGenerationThread(QThread):
                     # 💡 자식 <p> 요소 찾기
                     p_elements = parent_element.find_elements(By.TAG_NAME, "p")
                 except StaleElementReferenceException:
-                    cnt += 1
-                    print("StaleElementReferenceException 발생, 요소 재탐색 중...", cnt)
-                    continue  # 다시 루프 시작해서 재탐색
+                    print("StaleElementReferenceException 발생, 요소 재탐색 중...")
+                    current_time = datetime.datetime.now()
+                    formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
+                    return f"[Error: Server Reset] StaleElementReferenceException: {formatted_time}"
 
                 # 텍스트 추출
                 if p_elements and any(p.text.strip() for p in p_elements):
@@ -150,7 +168,27 @@ class ChatBotGenerationThread(QThread):
 
             except (NoSuchElementException, StaleElementReferenceException) as e:
                 print(f"예외 발생: {e.__class__.__name__}, 재시도 중...")
-                # 요소가 없거나 stale일 때는 무시하고 다시 시도
+
+                current_time = datetime.datetime.now()
+                formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
+                return f"[Error: Server Reset] NoSuchElementException, StaleElementReferenceException: {formatted_time}"
+
+            except TimeoutException:
+                print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+                print(f"TimeoutException: 60초 내에 XPath 요소를 찾지 못함:")
+                print(self.edge_drive)
+                print(self.gpt_xpath["text_input"])
+                print("출력 xpath", current_x_path)
+                print("현재 URL:", self.edge_drive.current_url)
+                print("페이지 타이틀:", self.edge_drive.title)
+                timestamp = time.strftime("%Y%m%d_%H%M%S")
+                print("Timestamp", timestamp)
+                print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+                traceback.print_exc()
+
+                current_time = datetime.datetime.now()
+                formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
+                return f"[Error: Server Reset] TimeoutException: {formatted_time}"
 
             QCoreApplication.processEvents()  # UI 응답 유지
             time.sleep(1)  # 1초 대기 후 다시 시도
@@ -171,6 +209,9 @@ class ChatBotGenerationThread(QThread):
 
                 if i < self.start_idx:
                     continue
+
+                if "[Error: Server Reset]" in answer:
+                    xpath_start = 0
 
                 text_to_copy = self.q_list.item(i).text()
                 print(f"Send: {text_to_copy}")
@@ -209,7 +250,13 @@ class ChatBotGenerationThread(QThread):
             print("\nFinished Chatbot Evaluation\n")
 
         except TimeoutException:
+            print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
             print("Error: 입력 필드를 찾을 수 없습니다. 페이지 로딩을 확인하세요.")
+            print(self.edge_drive)
+            print(self.gpt_xpath["text_input"])
+            print("현재 URL:", self.edge_drive.current_url)
+            print("페이지 타이틀:", self.edge_drive.title)
+            print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
             traceback.print_exc()  # <<< 여기에 추가
         except NoSuchElementException as e:
             print(f"Error: Element not found - {e}")
