@@ -24,7 +24,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from PyQt5.QtCore import pyqtSignal, QObject, QProcess
+from PyQt5.QtCore import pyqtSignal, QObject, QProcess, QCoreApplication
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 import os
@@ -206,7 +206,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.mainFrame_ui.vector_env_pushButton.clicked.connect(self.environment_setup)
         self.mainFrame_ui.vector_start_pushButton.clicked.connect(self.context_answer_generation)
 
-        # self.mainFrame_ui.questionlistWidget.itemDoubleClicked.connect(self.question_item_double_clicked)
+        self.mainFrame_ui.questionlistWidget.itemDoubleClicked.connect(self.question_item_double_clicked)
         self.mainFrame_ui.chatbotpushButton.clicked.connect(self.chatbot_generation)
         self.mainFrame_ui.delqlistpushButton.clicked.connect(self.delete_all_question_items)
 
@@ -387,46 +387,44 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.process_ground_truth_ground_truth.start(sys.executable, arguments)
 
     def start_browser(self, initial_open=True):
+        # DEV: "http://d1x4texestgncv.cloudfront.net/global/chatbot"
+
+        # 1. 기존 driver 종료
+        try:
+            if hasattr(self, 'edge_driver') and self.edge_driver is not None:
+                self.edge_driver.quit()
+                self.edge_driver = None
+        except Exception as e:
+            print(f"Previous WebDriver quit failed: {e}")
+
+        # 2. msedgedriver 프로세스 종료
         try:
             subprocess.run("taskkill /F /IM msedgedriver.exe /T", shell=True, check=True)
+            time.sleep(1)  # 잠시 대기
         except subprocess.CalledProcessError:
-            print("")
+            print("No existing msedgedriver.exe to terminate.")
 
+        # 3. Edge 브라우저 실행
         ms_drive = os.path.join(BASE_DIR, "ts_library", "edgedriver_win64", "msedgedriver.exe")
-
-        """Edge 브라우저 실행"""
-        edge_options = Options()
-        edge_options.use_chromium = True  # Chromium 기반 Edge 사용 설정
-
-        # "http://d1x4texestgncv.cloudfront.net/global/chatbot"
-
-        # # HTTPS 업그레이드 방지
-
-        # edge_options.add_argument(
-        #     "--disable-features=BlockInsecurePrivateNetworkRequests,InsecurePrivateNetworkRequestsAllowed")
-        # edge_options.add_argument("--disable-features=UpgradeHttpToHttps")  # 강제 변환 방지
-        # """
-        # reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge" /v InsecurePrivateNetworkRequestsAllowed /t REG_DWORD /d 1 /f
-        # reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge" /v UpgradeHttpToHttpsEnabled /t REG_DWORD /d 0 /f
-        #
-        # """
-
-        # Edge WebDriver 경로 지정
         driver_path = ms_drive.replace("\\", "/")
-        service = Service(driver_path)
+        edge_options = Options()
+        edge_options.use_chromium = True
 
-        # Edge 브라우저 실행
+        service = Service(driver_path)
         driver = webdriver.Edge(service=service, options=edge_options)
 
+        # 4. 서버 접속
         chatbot_server = self.mainFrame_ui.gptserverlineEdit.text().strip()
         driver.get(chatbot_server)
 
         self.edge_driver = driver
 
-        if not initial_open:
-            input_field = WebDriverWait(self.edge_driver, 300).until(
-                EC.presence_of_element_located((By.XPATH, self.chatbot_xpath["check_chatbot_ready_status"]))
-            )
+        # 5. chatbot ready 상태 대기
+        input_field = WebDriverWait(self.edge_driver, 300).until(
+            EC.presence_of_element_located((By.XPATH, self.chatbot_xpath["check_chatbot_ready_status"]))
+        )
+
+        QCoreApplication.processEvents()
         time.sleep(2)
 
     def delete_all_question_items(self):
@@ -512,26 +510,37 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             json.dump(datas, file, ensure_ascii=False, indent=4)  # 보기 좋게 저장
 
     def question_item_double_clicked(self, item):
-        """ 더블 클릭한 항목의 텍스트 출력 """
-        text_to_copy = item.text()
-        timeout = 30
+        if self.mainFrame_ui.questionlistWidget.count() == 0:
+            return
 
-        try:
-            # 입력 필드가 나타날 때까지 기다림 (최대 10초)
-            input_field = WebDriverWait(self.edge_driver, timeout).until(
-                EC.presence_of_element_located((By.XPATH, self.chatbot_xpath["text_input"]))
-            )
-            input_field.clear()
-            input_field.send_keys(text_to_copy)
-            time.sleep(0.5)
-            input_field.send_keys(Keys.RETURN)  # 'Enter' 키 입력
+        # 텍스트 추출 및 인덱스 추출
+        text = item.text()
+        row = self.mainFrame_ui.questionlistWidget.row(item)
 
-        except TimeoutException:
-            print("Error: 입력 필드를 찾을 수 없습니다. 페이지 로딩을 확인하세요.")
-        except NoSuchElementException as e:
-            print(f"Error: Element not found - {e}")
+        self.mainFrame_ui.startidxlineEdit.setText(f"{row}. {text}")
+
+        # """ 더블 클릭한 항목의 텍스트 출력 """
+        # text_to_copy = item.text()
+        # timeout = 30
+        #
+        # try:
+        #     # 입력 필드가 나타날 때까지 기다림 (최대 10초)
+        #     input_field = WebDriverWait(self.edge_driver, timeout).until(
+        #         EC.presence_of_element_located((By.XPATH, self.chatbot_xpath["text_input"]))
+        #     )
+        #     input_field.clear()
+        #     input_field.send_keys(text_to_copy)
+        #     time.sleep(0.5)
+        #     input_field.send_keys(Keys.RETURN)  # 'Enter' 키 입력
+        #
+        # except TimeoutException:
+        #     print("Error: 입력 필드를 찾을 수 없습니다. 페이지 로딩을 확인하세요.")
+        # except NoSuchElementException as e:
+        #     print(f"Error: Element not found - {e}")
 
     def chatbot_generation(self):
+        idx = self.mainFrame_ui.startidxlineEdit.text().strip().split(".")
+        start_idx = int(idx[0])
 
         item_count = self.mainFrame_ui.questionlistWidget.count()
         # print(item_count)
@@ -539,12 +548,13 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             print("There are No Questions")
             return
         self.reset_chatbot()
-        self.start_browser(initial_open=False)
+        self.start_browser(initial_open=True)
 
         self.chatbot_instance = ChatBotGenerationThread(base_dir=BASE_DIR, q_lists=self.mainFrame_ui.questionlistWidget,
                                                         drive=self.edge_driver,
                                                         gpt_xpath=self.chatbot_xpath,
-                                                        source_result_file=self.mainFrame_ui.testset_lineEdit.text()
+                                                        source_result_file=self.mainFrame_ui.testset_lineEdit.text(),
+                                                        startIdx=start_idx
                                                         )
         self.chatbot_instance.start()
 
