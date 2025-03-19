@@ -68,8 +68,8 @@
            </item>
            <item>
             <layout class="QGridLayout" name="gridLayout_6">
-             <item row="3" column="0">
-              <widget class="QLabel" name="label_6">
+             <item row="4" column="0">
+              <widget class="QLabel" name="label_12">
                <property name="font">
                 <font>
                  <weight>75</weight>
@@ -78,14 +78,21 @@
                 </font>
                </property>
                <property name="text">
-                <string>LLM Model               </string>
+                <string>User Name</string>
                </property>
               </widget>
              </item>
-             <item row="1" column="2">
-              <widget class="QPushButton" name="vector_env_pushButton">
+             <item row="1" column="0">
+              <widget class="QLabel" name="connectionstring_label">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <italic>false</italic>
+                 <bold>true</bold>
+                </font>
+               </property>
                <property name="text">
-                <string>Copy Trex Core Library</string>
+                <string>Trex Test Server(RAG)</string>
                </property>
               </widget>
              </item>
@@ -160,6 +167,70 @@
                </item>
               </layout>
              </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_18">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>Chatbot Server</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_6">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <italic>false</italic>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>LLM Model               </string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QPushButton" name="vector_env_pushButton">
+               <property name="text">
+                <string>Copy Trex Core Library</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <layout class="QVBoxLayout" name="verticalLayout_16">
+               <item>
+                <widget class="QGroupBox" name="groupBox_6">
+                 <property name="title">
+                  <string/>
+                 </property>
+                 <layout class="QVBoxLayout" name="verticalLayout_17">
+                  <item>
+                   <widget class="QRadioButton" name="prdradioButton">
+                    <property name="text">
+                     <string>https://prd.ai-studio-farm.com/global/chatbot</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QRadioButton" name="devradioButton">
+                    <property name="text">
+                     <string>http://d1x4texestgncv.cloudfront.net/global/chatbot</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+              </layout>
+             </item>
              <item row="2" column="0">
               <widget class="QLabel" name="label_2">
                <property name="font">
@@ -174,10 +245,16 @@
                </property>
               </widget>
              </item>
-             <item row="0" column="1">
-              <widget class="QLineEdit" name="gptserverlineEdit">
+             <item row="1" column="1">
+              <widget class="QLineEdit" name="connection_lineEdit">
+               <property name="font">
+                <font>
+                 <weight>50</weight>
+                 <bold>false</bold>
+                </font>
+               </property>
                <property name="text">
-                <string>https://prd.ai-studio-farm.com/global/chatbot</string>
+                <string>mongodb://root:ThunderSoft!88@localhost:27017/? tls=true&amp;tlsAllowInvalidCertificates=true&amp;retryWrites=false&amp;directConnection =true</string>
                </property>
               </widget>
              </item>
@@ -219,61 +296,6 @@
                 </widget>
                </item>
               </layout>
-             </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="connectionstring_label">
-               <property name="font">
-                <font>
-                 <weight>75</weight>
-                 <italic>false</italic>
-                 <bold>true</bold>
-                </font>
-               </property>
-               <property name="text">
-                <string>Trex Test Server(RAG)</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QLineEdit" name="connection_lineEdit">
-               <property name="font">
-                <font>
-                 <weight>50</weight>
-                 <bold>false</bold>
-                </font>
-               </property>
-               <property name="text">
-                <string>mongodb://root:ThunderSoft!88@localhost:27017/? tls=true&amp;tlsAllowInvalidCertificates=true&amp;retryWrites=false&amp;directConnection =true</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="0">
-              <widget class="QLabel" name="label_3">
-               <property name="font">
-                <font>
-                 <weight>75</weight>
-                 <italic>false</italic>
-                 <bold>true</bold>
-                </font>
-               </property>
-               <property name="text">
-                <string>Chatbot Server</string>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="0">
-              <widget class="QLabel" name="label_12">
-               <property name="font">
-                <font>
-                 <weight>75</weight>
-                 <italic>false</italic>
-                 <bold>true</bold>
-                </font>
-               </property>
-               <property name="text">
-                <string>User Name</string>
-               </property>
-              </widget>
              </item>
              <item row="4" column="1">
               <widget class="QLineEdit" name="userlineEdit">

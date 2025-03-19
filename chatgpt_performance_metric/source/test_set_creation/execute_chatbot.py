@@ -6,7 +6,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
-import traceback
 import json
 import chardet
 from collections import OrderedDict
@@ -72,7 +71,7 @@ def json_dump_f(file_path, data, use_encoding=False, append=False):
 
 
 class ChatBotGenerationThread(QThread):
-    def __init__(self, base_dir, q_lists, drive, gpt_xpath, source_result_file, startIdx=0):
+    def __init__(self, base_dir, q_lists, drive, gpt_xpath, source_result_file, startIdx=0, chatbot_server=''):
         super().__init__()
 
         self.running = True
@@ -85,6 +84,7 @@ class ChatBotGenerationThread(QThread):
         self.gpt_xpath = gpt_xpath
         self.filepath = source_result_file
         self.start_idx = int(startIdx)
+        self.chatbot_server = chatbot_server
 
         self.mutex = QMutex()
         self.pause_condition = QWaitCondition()
@@ -239,7 +239,7 @@ class ChatBotGenerationThread(QThread):
 
                 self.chatbot_answer.append((text_to_copy, answer))
 
-                self.single_data_merge(question=text_to_copy, answer=answer)
+                self.single_data_merge(question=text_to_copy, answer=answer, chatbot_server=self.chatbot_server)
 
                 self.check_pause()  # <<<< 일시중지 상태 체크
 
@@ -293,11 +293,12 @@ class ChatBotGenerationThread(QThread):
         self.quit()
         self.wait(3000)
 
-    def single_data_merge(self, question, answer):
+    def single_data_merge(self, question, answer, chatbot_server=''):
         for data in self.json_result_data:
             if isinstance(data, dict) and "user_input" in data:
                 if data["user_input"] == question:
                     data["chatbot_response"] = answer
+                    data["chatbot_server"] = chatbot_server
 
         json_dump_f(file_path=self.filepath.replace("\\", "/"), data=self.json_result_data)
 

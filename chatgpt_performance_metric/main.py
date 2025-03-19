@@ -376,7 +376,11 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         ComparativeAbstractQuerySynthesizer_str = str(ComparativeAbstractQuerySynthe_cnt)
         AbstractQuerySynthesizer_str = str(AbstractQuerySynthesizer_cnt)
         model_str = str(model)
-        chatbot_server = self.mainFrame_ui.gptserverlineEdit.text().strip()
+
+        if self.mainFrame_ui.prdradioButton.isChecked():
+            chatbot_server = self.mainFrame_ui.prdradioButton.text().strip()
+        else:
+            chatbot_server = self.mainFrame_ui.devradioButton.text().strip()
 
         # 인자로 넘길 리스트 (모두 문자열이어야 함)
         arguments = [script_path, source_dir, test_size_str, SpecificQuerySynthesizer_str,
@@ -414,7 +418,10 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         driver = webdriver.Edge(service=service, options=edge_options)
 
         # 4. 서버 접속
-        chatbot_server = self.mainFrame_ui.gptserverlineEdit.text().strip()
+        if self.mainFrame_ui.prdradioButton.isChecked():
+            chatbot_server = self.mainFrame_ui.prdradioButton.text().strip()
+        else:
+            chatbot_server = self.mainFrame_ui.devradioButton.text().strip()
         driver.get(chatbot_server)
 
         self.edge_driver = driver
@@ -450,7 +457,10 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             # 현재 시간 가져오기
             now = datetime.now(korea_tz)
 
-            chatbot_server = self.mainFrame_ui.gptserverlineEdit.text().strip()
+            if self.mainFrame_ui.prdradioButton.isChecked():
+                chatbot_server = self.mainFrame_ui.prdradioButton.text().strip()
+            else:
+                chatbot_server = self.mainFrame_ui.devradioButton.text().strip()
 
             new_item = {
                 "user_input": text,
@@ -550,11 +560,18 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.reset_chatbot()
         self.start_browser(initial_open=True)
 
+        if self.mainFrame_ui.prdradioButton.isChecked():
+            chatbot_server = self.mainFrame_ui.prdradioButton.text().strip()
+        else:
+            chatbot_server = self.mainFrame_ui.devradioButton.text().strip()
+
+
         self.chatbot_instance = ChatBotGenerationThread(base_dir=BASE_DIR, q_lists=self.mainFrame_ui.questionlistWidget,
                                                         drive=self.edge_driver,
                                                         gpt_xpath=self.chatbot_xpath,
                                                         source_result_file=self.mainFrame_ui.testset_lineEdit.text(),
-                                                        startIdx=start_idx
+                                                        startIdx=start_idx,
+                                                        chatbot_server=chatbot_server
                                                         )
         self.chatbot_instance.start()
 
