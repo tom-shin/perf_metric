@@ -238,7 +238,7 @@ class ChatBotGenerationThread(QThread):
 
                     QCoreApplication.processEvents()
 
-                    time.sleep(5)
+                    time.sleep(2)
 
             print("\nFinished Chatbot Evaluation\n")
 
