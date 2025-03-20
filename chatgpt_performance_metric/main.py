@@ -223,6 +223,8 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.mainFrame_ui.lineEdit_SpecificQuerySynthesizer.hide()
         self.mainFrame_ui.lineEdit_ComparativeAbstractQuerySynthesizer.hide()
         self.mainFrame_ui.lineEdit_AbstractQuerySynthesizer.hide()
+        self.mainFrame_ui.delqlistpushButton.hide()
+        self.mainFrame_ui.popctrl_radioButton.hide()
 
     def suspend_resume_response(self):
         if self.chatbot_instance is not None:
@@ -439,6 +441,13 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.mainFrame_ui.questionnumlineEdit.setText("0")
 
     def add_to_question_list(self):
+        file_ = self.mainFrame_ui.testset_lineEdit.text().strip()
+        file_path = file_.replace("\\", "/")
+
+        if not os.path.isfile(file_path):
+            print("[Warning] 파일을 먼저 선택하세요!")
+            return
+
         text = self.mainFrame_ui.qinput_lineEdit.text().strip()  # 입력된 텍스트 가져오기
         if text:  # 빈 값이 아니면 추가
             self.mainFrame_ui.questionlistWidget.addItem(text)  # 리스트 마지막에 추가
@@ -480,6 +489,11 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             # 3. JSON 파일 다시 저장
             with open(file_path, "w", encoding="utf-8") as file:
                 json.dump(data, file, ensure_ascii=False, indent=4)  # 보기 좋게 저장
+
+            self.open_file_for_generating_contexts_answer_test_set(skip=True)
+
+            total_s = int(self.mainFrame_ui.questionnumlineEdit.text().strip()) + 1
+            self.mainFrame_ui.questionnumlineEdit.setText(str(total_s))
 
     def message_write_on_item(self):
         current_row = self.mainFrame_ui.questionlistWidget.currentRow()  # 현재 선택된 인덱스
@@ -565,7 +579,6 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         else:
             chatbot_server = self.mainFrame_ui.devradioButton.text().strip()
 
-
         self.chatbot_instance = ChatBotGenerationThread(base_dir=BASE_DIR, q_lists=self.mainFrame_ui.questionlistWidget,
                                                         drive=self.edge_driver,
                                                         gpt_xpath=self.chatbot_xpath,
@@ -573,18 +586,33 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
                                                         startIdx=start_idx,
                                                         chatbot_server=chatbot_server
                                                         )
+        self.chatbot_instance.chatbot_work_status_sig.connect(self.get_chatbot_work_status)
+        self.chatbot_instance.chatbot_suspend_resume_sig.connect(self.control_message_write_box)
         self.chatbot_instance.start()
 
-    def open_file_for_generating_contexts_answer_test_set(self):
-        file_path = easygui.fileopenbox(
-            msg="Select Test Set Scenario",
-            title="Test Set Selection",
-            default="*.json",
-            filetypes=["*.json"]
-        )
+    def control_message_write_box(self, status):
+        self.mainFrame_ui.msgwritepushButton.setEnabled(status)
 
-        if file_path is None:
-            return
+    def get_chatbot_work_status(self, status):
+        # print("Chatbot Status", status)
+        self.mainFrame_ui.qinput_lineEdit.setEnabled(not status)
+        self.mainFrame_ui.delqlistpushButton.setEnabled(not status)
+
+    def open_file_for_generating_contexts_answer_test_set(self, skip=False):
+
+        if not skip:
+            file_path = easygui.fileopenbox(
+                msg="Select Test Set Scenario",
+                title="Test Set Selection",
+                default="*.json",
+                filetypes=["*.json"]
+            )
+
+            if file_path is None:
+                return
+        else:
+            file_ = self.mainFrame_ui.testset_lineEdit.text().strip()
+            file_path = file_.replace("\\", "/")
 
         self.embed_open_scenario_file = file_path
         self.mainFrame_ui.testset_lineEdit.setText(self.embed_open_scenario_file)
@@ -623,6 +651,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
                         self.mainFrame_ui.questionlistWidget.addItem(question)
                         cnt += 1
 
+        self.mainFrame_ui.startidxlineEdit.setText(f'0. {scenarios[0]["user_input"]}')
         self.mainFrame_ui.questionnumlineEdit.setText(str(cnt))
         self.mainFrame_ui.chatbotpushButton.setEnabled(True)
 

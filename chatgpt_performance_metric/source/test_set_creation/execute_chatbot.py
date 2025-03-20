@@ -13,7 +13,7 @@ import datetime
 import tiktoken
 import traceback  # 맨 위에 추가
 
-from PyQt5.QtCore import QThread, QCoreApplication, QMutex, QWaitCondition
+from PyQt5.QtCore import QThread, QCoreApplication, QMutex, QWaitCondition, pyqtSignal
 
 
 def json_load_f(file_path, use_encoding=False):
@@ -71,6 +71,9 @@ def json_dump_f(file_path, data, use_encoding=False, append=False):
 
 
 class ChatBotGenerationThread(QThread):
+    chatbot_work_status_sig = pyqtSignal(bool)
+    chatbot_suspend_resume_sig = pyqtSignal(bool)  # suspend: True, # resume: False
+
     def __init__(self, base_dir, q_lists, drive, gpt_xpath, source_result_file, startIdx=0, chatbot_server=''):
         super().__init__()
 
@@ -186,6 +189,9 @@ class ChatBotGenerationThread(QThread):
             time.sleep(2)  # 1초 대기 후 다시 시도
 
     def run(self):
+        self.chatbot_work_status_sig.emit(True)
+        self.chatbot_suspend_resume_sig.emit(False)
+
         try:
             total = self.q_list.count()
             answer = ''
@@ -264,6 +270,7 @@ class ChatBotGenerationThread(QThread):
 
     def suspend(self):
         """일시중지"""
+        self.chatbot_suspend_resume_sig.emit(True)
         self.mutex.lock()
         self.suspended = True
         self.mutex.unlock()
@@ -271,6 +278,7 @@ class ChatBotGenerationThread(QThread):
 
     def resume(self):
         """재개"""
+        self.chatbot_suspend_resume_sig.emit(False)
         self.mutex.lock()
         self.suspended = False
         self.mutex.unlock()
@@ -285,6 +293,8 @@ class ChatBotGenerationThread(QThread):
         self.get_answer = False
         self.running = False
         self.resume()  # 중지시 일시중지 상태라도 해제해야 종료 가능
+        self.chatbot_work_status_sig.emit(False)
+        self.chatbot_suspend_resume_sig.emit(True)
         self.quit()
         self.wait(3000)
 
