@@ -76,6 +76,8 @@ class ChatBotGenerationThread(QThread):
 
         self.running = True
         self.suspended = False
+        self.input_text_run = True
+        self.get_answer = True
 
         self.base_dir = base_dir
         self.q_list = q_lists
@@ -94,7 +96,8 @@ class ChatBotGenerationThread(QThread):
     def send_text_to_browser(self, question):
         retry_cnt = 0
 
-        while True:
+        while self.input_text_run:
+            print(f"Send: {question}")
             try:
                 # 요소가 클릭 가능한 상태인지 대기
                 input_field = WebDriverWait(self.edge_drive, 60).until(
@@ -133,7 +136,9 @@ class ChatBotGenerationThread(QThread):
             except Exception as e:
                 retry_cnt += 1
                 print(f"예상치 못한 에러: {e}. [{retry_cnt}]")
-                time.sleep(2)
+                print("예상치 못한 에러로 강제 종료 합니다 ")
+                self.stop()
+                time.sleep(3)
 
     def get_web_data(self, cnt):
         # start_time = time.time()
@@ -143,7 +148,7 @@ class ChatBotGenerationThread(QThread):
 
         formular = 2 * cnt + 3
 
-        while True:
+        while self.get_answer:
             self.check_pause()  # 일시중지 체크
 
             try:
@@ -200,40 +205,40 @@ class ChatBotGenerationThread(QThread):
                 if "[Error: Server Reset]" in answer:
                     xpath_start = 0
 
-                text_to_copy = self.q_list.item(i).text()
-                print(f"Send: {text_to_copy}")
+                if self.input_text_run:
+                    text_to_copy = self.q_list.item(i).text()
+                    ret = self.send_text_to_browser(question=text_to_copy)
 
-                ret = self.send_text_to_browser(question=text_to_copy)
+                if self.get_answer:
+                    s = time.time()
+                    current_time = datetime.datetime.now()
+                    formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
+                    print(f"Send 완료 및 답변 대기 시작: {formatted_time}")
 
-                current_time = datetime.datetime.now()
-                formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
-                print(f"Send 완료 및 답변 대기 시작: {formatted_time}")
+                    answer = self.get_web_data(xpath_start)
+                    xpath_start += 1
 
-                s = time.time()
-                answer = self.get_web_data(xpath_start)
-                xpath_start += 1
+                    # 질문 + 답변 쌍만 토큰화하여 누적
+                    combined_text = f"Q: {text_to_copy}\nA: {answer}"
+                    tokens = enc.encode(combined_text)
+                    pair_token_count = len(tokens)
+                    token_count += pair_token_count
 
-                # 질문 + 답변 쌍만 토큰화하여 누적
-                combined_text = f"Q: {text_to_copy}\nA: {answer}"
-                tokens = enc.encode(combined_text)
-                pair_token_count = len(tokens)
-                token_count += pair_token_count
+                    with open("accumulated_text.txt", "a+", encoding="utf-8") as file:
+                        file.write(combined_text)
 
-                with open("accumulated_text.txt", "a+", encoding="utf-8") as file:
-                    file.write(combined_text)
+                    print(
+                        f"[{i + 1}/{total}].  Chatbot 답변 완료:   {round(time.time() - s, 2)} sec.   이번 쌍 토큰 수: {pair_token_count}, 누적 토큰 수: {token_count}\n\n")
 
-                print(
-                    f"[{i + 1}/{total}].  Chatbot 답변 완료:   {round(time.time() - s, 2)} sec.   이번 쌍 토큰 수: {pair_token_count}, 누적 토큰 수: {token_count}\n\n")
+                    self.chatbot_answer.append((text_to_copy, answer))
 
-                self.chatbot_answer.append((text_to_copy, answer))
+                    self.single_data_merge(question=text_to_copy, answer=answer, chatbot_server=self.chatbot_server)
 
-                self.single_data_merge(question=text_to_copy, answer=answer, chatbot_server=self.chatbot_server)
+                    self.check_pause()  # <<<< 일시중지 상태 체크
 
-                self.check_pause()  # <<<< 일시중지 상태 체크
+                    QCoreApplication.processEvents()
 
-                QCoreApplication.processEvents()
-
-                time.sleep(2)
+                    time.sleep(5)
 
             print("\nFinished Chatbot Evaluation\n")
 
@@ -276,6 +281,8 @@ class ChatBotGenerationThread(QThread):
         return self.running
 
     def stop(self):
+        self.input_text_run = False
+        self.get_answer = False
         self.running = False
         self.resume()  # 중지시 일시중지 상태라도 해제해야 종료 가능
         self.quit()
