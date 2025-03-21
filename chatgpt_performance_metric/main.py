@@ -9,11 +9,9 @@ import easygui
 import site
 import shutil
 import ctypes
-import chardet
-import json
+import stat
+
 from collections import OrderedDict
-from datetime import datetime
-import pytz
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -33,6 +31,7 @@ import chardet
 import json
 from datetime import datetime
 import pytz
+import sys
 
 from ragas.llms import LangchainLLMWrapper
 from ragas.embeddings import LangchainEmbeddingsWrapper
@@ -42,7 +41,7 @@ from langchain_openai import OpenAIEmbeddings
 from ragas.testset import TestsetGenerator
 
 from PyQt5.QtCore import QThread
-
+import platform
 import pandas as pd
 
 # 모든 행과 열을 출력할 수 있도록 설정 변경
@@ -57,7 +56,12 @@ from source.test_set_creation.execute_trex_ai_chatbot_tools import generator_con
 from source.test_set_evaluation.execute_ragas_metrics import performance_metric_evaluator_class
 from source.test_set_creation.execute_chatbot import ChatBotGenerationThread
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if getattr(sys, 'frozen', False):  # PyInstaller로 패키징된 경우
+    BASE_DIR = os.path.dirname(sys.executable)  # 실행 파일이 있는 폴더
+    RESOURCE_DIR = sys._MEIPASS  # 임시 폴더(내부 리소스 저장됨)
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    RESOURCE_DIR = BASE_DIR  # 개발 환경에서는 현재 폴더 사용
 
 file_path = os.path.join(BASE_DIR, "version.txt")
 with open(file_path, "r") as file_:
@@ -68,6 +72,31 @@ logging.basicConfig(level=logging.INFO)
 
 def PRINT_(*args):
     logging.info(args)
+
+
+def check_environment():
+    env = ''
+    system = platform.system()
+    if system == "Windows":
+        # Windows인지 확인, WSL 포함
+        if "microsoft" in platform.version().lower() or "microsoft" in platform.release().lower():
+            env = "WSL"  # Windows Subsystem for Linux
+        env = "Windows"  # 순수 Windows
+    elif system == "Linux":
+        # Linux에서 WSL인지 확인
+        try:
+            with open("/proc/version", "r") as f:
+                version_info = f.read().lower()
+            if "microsoft" in version_info:
+                env = "WSL"  # WSL 환경
+        except FileNotFoundError:
+            pass
+        env = "Linux"  # 순수 Linux
+    else:
+        env = "Other"  # macOS 또는 기타 운영체제
+
+    # PRINT_(env)
+    return env
 
 
 def load_module_func(module_name):
@@ -90,13 +119,15 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
 
+        self.debug_mode = False
         self.testset_creation_instance = None
-        self.chatbot_instance = None
+        # self.chatbot_instance = None
         self.edge_driver = None
         self.context_ground = None
         self.directory = None
         self.openaikey = None
         self.embed_open_scenario_file = None
+        self.all_threads = []
 
         """ for main frame & widget """
         self.mainFrame_ui = None
@@ -158,6 +189,9 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         if answer == QtWidgets.QMessageBox.Yes:
             event.accept()
             self.terminate_env_setup()
+
+            for s_thread in self.all_threads:
+                s_thread.stop()
         else:
             event.ignore()
 
@@ -226,18 +260,36 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.mainFrame_ui.delqlistpushButton.hide()
         self.mainFrame_ui.popctrl_radioButton.hide()
 
+        self.mainFrame_ui.debugcheckBox.stateChanged.connect(self.debug_mode_on_off)
+
+    def debug_mode_on_off(self):
+        self.mainFrame_ui.chatbotpushButton.setEnabled(True)
+        self.mainFrame_ui.msgwritepushButton.setEnabled(not self.mainFrame_ui.debugcheckBox.isChecked())
+        self.mainFrame_ui.suspendpushButton.setEnabled(not self.mainFrame_ui.debugcheckBox.isChecked())
+        self.mainFrame_ui.testset_pushButton.setEnabled(not self.mainFrame_ui.debugcheckBox.isChecked())
+
     def suspend_resume_response(self):
-        if self.chatbot_instance is not None:
-            if not self.chatbot_instance.suspended:
-                self.chatbot_instance.suspend()
+        for s_thread in self.all_threads:
+            if not s_thread.suspended:
+                s_thread.suspend()
                 self.mainFrame_ui.suspendpushButton.setText("Resume")
             else:
-                self.chatbot_instance.resume()
+                s_thread.resume()
                 self.mainFrame_ui.suspendpushButton.setText("Suspend")
 
+        # if self.chatbot_instance is not None:
+        #     if not self.chatbot_instance.suspended:
+        #         self.chatbot_instance.suspend()
+        #         self.mainFrame_ui.suspendpushButton.setText("Resume")
+        #     else:
+        #         self.chatbot_instance.resume()
+        #         self.mainFrame_ui.suspendpushButton.setText("Suspend")
+
     def stop_response(self):
-        if self.chatbot_instance is not None:
-            self.reset_chatbot()
+        self.reset_chatbot()
+
+        # if self.chatbot_instance is not None:
+        #     self.reset_chatbot()
 
     def setUserName(self, user=''):
         self.mainFrame_ui.userlineEdit.setText(user)
@@ -393,25 +445,37 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.process_ground_truth_ground_truth.start(sys.executable, arguments)
 
     def start_browser(self, initial_open=True):
-        # DEV: "http://d1x4texestgncv.cloudfront.net/global/chatbot"
 
-        # 1. 기존 driver 종료
-        try:
-            if hasattr(self, 'edge_driver') and self.edge_driver is not None:
-                self.edge_driver.quit()
-                self.edge_driver = None
-        except Exception as e:
-            print(f"Previous WebDriver quit failed: {e}")
+        if not self.debug_mode:
 
-        # 2. msedgedriver 프로세스 종료
-        try:
-            subprocess.run("taskkill /F /IM msedgedriver.exe /T", shell=True, check=True)
-            time.sleep(1)  # 잠시 대기
-        except subprocess.CalledProcessError:
-            print("No existing msedgedriver.exe to terminate.")
+            # 1. 기존 driver 종료
+            try:
+                if hasattr(self, 'edge_driver') and self.edge_driver is not None:
+                    self.edge_driver.quit()
+                    self.edge_driver = None
+            except Exception as e:
+                print(f"Previous WebDriver quit failed: {e}")
+
+            # 2. msedgedriver 프로세스 종료
+            try:
+                env = check_environment()
+                if env == "Windows":
+                    subprocess.run("taskkill /F /IM msedgedriver.exe /T", shell=True, check=True)
+                else:
+                    subprocess.run("pkill -f msedgedriver", shell=True)
+
+                time.sleep(1)  # 잠시 대기
+            except subprocess.CalledProcessError:
+                print("No existing msedgedriver.exe to terminate.")
 
         # 3. Edge 브라우저 실행
-        ms_drive = os.path.join(BASE_DIR, "ts_library", "edgedriver_win64", "msedgedriver.exe")
+        env = check_environment()
+        if env == "Windows":
+            ms_drive = os.path.join(BASE_DIR, "ts_library", "edgedriver_win64", "msedgedriver.exe")
+        else:
+            ms_drive = os.path.join(BASE_DIR, "ts_library", "edgedriver_linux", "msedgedriver")
+            os.chmod(ms_drive, os.stat(ms_drive).st_mode | stat.S_IEXEC)
+
         driver_path = ms_drive.replace("\\", "/")
         edge_options = Options()
         edge_options.use_chromium = True
@@ -563,32 +627,54 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         #     print(f"Error: Element not found - {e}")
 
     def chatbot_generation(self):
-        idx = self.mainFrame_ui.startidxlineEdit.text().strip().split(".")
-        start_idx = int(idx[0])
+        self.debug_mode = self.mainFrame_ui.debugcheckBox.isChecked()
 
-        item_count = self.mainFrame_ui.questionlistWidget.count()
-        # print(item_count)
-        if item_count == 0:
-            print("There are No Questions")
-            return
-        self.reset_chatbot()
-        self.start_browser(initial_open=True)
-
-        if self.mainFrame_ui.prdradioButton.isChecked():
-            chatbot_server = self.mainFrame_ui.prdradioButton.text().strip()
+        if not self.debug_mode:
+            debug_thread = 1
         else:
-            chatbot_server = self.mainFrame_ui.devradioButton.text().strip()
+            debug_thread = int(self.mainFrame_ui.threadspinBox.value())
 
-        self.chatbot_instance = ChatBotGenerationThread(base_dir=BASE_DIR, q_lists=self.mainFrame_ui.questionlistWidget,
-                                                        drive=self.edge_driver,
-                                                        gpt_xpath=self.chatbot_xpath,
-                                                        source_result_file=self.mainFrame_ui.testset_lineEdit.text(),
-                                                        startIdx=start_idx,
-                                                        chatbot_server=chatbot_server
-                                                        )
-        self.chatbot_instance.chatbot_work_status_sig.connect(self.get_chatbot_work_status)
-        self.chatbot_instance.chatbot_suspend_resume_sig.connect(self.control_message_write_box)
-        self.chatbot_instance.start()
+        for i in range(debug_thread):
+
+            if not self.debug_mode:
+                idx = self.mainFrame_ui.startidxlineEdit.text().strip().split(".")
+                start_idx = int(idx[0])
+
+                source_result_file = self.mainFrame_ui.testset_lineEdit.text()
+                item_count = self.mainFrame_ui.questionlistWidget.count()
+                # print(item_count)
+                if item_count == 0:
+                    print("There are No Questions")
+                    return
+                self.reset_chatbot()
+                q_lists = self.mainFrame_ui.questionlistWidget
+
+            else:
+                start_idx = 0
+                source_result_file = os.path.join(BASE_DIR, "Debug_Set", f"shuffled_file_{i}.json")
+                with open(source_result_file, 'r', encoding='utf-8') as f:
+                    q_lists = json.load(f)  # data는 list[dict] 형태
+
+            self.start_browser(initial_open=True)
+
+            if self.mainFrame_ui.prdradioButton.isChecked():
+                chatbot_server = self.mainFrame_ui.prdradioButton.text().strip()
+            else:
+                chatbot_server = self.mainFrame_ui.devradioButton.text().strip()
+
+            chatbot_instance = ChatBotGenerationThread(base_dir=BASE_DIR, q_lists=q_lists,
+                                                       drive=self.edge_driver,
+                                                       gpt_xpath=self.chatbot_xpath,
+                                                       source_result_file=source_result_file,
+                                                       startIdx=start_idx,
+                                                       chatbot_server=chatbot_server,
+                                                       debug_mode=self.debug_mode
+                                                       )
+            chatbot_instance.chatbot_work_status_sig.connect(self.get_chatbot_work_status)
+            chatbot_instance.chatbot_suspend_resume_sig.connect(self.control_message_write_box)
+            chatbot_instance.start()
+
+            self.all_threads.append(chatbot_instance)
 
     def control_message_write_box(self, status):
         self.mainFrame_ui.msgwritepushButton.setEnabled(status)
@@ -659,9 +745,13 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
     def reset_chatbot(self):
         self.mainFrame_ui.suspendpushButton.setText("Suspend")
-        if self.chatbot_instance is not None:
-            self.chatbot_instance.stop()
-            self.chatbot_instance = None
+
+        for s_thread in self.all_threads:
+            s_thread.stop()
+            s_thread = None
+        # if self.chatbot_instance is not None:
+        #     self.chatbot_instance.stop()
+        #     self.chatbot_instance = None
 
     def open_file_for_evaluation(self):
         file_path = easygui.fileopenbox(

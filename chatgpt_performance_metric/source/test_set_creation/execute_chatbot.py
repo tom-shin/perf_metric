@@ -12,8 +12,33 @@ from collections import OrderedDict
 import datetime
 import tiktoken
 import traceback  # 맨 위에 추가
-
+import platform
 from PyQt5.QtCore import QThread, QCoreApplication, QMutex, QWaitCondition, pyqtSignal
+
+
+def check_environment():
+    env = ''
+    system = platform.system()
+    if system == "Windows":
+        # Windows인지 확인, WSL 포함
+        if "microsoft" in platform.version().lower() or "microsoft" in platform.release().lower():
+            env = "WSL"  # Windows Subsystem for Linux
+        env = "Windows"  # 순수 Windows
+    elif system == "Linux":
+        # Linux에서 WSL인지 확인
+        try:
+            with open("/proc/version", "r") as f:
+                version_info = f.read().lower()
+            if "microsoft" in version_info:
+                env = "WSL"  # WSL 환경
+        except FileNotFoundError:
+            pass
+        env = "Linux"  # 순수 Linux
+    else:
+        env = "Other"  # macOS 또는 기타 운영체제
+
+    # PRINT_(env)
+    return env
 
 
 def json_load_f(file_path, use_encoding=False):
@@ -74,13 +99,15 @@ class ChatBotGenerationThread(QThread):
     chatbot_work_status_sig = pyqtSignal(bool)
     chatbot_suspend_resume_sig = pyqtSignal(bool)  # suspend: True, # resume: False
 
-    def __init__(self, base_dir, q_lists, drive, gpt_xpath, source_result_file, startIdx=0, chatbot_server=''):
+    def __init__(self, base_dir, q_lists, drive, gpt_xpath, source_result_file, startIdx=0, chatbot_server='',
+                 debug_mode=False):
         super().__init__()
 
         self.running = True
         self.suspended = False
         self.input_text_run = True
         self.get_answer = True
+        self.debug_mode = debug_mode
 
         self.base_dir = base_dir
         self.q_list = q_lists
@@ -140,12 +167,17 @@ class ChatBotGenerationThread(QThread):
                 retry_cnt += 1
                 print(f"예상치 못한 에러: {e}. [{retry_cnt}]")
                 print("예상치 못한 에러로 강제 종료 합니다 ")
+                print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+                print("Error: 입력 필드를 찾을 수 없습니다. 페이지 로딩을 확인하세요.")
+                print(self.edge_drive)
+                print(self.gpt_xpath["text_input"])
+                print("현재 URL:", self.edge_drive.current_url)
+                print("페이지 타이틀:", self.edge_drive.title)
+                print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++")
                 self.stop()
                 time.sleep(3)
 
     def get_web_data(self, cnt):
-        # start_time = time.time()
-        timeout = 3600  # 1시간
         final_text = ""
         retry_cnt = 0
 
@@ -193,7 +225,11 @@ class ChatBotGenerationThread(QThread):
         self.chatbot_suspend_resume_sig.emit(False)
 
         try:
-            total = self.q_list.count()
+            if self.debug_mode:
+                total = len(self.q_list)
+            else:
+                total = self.q_list.count()
+
             answer = ''
             text_to_copy = ""
             token_count = 0
@@ -212,7 +248,11 @@ class ChatBotGenerationThread(QThread):
                     xpath_start = 0
 
                 if self.input_text_run:
-                    text_to_copy = self.q_list.item(i).text()
+                    if self.debug_mode:
+                        text_to_copy = self.q_list[i]["user_input"]
+                    else:
+                        text_to_copy = self.q_list.item(i).text()
+
                     ret = self.send_text_to_browser(question=text_to_copy)
 
                 if self.get_answer:
@@ -230,15 +270,18 @@ class ChatBotGenerationThread(QThread):
                     pair_token_count = len(tokens)
                     token_count += pair_token_count
 
-                    with open("accumulated_text.txt", "a+", encoding="utf-8") as file:
-                        file.write(combined_text)
+                    if not self.debug_mode:
+                        with open("accumulated_text.txt", "a+", encoding="utf-8") as file:
+                            file.write(combined_text)
 
+                    response_elapsed_time = round(time.time() - s, 2)
                     print(
-                        f"[{i + 1}/{total}].  Chatbot 답변 완료:   {round(time.time() - s, 2)} sec.   이번 쌍 토큰 수: {pair_token_count}, 누적 토큰 수: {token_count}\n\n")
+                        f"[{i + 1}/{total}].  Chatbot 답변 완료:   {response_elapsed_time} sec.   이번 쌍 토큰 수: {pair_token_count}, 누적 토큰 수: {token_count}\n\n")
 
                     self.chatbot_answer.append((text_to_copy, answer))
 
-                    self.single_data_merge(question=text_to_copy, answer=answer, chatbot_server=self.chatbot_server)
+                    self.single_data_merge(question=text_to_copy, answer=answer,
+                                           chatbot_server=rf"{self.chatbot_server}, elapsed_time:{response_elapsed_time}")
 
                     self.check_pause()  # <<<< 일시중지 상태 체크
 
