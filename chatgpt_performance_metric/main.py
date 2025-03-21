@@ -10,6 +10,7 @@ import site
 import shutil
 import ctypes
 import stat
+import random
 
 from collections import OrderedDict
 
@@ -263,10 +264,10 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.mainFrame_ui.debugcheckBox.stateChanged.connect(self.debug_mode_on_off)
 
     def debug_mode_on_off(self):
-        self.mainFrame_ui.chatbotpushButton.setEnabled(True)
+        # self.mainFrame_ui.chatbotpushButton.setEnabled(True)
         self.mainFrame_ui.msgwritepushButton.setEnabled(not self.mainFrame_ui.debugcheckBox.isChecked())
         self.mainFrame_ui.suspendpushButton.setEnabled(not self.mainFrame_ui.debugcheckBox.isChecked())
-        self.mainFrame_ui.testset_pushButton.setEnabled(not self.mainFrame_ui.debugcheckBox.isChecked())
+        # self.mainFrame_ui.testset_pushButton.setEnabled(not self.mainFrame_ui.debugcheckBox.isChecked())
 
     def suspend_resume_response(self):
         for s_thread in self.all_threads:
@@ -626,6 +627,25 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         # except NoSuchElementException as e:
         #     print(f"Error: Element not found - {e}")
 
+    def generate_test_files(self, debug_thread):
+        path = self.mainFrame_ui.testset_lineEdit.text().strip().replace("\\", "/")
+
+        for i in range(debug_thread):
+            with open(path, 'r', encoding='utf-8') as f:
+                data = json.load(f)  # data는 list[dict] 형태
+
+            random.shuffle(data)
+
+            target = os.path.join(BASE_DIR, "Debug_Set", f'shuffled_file_{i}.json')
+
+            with open(target, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=4)
+
+            relative_path = os.path.relpath(target, BASE_DIR)
+
+            print("Completed File Generation:  ", relative_path)
+            QCoreApplication.processEvents()
+
     def chatbot_generation(self):
         self.debug_mode = self.mainFrame_ui.debugcheckBox.isChecked()
 
@@ -633,6 +653,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             debug_thread = 1
         else:
             debug_thread = int(self.mainFrame_ui.threadspinBox.value())
+            self.generate_test_files(debug_thread)
 
         for i in range(debug_thread):
 
