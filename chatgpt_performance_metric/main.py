@@ -11,6 +11,7 @@ import shutil
 import ctypes
 import stat
 import random
+from concurrent.futures import ThreadPoolExecutor
 
 from collections import OrderedDict
 
@@ -123,7 +124,6 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.debug_mode = False
         self.testset_creation_instance = None
         # self.chatbot_instance = None
-        self.edge_driver = None
         self.context_ground = None
         self.directory = None
         self.openaikey = None
@@ -445,31 +445,8 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         # QProcess로 파이썬 스크립트를 인자와 함께 실행
         self.process_ground_truth_ground_truth.start(sys.executable, arguments)
 
-    def start_browser(self, initial_open=True):
+    def start_browser_thread(self, initial_open=True, thread_id=None):
 
-        if not self.debug_mode:
-
-            # 1. 기존 driver 종료
-            try:
-                if hasattr(self, 'edge_driver') and self.edge_driver is not None:
-                    self.edge_driver.quit()
-                    self.edge_driver = None
-            except Exception as e:
-                print(f"Previous WebDriver quit failed: {e}")
-
-            # 2. msedgedriver 프로세스 종료
-            try:
-                env = check_environment()
-                if env == "Windows":
-                    subprocess.run("taskkill /F /IM msedgedriver.exe /T", shell=True, check=True)
-                else:
-                    subprocess.run("pkill -f msedgedriver", shell=True)
-
-                time.sleep(1)  # 잠시 대기
-            except subprocess.CalledProcessError:
-                print("No existing msedgedriver.exe to terminate.")
-
-        # 3. Edge 브라우저 실행
         env = check_environment()
         if env == "Windows":
             ms_drive = os.path.join(BASE_DIR, "ts_library", "edgedriver_win64", "msedgedriver.exe")
@@ -489,17 +466,19 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             chatbot_server = self.mainFrame_ui.prdradioButton.text().strip()
         else:
             chatbot_server = self.mainFrame_ui.devradioButton.text().strip()
-        driver.get(chatbot_server)
-
-        self.edge_driver = driver
-
-        # 5. chatbot ready 상태 대기
-        input_field = WebDriverWait(self.edge_driver, 300).until(
-            EC.presence_of_element_located((By.XPATH, self.chatbot_xpath["check_chatbot_ready_status"]))
-        )
 
         QCoreApplication.processEvents()
-        time.sleep(2)
+        driver.get(chatbot_server)
+
+        # 5. chatbot ready 상태 대기
+        QCoreApplication.processEvents()
+        input_field = WebDriverWait(driver, 300).until(
+            EC.presence_of_element_located((By.XPATH, self.chatbot_xpath["check_chatbot_ready_status"]))
+        )
+        QCoreApplication.processEvents()
+
+        # 여기서 실제로 'edge_driver'를 각 스레드에서 독립적으로 사용하도록 설정
+        return driver
 
     def delete_all_question_items(self):
         self.mainFrame_ui.questionlistWidget.clear()
@@ -608,25 +587,6 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
 
         self.mainFrame_ui.startidxlineEdit.setText(f"{row}. {text}")
 
-        # """ 더블 클릭한 항목의 텍스트 출력 """
-        # text_to_copy = item.text()
-        # timeout = 30
-        #
-        # try:
-        #     # 입력 필드가 나타날 때까지 기다림 (최대 10초)
-        #     input_field = WebDriverWait(self.edge_driver, timeout).until(
-        #         EC.presence_of_element_located((By.XPATH, self.chatbot_xpath["text_input"]))
-        #     )
-        #     input_field.clear()
-        #     input_field.send_keys(text_to_copy)
-        #     time.sleep(0.5)
-        #     input_field.send_keys(Keys.RETURN)  # 'Enter' 키 입력
-        #
-        # except TimeoutException:
-        #     print("Error: 입력 필드를 찾을 수 없습니다. 페이지 로딩을 확인하세요.")
-        # except NoSuchElementException as e:
-        #     print(f"Error: Element not found - {e}")
-
     def generate_test_files(self, debug_thread):
         path = self.mainFrame_ui.testset_lineEdit.text().strip().replace("\\", "/")
 
@@ -646,7 +606,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             print("Completed File Generation:  ", relative_path)
             QCoreApplication.processEvents()
 
-    def chatbot_generation(self):
+    def chatbot_generation(self):   #thread pool 사용해서 자원 효울적으로 사용하자.
         self.debug_mode = self.mainFrame_ui.debugcheckBox.isChecked()
 
         if not self.debug_mode:
@@ -655,47 +615,68 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             debug_thread = int(self.mainFrame_ui.threadspinBox.value())
             self.generate_test_files(debug_thread)
 
-        for i in range(debug_thread):
-
-            if not self.debug_mode:
-                idx = self.mainFrame_ui.startidxlineEdit.text().strip().split(".")
-                start_idx = int(idx[0])
-
-                source_result_file = self.mainFrame_ui.testset_lineEdit.text()
-                item_count = self.mainFrame_ui.questionlistWidget.count()
-                # print(item_count)
-                if item_count == 0:
-                    print("There are No Questions")
-                    return
-                self.reset_chatbot()
-                q_lists = self.mainFrame_ui.questionlistWidget
-
+        # 스레드 풀 정의
+        self.reset_chatbot()
+        try:
+            env = check_environment()
+            if env == "Windows":
+                subprocess.run("taskkill /F /IM msedgedriver.exe /T", shell=True, check=True)
             else:
-                start_idx = 0
-                source_result_file = os.path.join(BASE_DIR, "Debug_Set", f"shuffled_file_{i}.json")
-                with open(source_result_file, 'r', encoding='utf-8') as f:
-                    q_lists = json.load(f)  # data는 list[dict] 형태
+                subprocess.run("pkill -f msedgedriver", shell=True)
+            time.sleep(3)  # 잠시 대기
+        except subprocess.CalledProcessError:
+            print("No existing msedgedriver.exe to terminate.")
 
-            self.start_browser(initial_open=True)
+        max_threads = debug_thread  # 사용자가 지정한 개수만큼
+        with ThreadPoolExecutor(max_workers=max_threads) as executor:
+            for i in range(debug_thread):
+                QCoreApplication.processEvents()
+                executor.submit(self.run_chatbot_thread, i)  # 각 스레드 작업 등록
 
-            if self.mainFrame_ui.prdradioButton.isChecked():
-                chatbot_server = self.mainFrame_ui.prdradioButton.text().strip()
-            else:
-                chatbot_server = self.mainFrame_ui.devradioButton.text().strip()
+    def run_chatbot_thread(self, i):
+        if not self.debug_mode:
+            idx = self.mainFrame_ui.startidxlineEdit.text().strip().split(".")
+            start_idx = int(idx[0])
 
-            chatbot_instance = ChatBotGenerationThread(base_dir=BASE_DIR, q_lists=q_lists,
-                                                       drive=self.edge_driver,
-                                                       gpt_xpath=self.chatbot_xpath,
-                                                       source_result_file=source_result_file,
-                                                       startIdx=start_idx,
-                                                       chatbot_server=chatbot_server,
-                                                       debug_mode=self.debug_mode
-                                                       )
-            chatbot_instance.chatbot_work_status_sig.connect(self.get_chatbot_work_status)
-            chatbot_instance.chatbot_suspend_resume_sig.connect(self.control_message_write_box)
-            chatbot_instance.start()
+            source_result_file = self.mainFrame_ui.testset_lineEdit.text()
+            item_count = self.mainFrame_ui.questionlistWidget.count()
+            if item_count == 0:
+                print("There are No Questions")
+                return
 
-            self.all_threads.append(chatbot_instance)
+            q_lists = self.mainFrame_ui.questionlistWidget
+
+        else:
+            start_idx = 0
+            source_result_file = os.path.join(BASE_DIR, "Debug_Set", f"shuffled_file_{i}.json")
+            with open(source_result_file, 'r', encoding='utf-8') as f:
+                q_lists = json.load(f)  # list[dict]
+
+        QCoreApplication.processEvents()
+        driver = self.start_browser_thread(initial_open=True)
+        QCoreApplication.processEvents()
+
+        if self.mainFrame_ui.prdradioButton.isChecked():
+            chatbot_server = self.mainFrame_ui.prdradioButton.text().strip()
+        else:
+            chatbot_server = self.mainFrame_ui.devradioButton.text().strip()
+
+        chatbot_instance = ChatBotGenerationThread(
+            base_dir=BASE_DIR,
+            q_lists=q_lists,
+            drive=driver,
+            gpt_xpath=self.chatbot_xpath,
+            source_result_file=source_result_file,
+            startIdx=start_idx,
+            chatbot_server=chatbot_server,
+            debug_mode=self.debug_mode
+        )
+
+        chatbot_instance.chatbot_work_status_sig.connect(self.get_chatbot_work_status)
+        chatbot_instance.chatbot_suspend_resume_sig.connect(self.control_message_write_box)
+        chatbot_instance.start()
+
+        self.all_threads.append(chatbot_instance)
 
     def control_message_write_box(self, status):
         self.mainFrame_ui.msgwritepushButton.setEnabled(status)
@@ -762,7 +743,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.mainFrame_ui.questionnumlineEdit.setText(str(cnt))
         self.mainFrame_ui.chatbotpushButton.setEnabled(True)
 
-        self.reset_chatbot()
+        # self.reset_chatbot()
 
     def reset_chatbot(self):
         self.mainFrame_ui.suspendpushButton.setText("Suspend")
@@ -770,6 +751,17 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         for s_thread in self.all_threads:
             s_thread.stop()
             s_thread = None
+
+        # try:
+        #     env = check_environment()
+        #     if env == "Windows":
+        #         subprocess.run("taskkill /F /IM msedgedriver.exe /T", shell=True, check=True)
+        #     else:
+        #         subprocess.run("pkill -f msedgedriver", shell=True)
+        #     time.sleep(1)  # 잠시 대기
+        # except subprocess.CalledProcessError:
+        #     print("No existing msedgedriver.exe to terminate.")
+
         # if self.chatbot_instance is not None:
         #     self.chatbot_instance.stop()
         #     self.chatbot_instance = None
