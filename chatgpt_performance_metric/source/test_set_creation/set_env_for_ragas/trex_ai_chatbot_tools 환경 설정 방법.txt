@@ -1,0 +1,116 @@
+
+[일반적인 방법 - python에 sitepackage에 library 설치 후 실행 할 경우]
+
+1. trex_ai_chatbot_tools을 다운로드 받는다.
+2. 최신 prompt.txt를 전달 받아 (web 조직) 위 trex_ai_chatbot_tools에 복사한다.
+3. .env 파일을 trex_ai_chatbot_tools에 만들고 아래 내용을 기입하고 저장한다.
+
+	OPENAI_API_KEY=sk-
+	CONNECTION_STRING=mongodb://root:ThunderSoft!88@localhost:27017/?tls=true&tlsAllowInvalidCertificates=true&retryWrites=false&directConnection=true
+	* 20250103_DocumentDB New Connection.pdf 에 설명 있음
+
+4. generateContext 하기 전 csv파일이 저장된 DB에 연결을 해야 한다. 
+   
+	연결에 필요한 .pem 키를 전달 받아(from web 팀) 아무 폴더에 저장한다. 해당 폴더 위치에서 아래를 실행한다.      
+	icacls "pre-dev-kp-ec2-documentdb.pem" /inheritance:r
+	icacls "pre-dev-kp-ec2-documentdb.pem" /remove:g "Users" "Authenticated Users" "Everyone" "BUILTIN\Users"
+	icacls "pre-dev-kp-ec2-documentdb.pem" /grant:r "%USERNAME%:R"
+	
+	ssh -i "pre-dev-kp-ec2-documentdb.pem" -L 27017:docdb-2025-01-02-06-49-35.cluster-c50g4i88ec8i.ap-northeast-2.docdb.amazonaws.com:27017 ubuntu@ec2-3-34-137-7.ap-northeast-2.compute.amazonaws.com -N
+	* 20250103_DocumentDB New Connection.pdf 에 설명 있음
+
+5. 아래 코드를 이용해서 response와 context를 읽어온다.
+	from trex_ai_chatbot_tools import text_gen as tg
+	import json
+	
+	testset = EvaluationDataset.from_jsonl(json_file_path)
+    for i, tc in enumerate(testset):
+        logger.info(
+            f"Generating RAGAS json...({i+1}/{len(testset)})")
+        response = tg.answer_question(tc.user_input)
+        post_response = tg.post_generation(response)
+        if post_response['success']:
+            tc.response = post_response['response']
+            tc.retrieved_contexts = post_response['list']
+        else:
+            tc.response = post_response['response']
+            tc.retrieved_contexts = post_response['response']
+
+    # JSON 파일 저장
+    testset.to_jsonl(save_file_path)
+    logger.info(f"Save to json file : {save_file_path}")
+		
+		
+		
+
+[Kendrick 만든 tool 이용 시]
+
+1. PS C:\Work\tom\python_project\Testset_Generation_Evaluation\new_chatbot_library\kendrick\ragtools-all-in-one> python -m venv .
+
+2. PS C:\Work\tom\python_project\Testset_Generation_Evaluation\new_chatbot_library\kendrick\ragtools-all-in-one> Scripts\activate
+
+3. (ragtools-all-in-one) PS C:\Work\tom\python_project\Testset_Generation_Evaluation\new_chatbot_library\kendrick\ragtools-all-in-one> pip install -r requirements.txt
+
+4. C:\Work\tom\python_project\Testset_Generation_Evaluation\new_chatbot_library\kendrick\ragtools-all-in-one\Lib\site-packages에 james가 만든 trex_ai_chatbot_tools을 복사한다.
+
+5. config 파일 작성 (config_sample.json)
+   {
+		"action": "createTestset",
+		"json_filename": "C:/Work/tom/python_project/Testset_Generation_Evaluation/new_chatbot_library/kendrick/ragtools-all-in-one/create_tom_sample.json",
+		"csv_filename": "create_tom_sample.csv",
+		"basepath": "",
+		"gpt_model": "gpt-4o-mini",
+		"dataset_source_dir": "C:/Work/tom/python_project/Testset_Generation_Evaluation/new_chatbot_library/kendrick/Input_doc/documentation",
+		"testset_test_size": 2,
+		"testset_filename": "question_answer_result.json",
+		"eval_result_filename": "./eval_result.json",
+		"eval_metrics": ["LLMContextRecall", "FactualCorrectness", "Faithfulness", "SemanticSimilarity"],
+		"eval_iterations": 3,
+		"send_to_server": false,
+		"dataset_infos": [
+			{"source" : "", "id" : ""}
+		],
+		"testset_single_hop_query_ratio": 1.0,
+		"testset_multi_hop_query_ratio": 0.0
+
+	}
+
+6. createTestset
+    >> python trex_ragtools_aio.py --json_config .\config_sample.json
+
+8. generateContext
+   - prompt.txt(현재 적용된)을 C:\Work\tom\python_project\Testset_Generation_Evaluation\new_chatbot_library\kendrick\ragtools-all-in-one\Lib\site-packages\trex_ai_chatbot_tools에 복사한다.
+   - .env 가 필요 함
+      * kendrick\ragtools-all-in-one에서 .env_template을 .env로 복사 후 아래 내용 기입
+	    OPENAI_API_KEY=sk-
+		CONNECTION_STRING=mongodb://root:ThunderSoft!88@localhost:27017/?tls=true&tlsAllowInvalidCertificates=true&retryWrites=false&directConnection=true
+   - pre-dev-kp-ec2-documentdb.pem 을 C:\Work\tom\python_project\Testset_Generation_Evaluation\new_chatbot_library\kendrick\ragtools-all-in-one 에 복사한다.
+     즉 python trex_ragtools_aio.py --json_config .\config_sample.json을 실행하는 폴더 안에 복사한다.
+   - 파일에 대한 권한 조정 후 ssh 연결한다.
+     : icacls "pre-dev-kp-ec2-documentdb.pem" /inheritance:r
+	 : icacls "pre-dev-kp-ec2-documentdb.pem" /remove:g "Users" "Authenticated Users" "Everyone" "BUILTIN\Users"
+	 : icacls "pre-dev-kp-ec2-documentdb.pem" /grant:r "%USERNAME%:R"
+	 : ssh -i "pre-dev-kp-ec2-documentdb.pem" -L 27017:docdb-2025-01-02-06-49-35.cluster-c50g4i88ec8i.ap-northeast-2.docdb.amazonaws.com:27017 ubuntu@ec2-3-34-137-7.ap-northeast-2.compute.amazonaws.com -N
+   -  config_sample.json에서 action을 generateContext로 변경 하고 필요한 부분 수정
+		{
+			"action": "generateContext",
+			"json_filename": "C:/Work/tom/python_project/Testset_Generation_Evaluation/new_chatbot_library/kendrick/ragtools-all-in-one/question_answer_result.json",
+			"csv_filename": "create_tom_sample.csv",
+			"basepath": "",
+			"gpt_model": "gpt-4o-mini",
+			"dataset_source_dir": "C:/Work/tom/python_project/Testset_Generation_Evaluation/new_chatbot_library/kendrick/Input_doc/documentation",
+			"testset_test_size": 2,
+			"testset_filename": "question_answer_result.json",
+			"eval_result_filename": "./eval_result.json",
+			"eval_metrics": ["LLMContextRecall", "FactualCorrectness", "Faithfulness", "SemanticSimilarity"],
+			"eval_iterations": 3,
+			"send_to_server": false,
+			"dataset_infos": [
+				{"source" : "", "id" : ""}
+			],
+			"testset_single_hop_query_ratio": 1.0,
+			"testset_multi_hop_query_ratio": 0.0
+
+		}
+	- python trex_ragtools_aio.py --json_config .\config_sample.json
+

@@ -2,7 +2,7 @@
     "PARSER": {
         "MIN_TOKENS": 100,
         "MAX_TOKENS": 300,
-        "OVERMAX_SLICEAT": 0.3
+        "OVERMAX_SLICEAT": 0.33
     },
     "EMBED": {
         "MODEL": "text-embedding-3-small",
@@ -11,13 +11,30 @@
     },
     "TEXTGEN": {
         "MODEL": "gpt-4o-mini",
+        "PROMPT_PATH": "prompt.txt",
         "MAX_TOKENS": 16385,
         "INPUT_TOKENS": 10000,
         "CONTEXT_TOKENS": 8000,
-        "LIMIT": 10,
+        "CONTEXT_CHUNK_LIMIT": 10,
+        "TEMPERATURE": 1,
+        "MIN_CONVERSATION": 3,
         "HYPERLINK_COUNT": 2,
-        "VECTOR_DISTANCE": 0.5,
-        "OUTPUT_TOKENS": 500
+        "CACHE_SIMILAR": 0.05,
+        "CACHE_EQUAL": 0.01,
+        "OUTPUT_TOKENS": 1000
+    },
+    "METADATA": {
+        "LINK": {
+            "QueryWeight": 0,
+            "ResponseWeight": 1,
+            "PassScore": 0.5
+        },
+        "IMAGE": {
+            "QueryWeight": 0.5,
+            "ResponseWeight": 1,
+            "FilenameWeight": 0.1,
+            "PassScore": 0.8
+        }
     },
     "FINE_TUNING": {
         "MODEL": "gpt-4o-mini",
@@ -25,9 +42,50 @@
         "TRAIN_PATH": "Output/training_data.jsonl",
         "VALID_PATH": "Output/validation_data.jsonl"
     },
+    "MODERATION": {
+        "MODEL": "omni-moderation-2024-09-26",
+        "USE_FLAG": true,
+        "CATEGORIES": {
+            "sexual": 0.2,
+            "sexual/minors": 0.2,
+            "harassment": 0.2,
+            "harassment/threatening": 0.2,
+            "hate": 0.2,
+            "hate/threatening": 0.2,
+            "illicit": 0.2,
+            "illicit/violent": 0.2,
+            "self-harm": 0.2,
+            "self-harm/intent": 0.2,
+            "self-harm/instructions": 0.2,
+            "violence": 0.2,
+            "violence/graphic": 0.2
+        }
+    },
     "LAMBDA": {
-        "DB_ID": "vector_db",
-        "VDB_ID": "collection",
-        "CACHE_ID": "cache"
+        "BUCKET": "tsk-ragtools-lambda",
+        "PROMPT": "prompt.txt"
+    },
+    "DATABASE": {
+        "VECTOR": {
+            "DB_ID": "vector_db",
+            "COL_ID": "dev_col"
+        },
+        "COL_IDS": {
+            "CACHE_ID": "cache",
+            "LOG_ID": "statistics"
+        },
+        "USERS": {
+            "GENERAL": "general",
+            "MUSUNSA": "mx"
+        }
+    },
+    "DEBUG": {
+        "INPUT": "Input/debug.json",
+        "TEXTGEN_OUTPUT": "Output/TextGenOutput.txt",
+        "TEXTGEN_HISTORY": "Output/ChatHistory.json",
+        "BULKGEN_CSV": "Output/debug.csv",
+        "CHUNKING_STATISTICS": "Output/DataSize.txt",
+        "COSINE_MATRIX": "Output/q_matrix.csv",
+        "LOGGER": "Logs/"
     }
 }

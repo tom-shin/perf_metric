@@ -238,7 +238,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
         self.mainFrame_ui.gengenpushButton.clicked.connect(self.question_ground_truth_generation)
 
         self.mainFrame_ui.testset_pushButton.clicked.connect(self.open_file_for_generating_contexts_answer_test_set)
-        self.mainFrame_ui.vector_env_pushButton.clicked.connect(self.environment_setup)
+        # self.mainFrame_ui.vector_env_pushButton.clicked.connect(self.environment_setup)
         self.mainFrame_ui.vector_start_pushButton.clicked.connect(self.context_answer_generation)
 
         self.mainFrame_ui.questionlistWidget.itemDoubleClicked.connect(self.question_item_double_clicked)
@@ -306,55 +306,56 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             print(f"pls, install trex_ai_chatbot_tools library: {e}")
             return
 
-        self.context_ground = generator_context_answer_class(self, tg)
-        self.context_ground.db_connection()
-        self.context_ground.start_set_generation()
+        context_ground = generator_context_answer_class(self.embed_open_scenario_file.replace("\\", "/"))
+        context_ground.db_connection()
+        context_ground.start()
+        self.all_threads.append(context_ground)
 
-    def env_file_generation_and_copy2_rag_library(self):
-        # env template 수정해서 tsk_ragtools에 생성
-        openai_api_key = self.get_OpenAIKey()
-        env_path = os.path.join(BASE_DIR, "source", "test_set_creation", "set_env_for_ragas", ".env_template")
-        env_path_target = os.path.join(BASE_DIR, "ts_library", "trex_ai_chatbot_tools", ".env")
-        connection_string = self.mainFrame_ui.connection_lineEdit.text()
+    # def env_file_generation_and_copy2_rag_library(self):
+    #     # env template 수정해서 tsk_ragtools에 생성
+    #     openai_api_key = self.get_OpenAIKey()
+    #     env_path = os.path.join(BASE_DIR, "source", "test_set_creation", "set_env_for_ragas", ".env_template")
+    #     env_path_target = os.path.join(BASE_DIR, "ts_library", "trex_ai_chatbot_tools", ".env")
+    #     connection_string = self.mainFrame_ui.connection_lineEdit.text()
 
-        with open(env_path, 'r') as template_file:
-            content = template_file.readlines()
+    #     with open(env_path, 'r') as template_file:
+    #         content = template_file.readlines()
 
-        new_content = []
-        for line in content:
-            if line.startswith("OPENAI_API_KEY"):
-                new_content.append(f'OPENAI_API_KEY={openai_api_key}\n')
-            elif line.startswith("CONNECTION_STRING"):
-                new_content.append(f'CONNECTION_STRING={connection_string}\n')
-            else:
-                new_content.append(line)
+    #     new_content = []
+    #     for line in content:
+    #         if line.startswith("OPENAI_API_KEY"):
+    #             new_content.append(f'OPENAI_API_KEY={openai_api_key}\n')
+    #         elif line.startswith("CONNECTION_STRING"):
+    #             new_content.append(f'CONNECTION_STRING={connection_string}\n')
+    #         else:
+    #             new_content.append(line)
 
-        with open(env_path_target, 'w') as new_file:
-            new_file.writelines(new_content)
+    #     with open(env_path_target, 'w') as new_file:
+    #         new_file.writelines(new_content)
 
-    @staticmethod
-    def copy_trex_ai_chatbot_tools_to_python_sitepackage():
+    # @staticmethod
+    # def copy_trex_ai_chatbot_tools_to_python_sitepackage():
 
-        def get_site_packages_path():  # 현재 실행 중인 파이썬 인터프리터의 site-packages 경로를 반환하는 함수
-            return [path for path in site.getsitepackages() if 'site-packages' in path]
+    #     def get_site_packages_path():  # 현재 실행 중인 파이썬 인터프리터의 site-packages 경로를 반환하는 함수
+    #         return [path for path in site.getsitepackages() if 'site-packages' in path]
 
-        site_packages_paths = get_site_packages_path()[0]
+    #     site_packages_paths = get_site_packages_path()[0]
 
-        source_dir = os.path.join(BASE_DIR, "ts_library", "trex_ai_chatbot_tools")
-        destination_dir = os.path.join(site_packages_paths, os.path.basename(source_dir))
+    #     source_dir = os.path.join(BASE_DIR, "ts_library", "trex_ai_chatbot_tools")
+    #     destination_dir = os.path.join(site_packages_paths, os.path.basename(source_dir))
 
-        try:
-            if os.path.exists(destination_dir):
-                shutil.rmtree(destination_dir)  # 대상 폴더가 존재하면 삭제
-                print(f'{destination_dir} 폴더가 삭제되었습니다.')
-            shutil.copytree(source_dir, destination_dir)  # 새롭게 폴더 복사
-            print(f'{source_dir}이(가) {destination_dir}로 복사되었습니다.')
-        except Exception as e:
-            print(f'복사 중 오류 발생: {e}')
+    #     try:
+    #         if os.path.exists(destination_dir):
+    #             shutil.rmtree(destination_dir)  # 대상 폴더가 존재하면 삭제
+    #             print(f'{destination_dir} 폴더가 삭제되었습니다.')
+    #         shutil.copytree(source_dir, destination_dir)  # 새롭게 폴더 복사
+    #         print(f'{source_dir}이(가) {destination_dir}로 복사되었습니다.')
+    #     except Exception as e:
+    #         print(f'복사 중 오류 발생: {e}')
 
-    def environment_setup(self):
-        self.env_file_generation_and_copy2_rag_library()
-        self.copy_trex_ai_chatbot_tools_to_python_sitepackage()
+    # def environment_setup(self):
+    #     self.env_file_generation_and_copy2_rag_library()
+    #     self.copy_trex_ai_chatbot_tools_to_python_sitepackage()
 
     @staticmethod
     def terminate_env_setup():
@@ -606,7 +607,7 @@ class Performance_metrics_MainWindow(QtWidgets.QMainWindow):
             print("Completed File Generation:  ", relative_path)
             QCoreApplication.processEvents()
 
-    def chatbot_generation(self):   #thread pool 사용해서 자원 효울적으로 사용하자.
+    def chatbot_generation(self):  # thread pool 사용해서 자원 효울적으로 사용하자.
         self.debug_mode = self.mainFrame_ui.debugcheckBox.isChecked()
 
         if not self.debug_mode:

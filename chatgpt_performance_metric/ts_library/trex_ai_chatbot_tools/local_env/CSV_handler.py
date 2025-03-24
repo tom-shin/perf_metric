@@ -1,0 +1,7 @@
+TUNING_DATA_CSV = "Input/TrainingData.csv"
+TUNING_DATA_JSON = "Output/fine_tuning_data.jsonl"
+# TRAINING_JSON = "Output/training_data.jsonl"
+# VALIDATION_JSON = "Output/validation_data.jsonl"
+IMAGE_REPO = "Input/Images"
+IMAGE_INPUT = "Input/Images.csv"
+IMAGE_CSV = "Output/ImageData.csv"

@@ -1,5 +1,4 @@
-from scipy import spatial
+from .. import dir_path, CONFIG
+from ..navigation import read_file, join_path
 
-
-def relevancy_score(e1: list[float], e2: list[float]) -> float:
-    return spatial.distance.cosine(e1, e2)
+GPT_INSTRUCTIONS = read_file(join_path(dir_path, CONFIG["TEXTGEN"]["PROMPT_PATH"]))

@@ -4,13 +4,8 @@ from openai import AuthenticationError
 import random
 import json
 import time
-from . import (
-    openai_client as client,
-    CONFIG,
-    GPT_INSTRUCTIONS,
-    tg_model,
-    error_invalidkey,
-)
+from . import openai_client as client, CONFIG, tg_model
+from .generator import GPT_INSTRUCTIONS
 
 
 def ft_errorcheck(json_data: list) -> bool:
@@ -159,9 +154,5 @@ def generate_ft_model(json_data=list[dict]):
     "Start OpenAI fine tuning job using TUNING_DATA_JSON, save ID to tg_model"
     if not ft_errorcheck(json_data):
         return
-    try:
-        model_id = generate_model(tg_model.base_model, json_data)
-    except AuthenticationError:
-        error_invalidkey()
-        return
+    model_id = generate_model(tg_model.base_model, json_data)
     tg_model.set_model(model_id)
