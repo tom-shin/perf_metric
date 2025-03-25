@@ -4,7 +4,6 @@ from PyQt5.QtCore import QThread
 from PyQt5 import QtWidgets, QtCore
 
 from .. import *  # __init__ 호출
-from trex_ai_chatbot_tools import text_gen as tg
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -85,6 +84,8 @@ class generator_context_answer_class(QThread):
             print(f"Error while running batch file: {e}")
 
     def run(self):
+        from trex_ai_chatbot_tools import text_gen as tg
+        
         total_cnt = len(self.testSet)
         for i, data in enumerate(self.testSet):
 
