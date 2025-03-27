@@ -215,7 +215,7 @@ class ChatBotGenerationThread(QThread):
             except TimeoutException:
                 current_time = datetime.datetime.now()
                 formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
-                return f"[Error: Server Reset] TimeoutException: {formatted_time}"
+                return f"[Error: Chatbot Reset] TimeoutException: {formatted_time}"
 
             QCoreApplication.processEvents()  # UI 응답 유지
             time.sleep(2)  # 1초 대기 후 다시 시도
@@ -244,7 +244,7 @@ class ChatBotGenerationThread(QThread):
                 if i < self.start_idx:
                     continue
 
-                if "[Error: Server Reset]" in answer:
+                if "[Error: Chatbot Reset]" in answer:
                     xpath_start = 0
 
                 if self.input_text_run:
