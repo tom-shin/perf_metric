@@ -1,4 +1,0 @@
-sentence_transformers
-ragas
-openai
-langchain-text-splitters
