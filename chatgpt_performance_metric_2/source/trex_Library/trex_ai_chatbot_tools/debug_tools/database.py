@@ -1,0 +1,10 @@
+from ..database import mongo_client
+from .. import CONFIG
+
+ANSWER_DB = CONFIG["DEBUG"]["ANSWER"]["DB_ID"]
+QUESTION_COL = CONFIG["DEBUG"]["ANSWER"]["QUESTION_ID"]
+ANSWER_COL = CONFIG["DEBUG"]["ANSWER"]["ANSWER_ID"]
+
+URL_DB = CONFIG["DEBUG"]["URL"]["DB_ID"]
+URL_EVALUATION_COL = mongo_client[URL_DB][CONFIG["DEBUG"]["URL"]["EVALUATION"]]
+URL_RESULT_COL = mongo_client[URL_DB][CONFIG["DEBUG"]["URL"]["RESULTS"]]

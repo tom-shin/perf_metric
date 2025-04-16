@@ -1,0 +1,7 @@
+PyQt5~=5.15.9
+chardet~=5.2.0
+pytz~=2025.2
+ragas~=0.2.14
+rapidfuzz
+bson
+pymongo

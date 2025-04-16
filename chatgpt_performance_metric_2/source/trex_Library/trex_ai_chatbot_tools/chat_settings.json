@@ -1,0 +1,29 @@
+{
+    "TEXTGEN": {
+        "MODEL": "gpt-4o-mini",
+        "PROMPT_PATH": "prompt.txt",
+        "MAX_TOKENS": 16385,
+        "INPUT_TOKENS": 10000,
+        "CONTEXT_TOKENS": 8000,
+        "CONTEXT_CHUNK_LIMIT": 10,
+        "TEMPERATURE": 1,
+        "MIN_CONVERSATION": 3,
+        "HYPERLINK_COUNT": 2,
+        "CACHE_SIMILAR": 0.05,
+        "CACHE_EQUAL": 0.01,
+        "OUTPUT_TOKENS": 1000
+    },
+    "METADATA": {
+        "LINK": {
+            "QueryWeight": 0,
+            "ResponseWeight": 1,
+            "PassScore": 0.5
+        },
+        "IMAGE": {
+            "QueryWeight": 0.5,
+            "ResponseWeight": 1,
+            "FilenameWeight": 0.1,
+            "PassScore": 0.8
+        }
+    }
+}

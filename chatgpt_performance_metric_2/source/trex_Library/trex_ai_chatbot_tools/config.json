@@ -1,0 +1,106 @@
+{
+    "PARSER": {
+        "MIN_TOKENS": 100,
+        "MAX_TOKENS": 300,
+        "OVERMAX_SLICEAT": 0.33
+    },
+    "EMBED": {
+        "MODEL": "text-embedding-3-small",
+        "MAX_TOKENS": 8191,
+        "DIM": 1536
+    },
+    "TEXTGEN": {
+        "MODEL": "gpt-4o-mini",
+        "MAX_TOKENS": 16385,
+        "INPUT_TOKENS": 10000,
+        "CONTEXT_TOKENS": 8000,
+        "CONTEXT_CHUNK_LIMIT": 10,
+        "TEMPERATURE": 0.8,
+        "MIN_CONVERSATION": 1,
+        "MAX_CONVERSATION": 3,
+        "HYPERLINK_COUNT": 2,
+        "CACHE_SIMILAR": 0.05,
+        "CACHE_EQUAL": 0.01,
+        "OUTPUT_TOKENS": 1000
+    },
+    "METADATA": {
+        "LINK": {
+            "QueryWeight": 1,
+            "ResponseWeight": 0.5,
+            "PassScore": 1
+        },
+        "IMAGE": {
+            "QueryWeight": 0.5,
+            "ResponseWeight": 1,
+            "FilenameWeight": 0.1,
+            "PassScore": 0.8
+        }
+    },
+    "FINE_TUNING": {
+        "MODEL": "gpt-4o-mini",
+        "RATIO": 0.2,
+        "TRAIN_PATH": "Output/training_data.jsonl",
+        "VALID_PATH": "Output/validation_data.jsonl"
+    },
+    "MODERATION": {
+        "MODEL": "omni-moderation-2024-09-26",
+        "USE_FLAG": true,
+        "CATEGORIES": {
+            "sexual": 0.2,
+            "sexual/minors": 0.2,
+            "harassment": 0.2,
+            "harassment/threatening": 0.2,
+            "hate": 0.2,
+            "hate/threatening": 0.2,
+            "illicit": 0.2,
+            "illicit/violent": 0.2,
+            "self-harm": 0.2,
+            "self-harm/intent": 0.2,
+            "self-harm/instructions": 0.2,
+            "violence": 0.2,
+            "violence/graphic": 0.2
+        }
+    },
+    "DATABASE": {
+        "PROMPT": {
+            "DB_ID": "prompt_db",
+            "COL_ID": "prompt"
+        },
+        "VECTOR": {
+            "DB_ID": "vector_db",
+            "ALL_ID": "aggregate",
+            "COL_ID": "dev_col",
+            "INDEX": "vector_index"
+        },
+        "VECTOR_DB_TYPES": {
+            "GENERAL": "general",
+            "MUSUNSA": "mx"
+        },
+        "SYSTEM": {
+            "CACHE_ID": "cache",
+            "CACHE_INDEX": "cache_index",
+            "CACHE_LIMIT": 1000,
+            "LOG_ID": "statistics"
+        }
+    },
+    "DEBUG": {
+        "LOGGER": "Logs/",
+        "INPUT": "Input/debug.json",
+        "TEXTGEN_OUTPUT": "Output/TextGenOutput.txt",
+        "TEXTGEN_HISTORY": "Output/ChatHistory.json",
+        "BULKGEN_CSV": "Output/debug.csv",
+        "CHUNKING_STATISTICS": "Output/DataSize.txt",
+        "COSINE_MATRIX": "Output/q_matrix.csv",
+        "ANSWER": {
+            "DB_ID": "answer_db",
+            "QUERY_ID": "queries",
+            "ANSWER_ID": "lookup"
+        },
+        "URL": {
+            "DB_ID": "url_db",
+            "QUERY_ID": "queries",
+            "EVALUATION_ID": "answers",
+            "RESULTS_ID": "results"
+        }
+    }
+}

@@ -1,0 +1,24 @@
+{
+    "Version": "Chatbot Evaluation Tools Ver.0.1 (made by tom.shin)",
+    "openai": {
+        "key": [
+            "sk-",
+            "BucaNVm1ibsxPUnxvWq8T3BlbkFJRGWPgBcKMtn1aorR2eYX"
+        ]
+    },
+    "test_set_creation": {        
+        "test_size": 3
+    },
+    "context_generation": {
+        "chatbot_server": [
+            "https://prd.ai-studio-farm.com/global/chatbot",
+            "http://d1x4texestgncv.cloudfront.net/global/chatbot"
+        ]
+    },
+    "filter": {
+        "include": [
+            ".md",
+            ".txt"
+        ]
+    }
+}
