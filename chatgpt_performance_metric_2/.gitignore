@@ -19,3 +19,6 @@ Logs
 
 # Git ignore 파일
 #.gitignore
+
+testset_creation_results.json
+testset_creation_failed_files.json
