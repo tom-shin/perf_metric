@@ -39,7 +39,7 @@ class ContextGeneration_with_Trex_Ai_Chatbot_tools(QThread, FileManager):
             """ .env setting """
             env_src_path = os.path.normpath(os.path.join("source", "source_files", "ContextGenerationDir", ".env"))
             src_trex_lib_dir = os.path.normpath(os.path.join("source", "trex_Library", "trex_ai_chatbot_tools"))
-            dst_trex_lib_dir = os.path.normpath(os.path.join("venv", "Lib", "site-packages", "trex_ai_chatbot_tools"))
+            dst_trex_lib_dir = os.path.normpath(os.path.join("Lib", "site-packages", "trex_ai_chatbot_tools"))
 
             # 1. .env 파일을 src_trex_lib_dir로 복사 (기존 파일 있으면 덮어쓰기)
             env_dst_path = os.path.normpath(os.path.join(src_trex_lib_dir, ".env"))

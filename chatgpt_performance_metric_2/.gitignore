@@ -17,6 +17,10 @@ Thumbs.db
 
 Logs
 
+Lib
+Scripts
+include
+pyvenv.cfg
 # Git ignore 파일
 #.gitignore
 
